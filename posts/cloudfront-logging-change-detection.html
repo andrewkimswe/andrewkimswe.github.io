@@ -104,40 +104,31 @@
           </p>
           <p>
             이러한 보안 관련 설정 변경은
-            <strong>CloudTrail → EventBridge → Lambda → SNS</strong> 구조를 통해 탐지할 수 있다.
+            <strong>CloudTrail, EventBridge, Lambda, SNS</strong> 구조를 통해 탐지할 수 있다.
           </p>
 
           <h2>Architecture</h2>
-          <pre><code>Operator
-    |
-    | UpdateDistribution
-    v
-CloudFront
-    |
-    | API Call
-    v
-CloudTrail
-    |
-    v
-EventBridge
-    |
-    | UpdateDistribution 감지
-    v
-Lambda
-    |
-    | GetDistributionConfig
-    v
-Logging Enabled?
-   |
-   +-- Yes -> 종료
-   |
-   +-- No
-        |
-        v
-       SNS
-        |
-        v
- Security Team Alert</code></pre>
+          <div class="mermaid diagram">
+flowchart TB
+    operator[Operator]
+    cloudfront[CloudFront Distribution]
+    cloudtrail[CloudTrail<br/>Audit Log]
+    eventbridge[EventBridge<br/>UpdateDistribution Detection]
+    lambda[Lambda<br/>GetDistributionConfig]
+    decision{Logging Enabled?}
+    endState[End]
+    sns[SNS Topic]
+    team[Security Team Alert]
+
+    operator --- cloudfront
+    cloudfront --- cloudtrail
+    cloudtrail --- eventbridge
+    eventbridge --- lambda
+    lambda --- decision
+    decision ---|Yes| endState
+    decision ---|No| sns
+    sns --- team
+          </div>
 
           <h2>1. CloudTrail을 통한 API 변경 기록</h2>
           <p>
@@ -228,21 +219,17 @@ Detected At: 2026-XX-XX XX:XX</code></pre>
 
           <h2>Detection Flow</h2>
           <p>전체 흐름은 다음 네 단계로 정리할 수 있다.</p>
-          <pre><code>CloudTrail
-    |
-Audit
+          <div class="mermaid diagram compact-diagram">
+flowchart LR
+    audit[CloudTrail<br/>Audit]
+    detection[EventBridge<br/>Detection]
+    validation[Lambda<br/>Validation]
+    notification[SNS<br/>Notification]
 
-EventBridge
-    |
-Detection
-
-Lambda
-    |
-Validation
-
-SNS
-    |
-Notification</code></pre>
+    audit --- detection
+    detection --- validation
+    validation --- notification
+          </div>
           <p>
             각 서비스의 역할을 분리하면 CloudFront 외의 AWS 리소스에도 동일한 패턴을 적용할
             수 있다. 예를 들어 다음과 같은 보안 관련 API 변경을 탐지하도록 확장할 수 있다.
@@ -259,19 +246,23 @@ UpdateDistribution</code></pre>
 
           <h2>Automatic Remediation</h2>
           <p>필요하다면 탐지에서 끝나지 않고 Lambda가 설정을 자동으로 복구하도록 구성할 수도 있다.</p>
-          <pre><code>Configuration Change
-        |
-   EventBridge
-        |
-      Lambda
-        |
-Security Setting Valid?
-     /       \
-   Yes        No
-    |          |
-   End      SNS Alert
-               +
-        Automatic Remediation</code></pre>
+          <div class="mermaid diagram">
+flowchart TB
+    change[Configuration Change]
+    bridge[EventBridge]
+    checker[Lambda Validation]
+    valid{Security Setting Valid?}
+    done[End]
+    alert[SNS Alert]
+    remediation[Automatic Remediation]
+
+    change --- bridge
+    bridge --- checker
+    checker --- valid
+    valid ---|Yes| done
+    valid ---|No| alert
+    alert --- remediation
+          </div>
           <p>
             다만 모든 변경을 자동으로 원복하는 것이 항상 적절한 것은 아니다. 정상적인 운영
             변경까지 자동으로 되돌리면 오히려 장애를 발생시킬 수 있기 때문에 시스템의 중요도와
@@ -292,10 +283,24 @@ Security Setting Valid?
             CloudTrail, EventBridge, Lambda, SNS를 조합하면 별도의 상시 모니터링 서버 없이도
             이벤트 기반으로 중요한 설정 변경을 탐지할 수 있다.
           </p>
-          <pre><code>CloudTrail  -> AWS API 변경 기록
-EventBridge -> 중요한 변경 이벤트 탐지
-Lambda      -> 실제 설정 상태 검증
-SNS         -> 담당자 알림</code></pre>
+          <dl class="service-summary">
+            <div>
+              <dt>CloudTrail</dt>
+              <dd>AWS API 변경 기록</dd>
+            </div>
+            <div>
+              <dt>EventBridge</dt>
+              <dd>중요한 변경 이벤트 탐지</dd>
+            </div>
+            <div>
+              <dt>Lambda</dt>
+              <dd>실제 설정 상태 검증</dd>
+            </div>
+            <div>
+              <dt>SNS</dt>
+              <dd>담당자 알림</dd>
+            </div>
+          </dl>
           <p>
             이 구조의 장점은 특정 서비스에 종속되지 않는다는 점이다. CloudFront Logging뿐만
             아니라 S3 Public Access, Security Group, IAM 등 보안에 중요한 AWS 설정 변경을
@@ -315,6 +320,29 @@ SNS         -> 담당자 알림</code></pre>
     </footer>
 
     <script src="../script.js"></script>
+    <script type="module">
+      import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
+
+      mermaid.initialize({
+        startOnLoad: true,
+        securityLevel: "strict",
+        theme: "base",
+        themeVariables: {
+          background: "#fbfaf7",
+          primaryColor: "#fbfaf7",
+          primaryTextColor: "#161616",
+          primaryBorderColor: "#161616",
+          lineColor: "#6f6a60",
+          secondaryColor: "#ece5d8",
+          tertiaryColor: "#f4f1ea",
+          fontFamily: "ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif"
+        },
+        flowchart: {
+          curve: "basis",
+          htmlLabels: true
+        }
+      });
+    </script>
     <script
       data-goatcounter="https://jiwonkim-blog.goatcounter.com/count"
       async
