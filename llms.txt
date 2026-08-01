@@ -19,4 +19,4 @@ Jiwon Kim's Blog is a Korean technical blog about backend engineering, cloud inf
 
 ## Posts
 
-No posts have been published yet.
+- [[AWS] CloudFront 설정 변경을 실시간으로 탐지하고 알림 보내기](https://andrewkimswe.github.io/posts/cloudfront-logging-change-detection.html): A CloudTrail, EventBridge, Lambda, and SNS pattern for detecting CloudFront logging configuration drift.

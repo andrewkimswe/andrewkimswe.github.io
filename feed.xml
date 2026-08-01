@@ -6,5 +6,12 @@
     <description>백엔드, 클라우드, 아키텍처, 운영, 트러블슈팅을 기록하는 기술 블로그입니다.</description>
     <language>ko-KR</language>
     <lastBuildDate>Mon, 31 Aug 2026 00:00:00 +0900</lastBuildDate>
+    <item>
+      <title>[AWS] CloudFront 설정 변경을 실시간으로 탐지하고 알림 보내기</title>
+      <link>https://andrewkimswe.github.io/posts/cloudfront-logging-change-detection.html</link>
+      <guid>https://andrewkimswe.github.io/posts/cloudfront-logging-change-detection.html</guid>
+      <pubDate>Mon, 31 Aug 2026 00:00:00 +0900</pubDate>
+      <description>CloudTrail, EventBridge, Lambda, SNS로 CloudFront Logging 비활성화를 탐지하는 패턴입니다.</description>
+    </item>
   </channel>
 </rss>

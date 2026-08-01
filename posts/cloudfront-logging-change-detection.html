@@ -1,0 +1,324 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>[AWS] CloudFront 설정 변경을 실시간으로 탐지하고 알림 보내기 | Jiwon Kim's Blog</title>
+    <meta
+      name="description"
+      content="CloudTrail, EventBridge, Lambda, SNS를 사용해 CloudFront Distribution의 Logging 비활성화를 탐지하고 알림을 보내는 구성입니다."
+    />
+    <meta name="author" content="Jiwon Kim" />
+    <meta name="robots" content="index, follow, max-image-preview:large" />
+    <link
+      rel="canonical"
+      href="https://andrewkimswe.github.io/posts/cloudfront-logging-change-detection.html"
+    />
+    <meta property="og:site_name" content="Jiwon Kim's Blog" />
+    <meta
+      property="og:title"
+      content="[AWS] CloudFront 설정 변경을 실시간으로 탐지하고 알림 보내기"
+    />
+    <meta
+      property="og:description"
+      content="CloudTrail, EventBridge, Lambda, SNS를 사용해 CloudFront Logging 비활성화를 탐지하는 패턴입니다."
+    />
+    <meta property="og:type" content="article" />
+    <meta
+      property="og:url"
+      content="https://andrewkimswe.github.io/posts/cloudfront-logging-change-detection.html"
+    />
+    <meta property="article:published_time" content="2026-08-31T00:00:00+09:00" />
+    <meta property="article:author" content="Jiwon Kim" />
+    <meta property="article:tag" content="AWS" />
+    <meta property="article:tag" content="CloudFront" />
+    <meta property="article:tag" content="Security" />
+    <link rel="stylesheet" href="../styles.css" />
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "BlogPosting",
+        "headline": "[AWS] CloudFront 설정 변경을 실시간으로 탐지하고 알림 보내기",
+        "description": "CloudTrail, EventBridge, Lambda, SNS를 사용해 CloudFront Distribution의 Logging 비활성화를 탐지하고 알림을 보내는 구성입니다.",
+        "datePublished": "2026-08-31T00:00:00+09:00",
+        "dateModified": "2026-08-31T00:00:00+09:00",
+        "author": {
+          "@type": "Person",
+          "name": "Jiwon Kim",
+          "url": "https://github.com/andrewkimswe"
+        },
+        "publisher": {
+          "@type": "Person",
+          "name": "Jiwon Kim"
+        },
+        "mainEntityOfPage": "https://andrewkimswe.github.io/posts/cloudfront-logging-change-detection.html",
+        "inLanguage": "ko-KR"
+      }
+    </script>
+  </head>
+  <body>
+    <header class="site-header">
+      <a class="brand" href="../" aria-label="Jiwon Kim's Blog 홈">
+        <span class="brand-mark">JK</span>
+        <span>
+          <strong>Jiwon Kim's Blog</strong>
+          <small>Engineering notes</small>
+        </span>
+      </a>
+      <nav class="nav-links" aria-label="주요 메뉴">
+        <a href="../#writing">Writing</a>
+        <a href="../#topics">Topics</a>
+        <a href="../#about">About</a>
+        <a href="https://github.com/andrewkimswe">GitHub</a>
+      </nav>
+    </header>
+
+    <main>
+      <article class="article-page">
+        <header class="article-hero">
+          <a class="back-link" href="../#writing">Back to writing</a>
+          <p class="eyebrow">Cloud · Security · Operations</p>
+          <h1>[AWS] CloudFront 설정 변경을 실시간으로 탐지하고 알림 보내기</h1>
+          <p class="article-summary">
+            CloudFront Access Logging은 보안 감사와 장애 분석에 중요한 단서가 된다.
+            운영 중 Logging이 실수로 비활성화되는 상황을 CloudTrail, EventBridge,
+            Lambda, SNS 조합으로 탐지하는 패턴을 정리한다.
+          </p>
+          <div class="article-meta">
+            <time datetime="2026-08-31">2026.08.31</time>
+            <span>AWS</span>
+            <span>CloudFront</span>
+            <span>Configuration Detection</span>
+          </div>
+        </header>
+
+        <div class="article-body">
+          <p>
+            CloudFront를 통해 서비스를 제공하는 환경에서는 Access Logging을 보안 감사와
+            장애 분석에 활용할 수 있다.
+          </p>
+          <p>
+            하지만 운영자가 CloudFront Distribution을 수정하는 과정에서 실수로 Logging을
+            비활성화할 수 있다. 서비스 자체는 계속 정상적으로 동작하기 때문에 별도의
+            모니터링이 없다면 이러한 설정 변경을 즉시 발견하기 어렵다.
+          </p>
+          <p>
+            이러한 보안 관련 설정 변경은
+            <strong>CloudTrail → EventBridge → Lambda → SNS</strong> 구조를 통해 탐지할 수 있다.
+          </p>
+
+          <h2>Architecture</h2>
+          <pre><code>Operator
+    |
+    | UpdateDistribution
+    v
+CloudFront
+    |
+    | API Call
+    v
+CloudTrail
+    |
+    v
+EventBridge
+    |
+    | UpdateDistribution 감지
+    v
+Lambda
+    |
+    | GetDistributionConfig
+    v
+Logging Enabled?
+   |
+   +-- Yes -> 종료
+   |
+   +-- No
+        |
+        v
+       SNS
+        |
+        v
+ Security Team Alert</code></pre>
+
+          <h2>1. CloudTrail을 통한 API 변경 기록</h2>
+          <p>
+            CloudFront Distribution의 설정을 변경하면 <code>UpdateDistribution</code>과
+            같은 AWS API 호출이 발생한다.
+          </p>
+          <p>
+            CloudTrail은 이러한 AWS API 활동을 기록하기 때문에 누가, 언제, 어떤 CloudFront
+            설정 변경 작업을 수행했는지 추적할 수 있다. 즉, CloudTrail은 이 구조에서
+            <strong>Audit Log</strong> 역할을 담당한다.
+          </p>
+
+          <h2>2. EventBridge를 통한 변경 이벤트 탐지</h2>
+          <p>
+            EventBridge에서는 CloudTrail을 통해 전달되는 CloudFront API 이벤트 중 필요한
+            이벤트만 필터링할 수 있다. 예를 들어 다음과 같이
+            <code>UpdateDistribution</code> 이벤트를 탐지한다.
+          </p>
+          <pre><code>{
+  "source": ["aws.cloudfront"],
+  "detail-type": ["AWS API Call via CloudTrail"],
+  "detail": {
+    "eventSource": ["cloudfront.amazonaws.com"],
+    "eventName": ["UpdateDistribution"]
+  }
+}</code></pre>
+          <p>
+            CloudFront Distribution의 설정이 변경되면 EventBridge가 이를 감지하여 Lambda를
+            호출한다. 단순 조회 이벤트가 아니라 실제 설정 변경과 관련된 이벤트만 대상으로
+            하기 때문에 불필요한 Lambda 실행을 줄일 수 있다.
+          </p>
+
+          <h2>3. Lambda를 통한 설정 검증</h2>
+          <p>
+            <code>UpdateDistribution</code>이 발생했다고 해서 반드시 보안 문제가 발생한 것은
+            아니다. Origin, Cache Behavior 등 정상적인 설정 변경일 수도 있기 때문에 Lambda에서
+            현재 Distribution 설정을 조회하고 실제 Logging 상태를 검증한다.
+          </p>
+          <pre><code>import boto3
+import os
+
+cloudfront = boto3.client("cloudfront")
+sns = boto3.client("sns")
+
+SNS_TOPIC_ARN = os.environ["SNS_TOPIC_ARN"]
+
+
+def lambda_handler(event, context):
+    distribution_id = get_distribution_id(event)
+
+    response = cloudfront.get_distribution_config(
+        Id=distribution_id
+    )
+
+    logging_config = response["DistributionConfig"]["Logging"]
+
+    if not logging_config["Enabled"]:
+        sns.publish(
+            TopicArn=SNS_TOPIC_ARN,
+            Subject="CloudFront Logging Disabled",
+            Message=(
+                f"CloudFront distribution {distribution_id} "
+                "has logging disabled."
+            )
+        )</code></pre>
+          <p>
+            Lambda는 <code>GetDistributionConfig</code>를 통해 현재 설정을 확인하고 Logging이
+            비활성화되어 있다면 SNS를 호출한다. 실제 구현 시 Lambda IAM Role에는 필요한
+            CloudFront 조회 권한과 SNS Publish 권한만 부여하여 최소 권한 원칙을 적용한다.
+          </p>
+
+          <h2>4. SNS를 통한 보안팀 알림</h2>
+          <p>
+            Logging이 비활성화된 것이 확인되면 SNS를 통해 담당자에게 알림을 전달한다.
+            예를 들어 다음과 같은 정보를 포함할 수 있다.
+          </p>
+          <pre><code>[Security Alert]
+
+CloudFront logging has been disabled.
+
+Distribution: E123456789
+API Event: UpdateDistribution
+Detected At: 2026-XX-XX XX:XX</code></pre>
+          <p>
+            SNS의 이메일 구독이나 별도의 알림 시스템과 연동하면 담당자가 설정 변경을 빠르게
+            확인할 수 있다.
+          </p>
+
+          <h2>Detection Flow</h2>
+          <p>전체 흐름은 다음 네 단계로 정리할 수 있다.</p>
+          <pre><code>CloudTrail
+    |
+Audit
+
+EventBridge
+    |
+Detection
+
+Lambda
+    |
+Validation
+
+SNS
+    |
+Notification</code></pre>
+          <p>
+            각 서비스의 역할을 분리하면 CloudFront 외의 AWS 리소스에도 동일한 패턴을 적용할
+            수 있다. 예를 들어 다음과 같은 보안 관련 API 변경을 탐지하도록 확장할 수 있다.
+          </p>
+          <pre><code>AuthorizeSecurityGroupIngress
+PutBucketPolicy
+PutBucketPublicAccessBlock
+DeleteBucketPolicy
+UpdateDistribution</code></pre>
+          <p>
+            이를 통해 Security Group의 위험한 인바운드 규칙 추가, S3 Bucket Policy 변경,
+            Public Access 설정 변경 등 중요한 Configuration Drift를 이벤트 기반으로 탐지할 수 있다.
+          </p>
+
+          <h2>Automatic Remediation</h2>
+          <p>필요하다면 탐지에서 끝나지 않고 Lambda가 설정을 자동으로 복구하도록 구성할 수도 있다.</p>
+          <pre><code>Configuration Change
+        |
+   EventBridge
+        |
+      Lambda
+        |
+Security Setting Valid?
+     /       \
+   Yes        No
+    |          |
+   End      SNS Alert
+               +
+        Automatic Remediation</code></pre>
+          <p>
+            다만 모든 변경을 자동으로 원복하는 것이 항상 적절한 것은 아니다. 정상적인 운영
+            변경까지 자동으로 되돌리면 오히려 장애를 발생시킬 수 있기 때문에 시스템의 중요도와
+            운영 정책에 따라 다음 전략을 선택해야 한다.
+          </p>
+          <ul>
+            <li>Alert Only</li>
+            <li>승인 후 Remediation</li>
+            <li>Automatic Remediation</li>
+          </ul>
+
+          <h2>정리</h2>
+          <p>
+            CloudFront와 같은 AWS 리소스의 보안 설정은 최초 구성뿐만 아니라
+            <strong>운영 중 설정이 변경되는 상황까지 모니터링하는 것</strong>이 중요하다.
+          </p>
+          <p>
+            CloudTrail, EventBridge, Lambda, SNS를 조합하면 별도의 상시 모니터링 서버 없이도
+            이벤트 기반으로 중요한 설정 변경을 탐지할 수 있다.
+          </p>
+          <pre><code>CloudTrail  -> AWS API 변경 기록
+EventBridge -> 중요한 변경 이벤트 탐지
+Lambda      -> 실제 설정 상태 검증
+SNS         -> 담당자 알림</code></pre>
+          <p>
+            이 구조의 장점은 특정 서비스에 종속되지 않는다는 점이다. CloudFront Logging뿐만
+            아니라 S3 Public Access, Security Group, IAM 등 보안에 중요한 AWS 설정 변경을
+            감지하는 범용적인 <strong>Configuration Change Detection Pattern</strong>으로
+            확장할 수 있다.
+          </p>
+        </div>
+      </article>
+    </main>
+
+    <footer class="site-footer">
+      <p>© 2026 Jiwon Kim. Technical writing, notes, and experiments.</p>
+      <div class="footer-links">
+        <span id="visitStatus">Analytics ready</span>
+        <a href="https://github.com/andrewkimswe">github.com/andrewkimswe</a>
+      </div>
+    </footer>
+
+    <script src="../script.js"></script>
+    <script
+      data-goatcounter="https://jiwonkim-blog.goatcounter.com/count"
+      async
+      src="https://gc.zgo.at/count.js"
+    ></script>
+  </body>
+</html>

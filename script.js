@@ -6,6 +6,10 @@ const visitStatus = document.querySelector("#visitStatus");
 let activeFilter = "all";
 
 function updatePosts() {
+  if (!posts.length) {
+    return;
+  }
+
   const query = searchInput.value.trim().toLowerCase();
 
   posts.forEach((post) => {
