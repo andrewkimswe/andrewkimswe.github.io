@@ -3,176 +3,222 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Andrew Kim SWE | AWS Solutions Blog</title>
+    <title>Jiwon Kim's Blog | 기술 블로그</title>
     <meta
       name="description"
-      content="andrewkimswe의 AWS 솔루션, 아키텍처 노트, 트러블슈팅을 정리하는 개발 블로그입니다."
+      content="Jiwon Kim의 기술 블로그입니다. 백엔드, 클라우드, 아키텍처, 운영, 트러블슈팅을 실무 중심으로 기록합니다."
     />
-    <meta property="og:title" content="Andrew Kim SWE | AWS Solutions Blog" />
+    <meta name="author" content="Jiwon Kim" />
+    <meta name="robots" content="index, follow, max-image-preview:large" />
+    <link rel="canonical" href="https://andrewkimswe.github.io/" />
+    <link rel="alternate" type="application/rss+xml" title="Jiwon Kim's Blog RSS" href="./feed.xml" />
+    <meta property="og:site_name" content="Jiwon Kim's Blog" />
+    <meta property="og:title" content="Jiwon Kim's Blog | 기술 블로그" />
     <meta
       property="og:description"
-      content="AWS 솔루션과 클라우드 아키텍처를 실무 중심으로 기록합니다."
+      content="백엔드, 클라우드, 아키텍처, 운영, 트러블슈팅을 실무 중심으로 기록합니다."
     />
     <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://andrewkimswe.github.io/" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Jiwon Kim's Blog | 기술 블로그" />
+    <meta
+      name="twitter:description"
+      content="백엔드, 클라우드, 아키텍처, 운영, 트러블슈팅을 실무 중심으로 기록합니다."
+    />
     <link rel="stylesheet" href="./styles.css" />
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "Blog",
+        "name": "Jiwon Kim's Blog",
+        "url": "https://andrewkimswe.github.io/",
+        "description": "백엔드, 클라우드, 아키텍처, 운영, 트러블슈팅을 실무 중심으로 기록하는 기술 블로그입니다.",
+        "author": {
+          "@type": "Person",
+          "name": "Jiwon Kim",
+          "url": "https://github.com/andrewkimswe",
+          "sameAs": ["https://github.com/andrewkimswe"]
+        },
+        "inLanguage": "ko-KR"
+      }
+    </script>
   </head>
   <body>
     <header class="site-header">
-      <a class="brand" href="./" aria-label="Andrew Kim SWE 홈">
-        <span class="brand-mark">AK</span>
+      <a class="brand" href="./" aria-label="Jiwon Kim's Blog 홈">
+        <span class="brand-mark">JK</span>
         <span>
-          <strong>Andrew Kim SWE</strong>
-          <small>AWS Solutions Blog</small>
+          <strong>Jiwon Kim's Blog</strong>
+          <small>Engineering notes</small>
         </span>
       </a>
       <nav class="nav-links" aria-label="주요 메뉴">
-        <a href="#posts">Posts</a>
-        <a href="#solutions">Solutions</a>
+        <a href="#writing">Writing</a>
+        <a href="#topics">Topics</a>
+        <a href="#about">About</a>
         <a href="https://github.com/andrewkimswe">GitHub</a>
       </nav>
     </header>
 
     <main>
       <section class="hero">
-        <div class="hero-copy">
-          <p class="eyebrow">AWS Architecture · Dev Notes · Troubleshooting</p>
-          <h1>클라우드 솔루션을 실무 언어로 정리합니다.</h1>
-          <p class="hero-text">
-            AWS에서 직접 부딪히는 설계 선택, 배포 패턴, 장애 해결 과정을 짧고
-            명확한 글로 기록하는 andrewkimswe의 개발 블로그입니다.
-          </p>
-          <div class="hero-actions">
-            <a class="primary-button" href="#posts">글 보기</a>
-            <a class="secondary-button" href="#start">첫 글 템플릿</a>
+        <div class="hero-kicker">Backend · Cloud · Architecture · Operations</div>
+        <div class="hero-layout">
+          <div class="hero-copy">
+            <h1>문제를 끝까지 추적하고, 배운 것을 글로 남깁니다.</h1>
+            <p class="hero-text">
+              Jiwon Kim의 기술 블로그입니다. AWS를 포함한 클라우드 인프라,
+              백엔드 설계, 장애 분석, 개발 과정에서 얻은 판단 기준을 차분하게 정리합니다.
+            </p>
           </div>
-        </div>
-        <div class="architecture-visual" aria-label="AWS 아키텍처 다이어그램">
-          <div class="cloud-node core">
-            <span>CloudFront</span>
-            <strong>Edge</strong>
-          </div>
-          <div class="connector connector-one"></div>
-          <div class="cloud-node service">
-            <span>S3</span>
-            <strong>Static</strong>
-          </div>
-          <div class="connector connector-two"></div>
-          <div class="cloud-node data">
-            <span>Route 53</span>
-            <strong>DNS</strong>
-          </div>
-          <div class="pulse pulse-a"></div>
-          <div class="pulse pulse-b"></div>
+          <aside class="profile-panel" aria-label="블로그 소개">
+            <p class="panel-label">Current focus</p>
+            <ul>
+              <li>Cloud architecture decisions</li>
+              <li>Backend reliability notes</li>
+              <li>Incident reviews and fixes</li>
+              <li>Readable engineering docs</li>
+            </ul>
+            <div class="metric-row">
+              <span>Posts</span>
+              <strong>3</strong>
+            </div>
+            <div class="metric-row">
+              <span>Primary language</span>
+              <strong>KR</strong>
+            </div>
+          </aside>
         </div>
       </section>
 
-      <section class="section" id="posts">
+      <section class="section writing-section" id="writing">
         <div class="section-heading">
-          <p class="eyebrow">Latest Writing</p>
-          <h2>최근 포스트</h2>
+          <div>
+            <p class="eyebrow">Writing</p>
+            <h2>최근 글</h2>
+          </div>
+          <p>
+            AWS 글도 올라가지만, 블로그의 중심은 특정 벤더가 아니라 문제 해결 과정과 기술적 판단입니다.
+          </p>
         </div>
+
         <div class="toolbar" aria-label="포스트 필터">
           <label class="search-box">
-            <span>검색</span>
-            <input id="postSearch" type="search" placeholder="S3, VPC, CloudFront..." />
+            <span>Search</span>
+            <input id="postSearch" type="search" placeholder="CloudFront, VPC, 장애..." />
           </label>
           <div class="tag-filter" role="list" aria-label="태그 필터">
             <button class="tag-button active" data-filter="all" type="button">All</button>
-            <button class="tag-button" data-filter="AWS" type="button">AWS</button>
+            <button class="tag-button" data-filter="Cloud" type="button">Cloud</button>
             <button class="tag-button" data-filter="Architecture" type="button">Architecture</button>
-            <button class="tag-button" data-filter="Troubleshooting" type="button">Troubleshooting</button>
+            <button class="tag-button" data-filter="Operations" type="button">Operations</button>
           </div>
         </div>
-        <div class="post-grid" id="postGrid">
-          <article class="post-card" data-tags="AWS Architecture" data-title="S3와 CloudFront로 정적 블로그 배포하기">
-            <div class="post-meta">
-              <span>AWS</span>
+
+        <div class="post-list" id="postGrid">
+          <article
+            class="post-row"
+            data-tags="Cloud Architecture AWS"
+            data-title="S3와 CloudFront로 정적 블로그 배포하기"
+          >
+            <a href="./posts/aws-s3-cloudfront-static-hosting.md">
               <time datetime="2026-08-31">2026.08.31</time>
-            </div>
-            <h3>S3와 CloudFront로 정적 블로그 배포하기</h3>
-            <p>정적 사이트를 S3에 올리고 CloudFront, Route 53, ACM으로 HTTPS까지 구성하는 기본 패턴입니다.</p>
-            <a href="./posts/aws-s3-cloudfront-static-hosting.md">읽기</a>
+              <span class="post-topic">Cloud</span>
+              <h3>S3와 CloudFront로 정적 블로그 배포하기</h3>
+              <p>정적 사이트를 S3, CloudFront, Route 53, ACM으로 배포하는 기본 패턴입니다.</p>
+            </a>
           </article>
-          <article class="post-card" data-tags="AWS Architecture" data-title="VPC 퍼블릭/프라이빗 서브넷 설계 노트">
-            <div class="post-meta">
-              <span>Architecture</span>
+          <article
+            class="post-row"
+            data-tags="Cloud Architecture AWS"
+            data-title="VPC 퍼블릭/프라이빗 서브넷 설계 노트"
+          >
+            <a href="./posts/aws-vpc-private-subnet-nat.md">
               <time datetime="2026-08-31">2026.08.31</time>
-            </div>
-            <h3>VPC 퍼블릭/프라이빗 서브넷 설계 노트</h3>
-            <p>인터넷 게이트웨이, NAT 게이트웨이, 라우팅 테이블을 기준으로 VPC 기본 구조를 정리합니다.</p>
-            <a href="./posts/aws-vpc-private-subnet-nat.md">읽기</a>
+              <span class="post-topic">Architecture</span>
+              <h3>VPC 퍼블릭/프라이빗 서브넷 설계 노트</h3>
+              <p>트래픽 방향을 기준으로 퍼블릭/프라이빗 서브넷과 NAT 구성을 정리합니다.</p>
+            </a>
           </article>
-          <article class="post-card" data-tags="Troubleshooting AWS" data-title="AWS 장애 대응 기록 템플릿">
-            <div class="post-meta">
-              <span>Troubleshooting</span>
+          <article
+            class="post-row"
+            data-tags="Operations Troubleshooting AWS"
+            data-title="AWS 장애 대응 기록 템플릿"
+          >
+            <a href="./posts/aws-incident-review-template.md">
               <time datetime="2026-08-31">2026.08.31</time>
-            </div>
-            <h3>AWS 장애 대응 기록 템플릿</h3>
-            <p>증상, 영향 범위, 원인, 재발 방지책을 빠짐없이 남기기 위한 포스트 구조입니다.</p>
-            <a href="./posts/aws-incident-review-template.md">읽기</a>
+              <span class="post-topic">Operations</span>
+              <h3>AWS 장애 대응 기록 템플릿</h3>
+              <p>증상, 영향 범위, 원인, 조치, 재발 방지책을 남기는 회고 템플릿입니다.</p>
+            </a>
           </article>
         </div>
       </section>
 
-      <section class="section solution-band" id="solutions">
+      <section class="section topic-section" id="topics">
         <div class="section-heading">
-          <p class="eyebrow">Solution Tracks</p>
-          <h2>AWS 글감 로드맵</h2>
+          <div>
+            <p class="eyebrow">Topics</p>
+            <h2>다룰 주제</h2>
+          </div>
         </div>
-        <div class="solution-list">
+        <div class="topic-grid">
           <article>
             <span>01</span>
-            <h3>Static Hosting</h3>
-            <p>S3, CloudFront, Route 53, ACM, 캐시 무효화 전략</p>
+            <h3>Backend</h3>
+            <p>API 설계, 인증/인가, 데이터 모델링, 성능 개선</p>
           </article>
           <article>
             <span>02</span>
-            <h3>Network Foundation</h3>
-            <p>VPC, Subnet, Route Table, NAT, Security Group</p>
+            <h3>Cloud</h3>
+            <p>AWS, 배포 구조, 네트워크, 스토리지, 비용 최적화</p>
           </article>
           <article>
             <span>03</span>
-            <h3>Container Deploy</h3>
-            <p>ECR, ECS/Fargate, ALB, 오토스케일링, 배포 전략</p>
+            <h3>Architecture</h3>
+            <p>서비스 경계, 장애 격리, 확장성, 기술 선택의 이유</p>
           </article>
           <article>
             <span>04</span>
             <h3>Operations</h3>
-            <p>CloudWatch, IAM, 비용 최적화, 장애 회고</p>
+            <p>모니터링, 장애 대응, 로그 분석, 재발 방지</p>
           </article>
         </div>
       </section>
 
-      <section class="section start-section" id="start">
+      <section class="section about-section" id="about">
         <div>
-          <p class="eyebrow">Post Template</p>
-          <h2>첫 글은 이 구조로 시작하면 됩니다.</h2>
+          <p class="eyebrow">About</p>
+          <h2>Jiwon Kim</h2>
         </div>
-        <pre><code>---
-title: "S3 + CloudFront 정적 블로그 배포"
-date: "2026-08-31"
-tags: ["AWS", "CloudFront", "S3"]
----
-
-## 문제
-왜 이 구성이 필요했는가?
-
-## 아키텍처
-어떤 AWS 리소스를 어떻게 연결했는가?
-
-## 구현
-핵심 설정과 명령어
-
-## 배운 점
-다음에 같은 일을 할 때 조심할 것</code></pre>
+        <div class="about-copy">
+          <p>
+            이 블로그는 해결한 문제를 다시 설명할 수 있을 만큼 이해했는지 확인하는 공간입니다.
+            짧은 설정 메모보다 맥락, 선택지, 실패한 접근, 다시 쓸 수 있는 체크리스트를 남기는 것을 목표로 합니다.
+          </p>
+          <div class="about-links">
+            <a href="https://github.com/andrewkimswe">GitHub</a>
+            <a href="./llms.txt">llms.txt</a>
+            <a href="./sitemap.xml">sitemap.xml</a>
+          </div>
+        </div>
       </section>
     </main>
 
     <footer class="site-footer">
-      <p>© 2026 Andrew Kim SWE. Built for AWS solution notes.</p>
-      <a href="https://github.com/andrewkimswe">github.com/andrewkimswe</a>
+      <p>© 2026 Jiwon Kim. Technical writing, notes, and experiments.</p>
+      <div class="footer-links">
+        <span id="visitStatus">Analytics ready</span>
+        <a href="https://github.com/andrewkimswe">github.com/andrewkimswe</a>
+      </div>
     </footer>
 
     <script src="./script.js"></script>
+    <script
+      data-goatcounter="https://jiwonkim-blog.goatcounter.com/count"
+      async
+      src="https://gc.zgo.at/count.js"
+    ></script>
   </body>
 </html>

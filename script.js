@@ -1,6 +1,7 @@
 const searchInput = document.querySelector("#postSearch");
 const filterButtons = document.querySelectorAll("[data-filter]");
-const posts = document.querySelectorAll(".post-card");
+const posts = document.querySelectorAll(".post-row");
+const visitStatus = document.querySelector("#visitStatus");
 
 let activeFilter = "all";
 
@@ -27,3 +28,7 @@ filterButtons.forEach((button) => {
 });
 
 searchInput.addEventListener("input", updatePosts);
+
+if (visitStatus) {
+  visitStatus.textContent = "Visitor analytics ready";
+}
