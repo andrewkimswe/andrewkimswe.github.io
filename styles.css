@@ -415,23 +415,23 @@ h3 {
 }
 
 .diagram {
-  margin: 24px 0 34px;
+  margin: 22px auto 32px;
   overflow-x: auto;
   border: 1px solid var(--line);
   background: var(--paper);
-  padding: 24px;
+  padding: clamp(14px, 3vw, 22px);
 }
 
 .diagram svg {
   display: block;
-  min-width: 680px;
-  max-width: 100%;
+  width: 100%;
+  max-width: 760px;
   height: auto;
   margin: 0 auto;
 }
 
 .compact-diagram svg {
-  min-width: 760px;
+  max-width: 680px;
 }
 
 .post-row {
