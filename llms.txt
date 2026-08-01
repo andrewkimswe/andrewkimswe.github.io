@@ -19,6 +19,4 @@ Jiwon Kim's Blog is a Korean technical blog about backend engineering, cloud inf
 
 ## Posts
 
-- [S3와 CloudFront로 정적 블로그 배포하기](https://andrewkimswe.github.io/posts/aws-s3-cloudfront-static-hosting.md)
-- [VPC 퍼블릭/프라이빗 서브넷 설계 노트](https://andrewkimswe.github.io/posts/aws-vpc-private-subnet-nat.md)
-- [AWS 장애 대응 기록 템플릿](https://andrewkimswe.github.io/posts/aws-incident-review-template.md)
+No posts have been published yet.

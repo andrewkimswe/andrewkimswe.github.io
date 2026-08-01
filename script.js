@@ -27,7 +27,9 @@ filterButtons.forEach((button) => {
   });
 });
 
-searchInput.addEventListener("input", updatePosts);
+if (searchInput) {
+  searchInput.addEventListener("input", updatePosts);
+}
 
 if (visitStatus) {
   visitStatus.textContent = "Visitor analytics ready";

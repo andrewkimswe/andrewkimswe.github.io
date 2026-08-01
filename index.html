@@ -6,7 +6,7 @@
     <title>Jiwon Kim's Blog | 기술 블로그</title>
     <meta
       name="description"
-      content="Jiwon Kim의 기술 블로그입니다. 백엔드, 클라우드, 아키텍처, 운영, 트러블슈팅을 실무 중심으로 기록합니다."
+      content="Jiwon Kim's technical blog on backend engineering, cloud infrastructure, architecture, operations, and troubleshooting."
     />
     <meta name="author" content="Jiwon Kim" />
     <meta name="robots" content="index, follow, max-image-preview:large" />
@@ -16,7 +16,7 @@
     <meta property="og:title" content="Jiwon Kim's Blog | 기술 블로그" />
     <meta
       property="og:description"
-      content="백엔드, 클라우드, 아키텍처, 운영, 트러블슈팅을 실무 중심으로 기록합니다."
+      content="Notes on backend engineering, cloud infrastructure, architecture, operations, and troubleshooting."
     />
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://andrewkimswe.github.io/" />
@@ -24,7 +24,7 @@
     <meta name="twitter:title" content="Jiwon Kim's Blog | 기술 블로그" />
     <meta
       name="twitter:description"
-      content="백엔드, 클라우드, 아키텍처, 운영, 트러블슈팅을 실무 중심으로 기록합니다."
+      content="Notes on backend engineering, cloud infrastructure, architecture, operations, and troubleshooting."
     />
     <link rel="stylesheet" href="./styles.css" />
     <script type="application/ld+json">
@@ -33,7 +33,7 @@
         "@type": "Blog",
         "name": "Jiwon Kim's Blog",
         "url": "https://andrewkimswe.github.io/",
-        "description": "백엔드, 클라우드, 아키텍처, 운영, 트러블슈팅을 실무 중심으로 기록하는 기술 블로그입니다.",
+        "description": "A technical blog about backend engineering, cloud infrastructure, architecture, operations, and troubleshooting.",
         "author": {
           "@type": "Person",
           "name": "Jiwon Kim",
@@ -66,28 +66,18 @@
         <div class="hero-kicker">Backend · Cloud · Architecture · Operations</div>
         <div class="hero-layout">
           <div class="hero-copy">
-            <h1>문제를 끝까지 추적하고, 배운 것을 글로 남깁니다.</h1>
+            <h1>Tracing problems deeply, then writing down what remains useful.</h1>
             <p class="hero-text">
-              Jiwon Kim의 기술 블로그입니다. AWS를 포함한 클라우드 인프라,
-              백엔드 설계, 장애 분석, 개발 과정에서 얻은 판단 기준을 차분하게 정리합니다.
+              A technical blog by Jiwon Kim about backend systems, cloud infrastructure,
+              architecture decisions, operations, and the lessons that survive real debugging.
             </p>
           </div>
           <aside class="profile-panel" aria-label="블로그 소개">
-            <p class="panel-label">Current focus</p>
-            <ul>
-              <li>Cloud architecture decisions</li>
-              <li>Backend reliability notes</li>
-              <li>Incident reviews and fixes</li>
-              <li>Readable engineering docs</li>
-            </ul>
-            <div class="metric-row">
-              <span>Posts</span>
-              <strong>3</strong>
-            </div>
-            <div class="metric-row">
-              <span>Primary language</span>
-              <strong>KR</strong>
-            </div>
+            <p class="panel-label">About this space</p>
+            <p>
+              Field notes on systems that need to be understood, operated, and explained
+              clearly after the implementation details fade.
+            </p>
           </aside>
         </div>
       </section>
@@ -116,43 +106,11 @@
           </div>
         </div>
 
-        <div class="post-list" id="postGrid">
-          <article
-            class="post-row"
-            data-tags="Cloud Architecture AWS"
-            data-title="S3와 CloudFront로 정적 블로그 배포하기"
-          >
-            <a href="./posts/aws-s3-cloudfront-static-hosting.md">
-              <time datetime="2026-08-31">2026.08.31</time>
-              <span class="post-topic">Cloud</span>
-              <h3>S3와 CloudFront로 정적 블로그 배포하기</h3>
-              <p>정적 사이트를 S3, CloudFront, Route 53, ACM으로 배포하는 기본 패턴입니다.</p>
-            </a>
-          </article>
-          <article
-            class="post-row"
-            data-tags="Cloud Architecture AWS"
-            data-title="VPC 퍼블릭/프라이빗 서브넷 설계 노트"
-          >
-            <a href="./posts/aws-vpc-private-subnet-nat.md">
-              <time datetime="2026-08-31">2026.08.31</time>
-              <span class="post-topic">Architecture</span>
-              <h3>VPC 퍼블릭/프라이빗 서브넷 설계 노트</h3>
-              <p>트래픽 방향을 기준으로 퍼블릭/프라이빗 서브넷과 NAT 구성을 정리합니다.</p>
-            </a>
-          </article>
-          <article
-            class="post-row"
-            data-tags="Operations Troubleshooting AWS"
-            data-title="AWS 장애 대응 기록 템플릿"
-          >
-            <a href="./posts/aws-incident-review-template.md">
-              <time datetime="2026-08-31">2026.08.31</time>
-              <span class="post-topic">Operations</span>
-              <h3>AWS 장애 대응 기록 템플릿</h3>
-              <p>증상, 영향 범위, 원인, 조치, 재발 방지책을 남기는 회고 템플릿입니다.</p>
-            </a>
-          </article>
+        <div class="post-list empty-list" id="postGrid">
+          <p>
+            No posts published yet. The first notes will start with cloud and backend
+            problems worth documenting.
+          </p>
         </div>
       </section>
 
@@ -172,7 +130,7 @@
           <article>
             <span>02</span>
             <h3>Cloud</h3>
-            <p>AWS, 배포 구조, 네트워크, 스토리지, 비용 최적화</p>
+            <p>배포 구조, 네트워크, 스토리지, 비용 최적화</p>
           </article>
           <article>
             <span>03</span>

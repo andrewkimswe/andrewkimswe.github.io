@@ -189,28 +189,12 @@ h3 {
   text-transform: uppercase;
 }
 
-.profile-panel ul {
-  display: grid;
-  gap: 10px;
-  margin: 0 0 28px;
-  padding: 0;
-  color: var(--ink);
-  font-size: 15px;
-  font-weight: 750;
-  list-style: none;
-}
-
-.metric-row {
-  display: flex;
-  justify-content: space-between;
-  gap: 18px;
-  border-top: 1px solid var(--line);
-  padding: 13px 0;
+.profile-panel p:last-child {
+  margin: 0;
   color: var(--muted);
-}
-
-.metric-row strong {
-  color: var(--ink);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 24px;
+  line-height: 1.32;
 }
 
 .section {
@@ -290,6 +274,19 @@ h3 {
 
 .post-list {
   border-top: 1px solid var(--ink);
+}
+
+.empty-list {
+  border-bottom: 1px solid var(--line);
+  padding: 28px 0;
+}
+
+.empty-list p {
+  max-width: 620px;
+  margin: 0;
+  color: var(--muted);
+  font-size: 18px;
+  line-height: 1.7;
 }
 
 .post-row {

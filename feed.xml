@@ -6,26 +6,5 @@
     <description>백엔드, 클라우드, 아키텍처, 운영, 트러블슈팅을 기록하는 기술 블로그입니다.</description>
     <language>ko-KR</language>
     <lastBuildDate>Mon, 31 Aug 2026 00:00:00 +0900</lastBuildDate>
-    <item>
-      <title>S3와 CloudFront로 정적 블로그 배포하기</title>
-      <link>https://andrewkimswe.github.io/posts/aws-s3-cloudfront-static-hosting.md</link>
-      <guid>https://andrewkimswe.github.io/posts/aws-s3-cloudfront-static-hosting.md</guid>
-      <pubDate>Mon, 31 Aug 2026 00:00:00 +0900</pubDate>
-      <description>정적 사이트를 S3, CloudFront, Route 53, ACM으로 배포하는 기본 패턴입니다.</description>
-    </item>
-    <item>
-      <title>VPC 퍼블릭/프라이빗 서브넷 설계 노트</title>
-      <link>https://andrewkimswe.github.io/posts/aws-vpc-private-subnet-nat.md</link>
-      <guid>https://andrewkimswe.github.io/posts/aws-vpc-private-subnet-nat.md</guid>
-      <pubDate>Mon, 31 Aug 2026 00:00:00 +0900</pubDate>
-      <description>트래픽 방향을 기준으로 퍼블릭/프라이빗 서브넷과 NAT 구성을 정리합니다.</description>
-    </item>
-    <item>
-      <title>AWS 장애 대응 기록 템플릿</title>
-      <link>https://andrewkimswe.github.io/posts/aws-incident-review-template.md</link>
-      <guid>https://andrewkimswe.github.io/posts/aws-incident-review-template.md</guid>
-      <pubDate>Mon, 31 Aug 2026 00:00:00 +0900</pubDate>
-      <description>증상, 영향 범위, 원인, 조치, 재발 방지책을 남기는 회고 템플릿입니다.</description>
-    </item>
   </channel>
 </rss>

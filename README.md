@@ -7,7 +7,7 @@ Jiwon Kim의 기술 블로그입니다. 백엔드, 클라우드, 아키텍처, �
 - `index.html`: 블로그 홈, 포스트 목록, 검색/태그 필터
 - `styles.css`: 반응형 UI 스타일
 - `script.js`: 포스트 검색과 필터링
-- `posts/`: Markdown 포스트 원문
+- `posts/`: Markdown 포스트 원문을 둘 위치
 - `robots.txt`, `sitemap.xml`, `llms.txt`, `feed.xml`: 검색 엔진과 AI 크롤러를 위한 공개 메타 파일
 - `.github/workflows/pages.yml`: GitHub Pages 자동 배포
 
