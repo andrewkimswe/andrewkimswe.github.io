@@ -14,11 +14,11 @@
       <description>CloudTrail, EventBridge, Lambda, SNS로 CloudFront Logging 비활성화를 탐지하는 패턴입니다.</description>
     </item>
     <item>
-      <title>[AWS] S3 Data Lake에서 Lake Formation으로 Row-Level Access Control 구현하기</title>
+      <title>[AWS] Multi-Tenant Data Lake에서 Tenant 데이터 격리하기 - S3와 Lake Formation Row-Level Security</title>
       <link>https://andrewkimswe.github.io/posts/s3-data-lake-lake-formation-row-level-access-control.html</link>
       <guid>https://andrewkimswe.github.io/posts/s3-data-lake-lake-formation-row-level-access-control.html</guid>
       <pubDate>Mon, 31 Aug 2026 00:00:00 +0900</pubDate>
-      <description>하나의 S3 Data Lake와 Glue Table을 유지하면서 팀별 Row/Column 접근 범위를 제한하는 Lake Formation 패턴입니다.</description>
+      <description>B2B SaaS 분석 환경에서 Tenant Isolation을 S3 Data Lake와 Lake Formation Row-Level Security까지 확장하는 패턴입니다.</description>
     </item>
   </channel>
 </rss>

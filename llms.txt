@@ -20,4 +20,4 @@ Jiwon Kim's Blog is a Korean technical blog about backend engineering, cloud inf
 ## Posts
 
 - [[AWS] CloudFront 설정 변경을 실시간으로 탐지하고 알림 보내기](https://andrewkimswe.github.io/posts/cloudfront-logging-change-detection.html): A CloudTrail, EventBridge, Lambda, and SNS pattern for detecting CloudFront logging configuration drift.
-- [[AWS] S3 Data Lake에서 Lake Formation으로 Row-Level Access Control 구현하기](https://andrewkimswe.github.io/posts/s3-data-lake-lake-formation-row-level-access-control.html): A Lake Formation Data Filter pattern for row-level, column-level, and cell-level access control on an S3 Data Lake.
+- [[AWS] Multi-Tenant Data Lake에서 Tenant 데이터 격리하기 - S3와 Lake Formation Row-Level Security](https://andrewkimswe.github.io/posts/s3-data-lake-lake-formation-row-level-access-control.html): A B2B SaaS tenant isolation pattern using S3, Glue Data Catalog, Lake Formation Data Filters, and Athena.

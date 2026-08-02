@@ -3,10 +3,10 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>[AWS] S3 Data Lake에서 Lake Formation으로 Row-Level Access Control 구현하기 | Jiwon Kim's Blog</title>
+    <title>[AWS] Multi-Tenant Data Lake에서 Tenant 데이터 격리하기 - S3와 Lake Formation Row-Level Security | Jiwon Kim's Blog</title>
     <meta
       name="description"
-      content="S3 Data Lake, Glue Data Catalog, Lake Formation Data Filter, Athena를 사용해 Row-Level 및 Column-Level Access Control을 구현하는 방식입니다."
+      content="B2B SaaS Multi-Tenant 환경에서 S3 Data Lake와 Lake Formation Row-Level Security로 Tenant 데이터를 격리하는 패턴입니다."
     />
     <meta name="author" content="Jiwon Kim" />
     <meta name="robots" content="index, follow, max-image-preview:large" />
@@ -17,11 +17,11 @@
     <meta property="og:site_name" content="Jiwon Kim's Blog" />
     <meta
       property="og:title"
-      content="[AWS] S3 Data Lake에서 Lake Formation으로 Row-Level Access Control 구현하기"
+      content="[AWS] Multi-Tenant Data Lake에서 Tenant 데이터 격리하기 - S3와 Lake Formation Row-Level Security"
     />
     <meta
       property="og:description"
-      content="하나의 S3 Data Lake와 Glue Table을 유지하면서 팀별 Row/Column 접근 범위를 제한하는 패턴입니다."
+      content="B2B SaaS Multi-Tenant 환경에서 하나의 S3 Data Lake를 유지하면서 Tenant별 Row 접근 범위를 제한하는 패턴입니다."
     />
     <meta property="og:type" content="article" />
     <meta
@@ -38,8 +38,8 @@
       {
         "@context": "https://schema.org",
         "@type": "BlogPosting",
-        "headline": "[AWS] S3 Data Lake에서 Lake Formation으로 Row-Level Access Control 구현하기",
-        "description": "S3 Data Lake, Glue Data Catalog, Lake Formation Data Filter, Athena를 사용해 Row-Level 및 Column-Level Access Control을 구현하는 방식입니다.",
+        "headline": "[AWS] Multi-Tenant Data Lake에서 Tenant 데이터 격리하기 - S3와 Lake Formation Row-Level Security",
+        "description": "B2B SaaS Multi-Tenant 환경에서 S3 Data Lake와 Lake Formation Row-Level Security로 Tenant 데이터를 격리하는 패턴입니다.",
         "datePublished": "2026-08-31T00:00:00+09:00",
         "dateModified": "2026-08-31T00:00:00+09:00",
         "author": {
@@ -77,94 +77,100 @@
       <article class="article-page">
         <header class="article-hero">
           <a class="back-link" href="../#writing">Back to writing</a>
-          <p class="eyebrow">Cloud · Data Governance · Security</p>
-          <h1>[AWS] S3 Data Lake에서 Lake Formation으로 Row-Level Access Control 구현하기</h1>
+          <p class="eyebrow">Cloud · Multi-Tenant · Data Governance</p>
+          <h1>[AWS] Multi-Tenant Data Lake에서 Tenant 데이터 격리하기 - S3와 Lake Formation Row-Level Security</h1>
           <p class="article-summary">
-            여러 팀이 하나의 S3 Data Lake를 공유할 때, 같은 테이블을 사용하면서도
-            사용자의 역할에 따라 조회 가능한 Row와 Column을 다르게 제한하는 패턴을 정리한다.
+            B2B SaaS 프로젝트에서 여러 기업 고객의 데이터를 하나의 분석 환경으로 모을 때,
+            Tenant Isolation을 애플리케이션 계층뿐만 아니라 Data Lake Governance Layer까지
+            확장하는 방식을 정리한다.
           </p>
           <div class="article-meta">
             <time datetime="2026-08-31">2026.08.31</time>
             <span>AWS</span>
             <span>Lake Formation</span>
-            <span>Data Governance</span>
+            <span>Tenant Isolation</span>
           </div>
         </header>
 
         <div class="article-body">
           <p>
-            여러 팀이 하나의 S3 Data Lake를 공유하는 환경에서는 단순히 "이 사용자가 S3에
-            접근할 수 있는가?"만으로는 충분하지 않을 수 있다.
+            B2B SaaS 프로젝트를 개발하면서 하나의 서비스가 여러 기업 고객의 데이터를 처리하는
+            Multi-Tenant 구조를 설계한 경험이 있다. Multi-Tenant 환경에서는 여러 Tenant가
+            동일한 시스템을 사용하더라도 각 기업의 데이터가 논리적으로 명확하게 격리되어야 한다.
           </p>
           <p>
-            예를 들어 글로벌 서비스에서 국가별 데이터를 하나의 테이블에 저장한다고 가정해보자.
+            서비스가 성장하면 운영 데이터뿐만 아니라 이벤트, 주문, 리워드 등의 데이터도 Data Lake에
+            적재하고 각 기업에 분석 기능을 제공해야 할 수 있다. 이때 Tenant 데이터 격리 문제는
+            애플리케이션뿐만 아니라 분석 환경에서도 동일하게 발생한다.
           </p>
-          <pre><code>s3://company-data-lake/
-└── battery/
-    └── battery_metrics.parquet</code></pre>
-          <p>데이터에는 다음과 같이 여러 국가의 정보가 함께 저장되어 있다.</p>
-          <pre><code>device_id | region | soh | voltage
-----------|--------|-----|--------
-EV-001    | KR     | 92  | 401
-EV-002    | JP     | 88  | 398
-EV-003    | US     | 95  | 405
-EV-004    | KR     | 90  | 400</code></pre>
-          <p>이때 다음과 같은 접근 정책이 필요하다고 가정한다.</p>
-          <ul>
-            <li>한국 분석팀은 <code>region = 'KR'</code> 데이터만 조회</li>
-            <li>일본 분석팀은 <code>region = 'JP'</code> 데이터만 조회</li>
-            <li>글로벌 데이터팀은 모든 지역 데이터 조회</li>
-          </ul>
+          <p>예를 들어 여러 Tenant의 분석 데이터를 하나의 S3 Data Lake에 저장한다고 가정해보자.</p>
+          <pre><code>tenant_id | user_id | event_type | points
+----------|---------|------------|-------
+COMP_A    | 101     | REWARD     | 5000
+COMP_B    | 201     | ORDER      | 3000
+COMP_A    | 102     | ORDER      | 7000
+COMP_C    | 301     | REWARD     | 2000</code></pre>
           <p>
-            모든 팀이 같은 테이블을 사용하지만
-            <strong>사용자의 역할에 따라 조회할 수 있는 Row가 달라져야 한다.</strong>
-            이러한 Fine-Grained Access Control은 AWS Lake Formation의
-            <strong>Data Filter</strong>를 이용해 구현할 수 있다.
+            Company A의 관리자는 자신의 기업 데이터를 분석할 수 있어야 하지만 Company B와
+            Company C의 데이터에는 접근할 수 없어야 한다.
+          </p>
+          <p>애플리케이션에서 모든 쿼리에 다음과 같은 조건을 추가하는 방법도 생각할 수 있다.</p>
+          <pre><code>WHERE tenant_id = 'COMP_A'</code></pre>
+          <p>
+            하지만 Tenant 격리를 개별 애플리케이션 쿼리의 정확성에만 의존하면 잘못된 쿼리나 권한
+            처리 실수가 다른 Tenant의 데이터 노출로 이어질 수 있다. 따라서 Data Lake 자체에서도
+            Tenant별 접근 경계를 적용하는 <strong>Defense in Depth</strong> 구조를 고려할 수 있다.
+          </p>
+          <p>
+            AWS에서는 <strong>S3, Glue Data Catalog, Lake Formation Data Filter</strong>를 이용해
+            동일한 데이터셋에 Row-Level Access Control을 적용할 수 있다.
           </p>
 
           <h2>Architecture</h2>
           <div class="mermaid diagram">
 flowchart TB
-    s3[Amazon S3<br/>Data Lake]
-    glue[AWS Glue Data Catalog<br/>battery_db.battery_metrics]
+    s3[Amazon S3<br/>Multi-Tenant Data Lake]
+    glue[AWS Glue Data Catalog<br/>tenant_analytics.events]
     lake[AWS Lake Formation<br/>Data Filters]
-    kr[KR Team<br/>region = KR]
-    jp[JP Team<br/>region = JP]
-    global[Global Team<br/>All Rows]
+    compA[Company A Role<br/>tenant_id = COMP_A]
+    compB[Company B Role<br/>tenant_id = COMP_B]
+    internal[Internal Role<br/>All Rows]
     athena[Amazon Athena]
 
     s3 --- glue
     glue --- lake
-    lake --- kr
-    lake --- jp
-    lake --- global
-    kr --- athena
-    jp --- athena
-    global --- athena
+    lake --- compA
+    lake --- compB
+    lake --- internal
+    compA --- athena
+    compB --- athena
+    internal --- athena
           </div>
           <p>
-            핵심은 데이터를 팀별 S3 Bucket이나 별도의 테이블로 복제하지 않고,
+            이 구조에서는 하나의 데이터셋을 유지하면서도 Tenant의 IAM Role에 따라 조회 가능한 Row를
+            제한할 수 있다. 핵심은 데이터를 Tenant별 S3 Bucket이나 별도의 테이블로 복제하지 않고,
             <strong>하나의 Data Lake와 Data Catalog Table을 유지하면서 Lake Formation에서
-            논리적으로 접근 범위를 제한하는 것</strong>이다.
+            논리적으로 접근 범위를 제한하는 것</strong>이다. Multi-Tenant 서비스에서 사용했던
+            Tenant Isolation 문제를 Data Lake의 Governance Layer까지 확장하는 방식이다.
           </p>
 
           <h2>1. 왜 IAM과 S3 Bucket Policy만으로는 부족할까?</h2>
           <p>S3와 IAM을 이용하면 다음과 같은 Resource-Level Access Control을 구현할 수 있다.</p>
-          <pre><code>Team A: bucket-a 접근 허용
-Team B: bucket-b 접근 허용</code></pre>
+          <pre><code>Company A: company-a-bucket 접근 허용
+Company B: company-b-bucket 접근 허용</code></pre>
           <p>Prefix를 기준으로 권한을 분리하는 것도 가능하다.</p>
-          <pre><code>s3://data-lake/korea/*
-s3://data-lake/japan/*</code></pre>
+          <pre><code>s3://data-lake/company-a/*
+s3://data-lake/company-b/*</code></pre>
           <p>하지만 요구사항이 다음과 같다면 이야기가 달라진다.</p>
           <pre><code>하나의 Table
 
-device_id | region | soh
-----------|--------|----
-EV-001    | KR     | 92
-EV-002    | JP     | 88
-EV-003    | US     | 95</code></pre>
+tenant_id | user_id | event_type
+----------|---------|-----------
+COMP_A    | 101     | REWARD
+COMP_B    | 201     | ORDER
+COMP_C    | 301     | REWARD</code></pre>
           <p>
-            한국팀에는 첫 번째 Row만 보여주고, 일본팀에는 두 번째 Row만 보여줘야 한다.
+            Company A에는 첫 번째 Row만 보여주고, Company B에는 두 번째 Row만 보여줘야 한다.
             즉 접근 제어의 대상이 S3 Object가 아니라 <strong>Table 내부의 데이터</strong>가 된다.
           </p>
           <dl class="service-summary">
@@ -184,18 +190,19 @@ EV-003    | US     | 95</code></pre>
             Lake Formation의 Fine-Grained Access Control은 Data Catalog의 Table을 기준으로
             적용할 수 있다. 따라서 S3의 데이터를 AWS Glue Data Catalog에 등록한다.
           </p>
-          <pre><code>Database: battery_db
-Table: battery_metrics
+          <pre><code>Database: tenant_analytics
+Table: events
 
 Columns:
-- device_id
-- region
-- soh
-- voltage</code></pre>
+- tenant_id
+- user_id
+- event_type
+- points
+- created_at</code></pre>
           <div class="mermaid diagram compact-diagram">
 flowchart LR
-    object[S3<br/>Physical Data<br/>battery_metrics.parquet]
-    catalog[Glue Data Catalog<br/>Metadata<br/>battery_db.battery_metrics]
+    object[S3<br/>Physical Data<br/>events.parquet]
+    catalog[Glue Data Catalog<br/>Metadata<br/>tenant_analytics.events]
     lake[AWS Lake Formation<br/>Permissions and Filters]
 
     object --- catalog
@@ -207,47 +214,47 @@ flowchart LR
 
           <h2>3. Lake Formation Data Filter 생성</h2>
           <p>
-            한국 분석팀이 <code>KR</code> 데이터만 조회할 수 있도록 Row Filter를 생성한다.
+            Company A 관리자가 <code>COMP_A</code> 데이터만 조회할 수 있도록 Row Filter를 생성한다.
             개념적으로 다음 SQL 조건과 같다.
           </p>
-          <pre><code>region = 'KR'</code></pre>
+          <pre><code>tenant_id = 'COMP_A'</code></pre>
           <p>예를 들어 Data Filter를 다음과 같이 정의할 수 있다.</p>
           <pre><code>Filter Name:
-kr-region-filter
+company-a-tenant-filter
 
 Database:
-battery_db
+tenant_analytics
 
 Table:
-battery_metrics
+events
 
 Column Access:
 All Columns
 
 Row Filter:
-region = 'KR'</code></pre>
-          <p>일본팀에는 별도의 Filter를 생성한다.</p>
+tenant_id = 'COMP_A'</code></pre>
+          <p>Company B에는 별도의 Filter를 생성한다.</p>
           <pre><code>Filter Name:
-jp-region-filter
+company-b-tenant-filter
 
 Row Filter:
-region = 'JP'</code></pre>
+tenant_id = 'COMP_B'</code></pre>
           <div class="mermaid diagram">
 flowchart TB
-    table[battery_metrics]
-    krFilter[KR Filter<br/>region = KR]
-    jpFilter[JP Filter<br/>region = JP]
+    table[events]
+    compAFilter[Company A Filter<br/>tenant_id = COMP_A]
+    compBFilter[Company B Filter<br/>tenant_id = COMP_B]
     noFilter[No Filter<br/>All Rows]
-    krAnalyst[KR Analyst]
-    jpAnalyst[JP Analyst]
-    globalAnalyst[Global Analyst]
+    compAAdmin[Company A Admin]
+    compBAdmin[Company B Admin]
+    internalAnalyst[Internal Analyst]
 
-    table --- krFilter
-    table --- jpFilter
+    table --- compAFilter
+    table --- compBFilter
     table --- noFilter
-    krFilter --- krAnalyst
-    jpFilter --- jpAnalyst
-    noFilter --- globalAnalyst
+    compAFilter --- compAAdmin
+    compBFilter --- compBAdmin
+    noFilter --- internalAnalyst
           </div>
 
           <h2>4. IAM Principal에 Filter 기반 SELECT 권한 부여</h2>
@@ -256,60 +263,61 @@ flowchart TB
             <code>SELECT</code> 권한을 부여한다.
           </p>
           <pre><code>Role:
-KRDataAnalystRole
+CompanyAAnalyticsRole
 
 Permission:
 SELECT
 
 Resource:
-battery_db.battery_metrics
+tenant_analytics.events
 
 Data Filter:
-kr-region-filter</code></pre>
+company-a-tenant-filter</code></pre>
           <p>
-            이제 <code>KRDataAnalystRole</code>을 사용하는 사용자가 Athena에서 다음 쿼리를
+            이제 <code>CompanyAAnalyticsRole</code>을 사용하는 사용자가 Athena에서 다음 쿼리를
             실행한다고 가정하자.
           </p>
           <pre><code>SELECT *
-FROM battery_db.battery_metrics;</code></pre>
+FROM tenant_analytics.events;</code></pre>
           <p>원본 데이터가 다음과 같더라도,</p>
-          <pre><code>EV-001 | KR | 92 | 401
-EV-002 | JP | 88 | 398
-EV-003 | US | 95 | 405
-EV-004 | KR | 90 | 400</code></pre>
-          <p>한국 분석팀에는 허용된 Row만 반환되도록 접근 범위를 제한할 수 있다.</p>
-          <pre><code>EV-001 | KR | 92 | 401
-EV-004 | KR | 90 | 400</code></pre>
+          <pre><code>COMP_A | 101 | REWARD | 5000
+COMP_B | 201 | ORDER  | 3000
+COMP_A | 102 | ORDER  | 7000
+COMP_C | 301 | REWARD | 2000</code></pre>
+          <p>Company A 관리자에게는 허용된 Row만 반환되도록 접근 범위를 제한할 수 있다.</p>
+          <pre><code>COMP_A | 101 | REWARD | 5000
+COMP_A | 102 | ORDER  | 7000</code></pre>
           <p>
-            애플리케이션이나 분석가가 매번 <code>WHERE region = 'KR'</code> 조건을 직접
+            애플리케이션이나 분석가가 매번 <code>WHERE tenant_id = 'COMP_A'</code> 조건을 직접
             추가할 필요가 없다. 접근 정책을 데이터 소비자의 쿼리 로직에 의존하지 않고
             <strong>Data Governance Layer에서 중앙 관리</strong>할 수 있다는 것이 중요한 차이점이다.
           </p>
 
           <h2>5. Column-Level Security와 결합하기</h2>
           <p>Lake Formation Data Filter는 Row뿐만 아니라 Column 접근도 제한할 수 있다.</p>
-          <pre><code>device_id
-region
+          <pre><code>tenant_id
+user_id
+event_type
 customer_id
-battery_serial
-soh
-voltage</code></pre>
+order_id
+points
+created_at</code></pre>
           <p>
-            분석팀에는 배터리 분석에 필요한 정보만 제공하고 <code>customer_id</code>와 같은
+            Tenant 관리자에게는 분석에 필요한 정보만 제공하고 <code>customer_id</code>와 같은
             개인정보는 노출하고 싶지 않을 수 있다.
           </p>
           <pre><code>Row Filter:
-region = 'KR'
+tenant_id = 'COMP_A'
 
 Allowed Columns:
-device_id
-region
-battery_serial
-soh
-voltage</code></pre>
+tenant_id
+user_id
+event_type
+points
+created_at</code></pre>
           <div class="mermaid diagram compact-diagram">
 flowchart LR
-    row[Row Security<br/>region = KR]
+    row[Row Security<br/>tenant_id = COMP_A]
     column[Column Security<br/>customer_id excluded]
     cell[Cell-Level Security]
 
@@ -345,16 +353,16 @@ flowchart TB
             역할에 허용된 데이터만 조회할 수 있다.
           </p>
 
-          <h2>7. 팀별 데이터 복제와 비교</h2>
+          <h2>7. Tenant별 데이터 복제와 비교</h2>
           <p>Lake Formation 없이 접근 범위를 물리적으로 분리한다면 다음과 같은 구조를 고려할 수도 있다.</p>
           <pre><code>S3
-├── korea-data/
-├── japan-data/
-└── us-data/</code></pre>
+├── company-a-data/
+├── company-b-data/
+└── company-c-data/</code></pre>
           <p>또는 별도의 Table을 만들 수도 있다.</p>
-          <pre><code>battery_kr
-battery_jp
-battery_us</code></pre>
+          <pre><code>events_company_a
+events_company_b
+events_company_c</code></pre>
           <p>
             하지만 데이터 소비자가 늘어날수록 데이터 복제와 권한 관리가 복잡해질 수 있다.
             Lake Formation을 이용하면 데이터와 접근 정책을 분리하여 관리할 수 있다.
@@ -364,15 +372,15 @@ flowchart TB
     lake[Single Data Lake]
     table[Single Table]
     governance[Lake Formation]
-    kr[KR Team]
-    jp[JP Team]
-    us[US Team]
+    compA[Company A]
+    compB[Company B]
+    compC[Company C]
 
     lake --- table
     table --- governance
-    governance --- kr
-    governance --- jp
-    governance --- us
+    governance --- compA
+    governance --- compB
+    governance --- compC
           </div>
 
           <h2>8. Lake Formation의 역할</h2>
@@ -412,12 +420,7 @@ flowchart TB
           <h2>9. 언제 Row-Level Security가 유용할까?</h2>
           <p>대표적으로 다음과 같은 Multi-Tenant 또는 Data Governance 환경에서 사용할 수 있다.</p>
 
-          <h3>지역별 데이터 분리</h3>
-          <pre><code>KR Team: region = 'KR'
-JP Team: region = 'JP'
-US Team: region = 'US'</code></pre>
-
-          <h3>고객별 데이터 분리</h3>
+          <h3>Tenant별 데이터 분리</h3>
           <pre><code>Customer A: tenant_id = 'A'
 Customer B: tenant_id = 'B'</code></pre>
 
