@@ -1,0 +1,466 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>[AWS] Lambda 반복 호출을 Step Functions Map으로 분리하기 | Jiwon Kim's Blog</title>
+    <meta
+      name="description"
+      content="Lambda 내부 반복 호출 구조를 AWS Step Functions Map 상태로 분리해 Timeout, Retry, Error Handling, Concurrency를 관리하는 Serverless Orchestration 설계입니다."
+    />
+    <meta name="author" content="Jiwon Kim" />
+    <meta name="robots" content="index, follow, max-image-preview:large" />
+    <link
+      rel="canonical"
+      href="https://andrewkimswe.github.io/posts/lambda-step-functions-map-orchestration.html"
+    />
+    <meta property="og:site_name" content="Jiwon Kim's Blog" />
+    <meta
+      property="og:title"
+      content="[AWS] Lambda 반복 호출을 Step Functions Map으로 분리하기 - Serverless Orchestration 설계"
+    />
+    <meta
+      property="og:description"
+      content="반복 호출과 재시도 책임을 Lambda 코드에서 Step Functions Map 상태로 분리하는 설계입니다."
+    />
+    <meta property="og:type" content="article" />
+    <meta
+      property="og:url"
+      content="https://andrewkimswe.github.io/posts/lambda-step-functions-map-orchestration.html"
+    />
+    <meta property="article:published_time" content="2026-08-03T00:00:00+09:00" />
+    <meta property="article:author" content="Jiwon Kim" />
+    <meta property="article:tag" content="AWS" />
+    <meta property="article:tag" content="Lambda" />
+    <meta property="article:tag" content="Step Functions" />
+    <meta property="article:tag" content="Serverless" />
+    <link rel="stylesheet" href="../styles.css" />
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "BlogPosting",
+        "headline": "[AWS] Lambda 반복 호출을 Step Functions Map으로 분리하기 - Serverless Orchestration 설계",
+        "description": "Lambda 내부 반복 호출 구조를 AWS Step Functions Map 상태로 분리해 Timeout, Retry, Error Handling, Concurrency를 관리하는 Serverless Orchestration 설계입니다.",
+        "datePublished": "2026-08-03T00:00:00+09:00",
+        "dateModified": "2026-08-03T00:00:00+09:00",
+        "author": {
+          "@type": "Person",
+          "name": "Jiwon Kim",
+          "url": "https://github.com/andrewkimswe"
+        },
+        "publisher": {
+          "@type": "Person",
+          "name": "Jiwon Kim"
+        },
+        "mainEntityOfPage": "https://andrewkimswe.github.io/posts/lambda-step-functions-map-orchestration.html",
+        "inLanguage": "ko-KR"
+      }
+    </script>
+  </head>
+  <body>
+    <header class="site-header">
+      <a class="brand" href="../" aria-label="Jiwon Kim's Blog 홈">
+        <span class="brand-mark">JK</span>
+        <span>
+          <strong>Jiwon Kim's Blog</strong>
+          <small>Engineering notes</small>
+        </span>
+      </a>
+      <nav class="nav-links" aria-label="주요 메뉴">
+        <a href="../#writing">Writing</a>
+        <a href="../#topics">Topics</a>
+        <a href="../#about">About</a>
+        <a href="https://github.com/andrewkimswe">GitHub</a>
+      </nav>
+    </header>
+
+    <main>
+      <article class="article-page">
+        <header class="article-hero">
+          <a class="back-link" href="../#writing">Back to writing</a>
+          <p class="eyebrow">Cloud · Serverless · Orchestration</p>
+          <h1>[AWS] Lambda 반복 호출을 Step Functions Map으로 분리하기 - Serverless Orchestration 설계</h1>
+          <p class="article-summary">
+            하나의 Lambda가 반복문으로 여러 작업을 호출하는 구조는 작게 시작하기 쉽지만,
+            작업량이 늘어나면 Timeout, Retry, Error Handling 책임이 한 함수 안에 몰린다.
+            Step Functions Map 상태로 오케스트레이션을 분리하는 설계를 정리한다.
+          </p>
+          <div class="article-meta">
+            <time datetime="2026-08-03">2026.08.03</time>
+            <span>AWS</span>
+            <span>Lambda</span>
+            <span>Step Functions</span>
+          </div>
+        </header>
+
+        <div class="article-body">
+          <p>
+            서버리스 애플리케이션을 만들다 보면 하나의 Lambda 함수가 여러 작업을 순차적으로
+            호출하는 구조를 쉽게 만들 수 있다.
+          </p>
+          <p>
+            예를 들어 등록되지 않은 디바이스 ID를 조회한 뒤, 각 디바이스를 활성화하는 작업을
+            수행한다고 가정해보자.
+          </p>
+          <div class="mermaid diagram compact-diagram">
+flowchart TB
+    retrieve[Retrieve Lambda]
+    d1[Activate Lambda<br/>device-1]
+    d2[Activate Lambda<br/>device-2]
+    d3[Activate Lambda<br/>device-3]
+    more[More devices]
+
+    retrieve --- d1
+    retrieve --- d2
+    retrieve --- d3
+    retrieve --- more
+          </div>
+          <p>초기에는 단순하고 구현하기 쉬운 구조다. 하지만 처리해야 할 디바이스가 증가하면 문제가 생긴다.</p>
+          <div class="mermaid diagram compact-diagram">
+flowchart TB
+    targets[처리 대상 증가]
+    loop[Lambda 내부 반복 횟수 증가]
+    runtime[전체 실행시간 증가]
+    timeout[Lambda Timeout 위험]
+
+    targets --- loop
+    loop --- runtime
+    runtime --- timeout
+          </div>
+          <p>
+            이런 경우 작업의 오케스트레이션 책임을 Lambda 내부 코드에서 분리하고,
+            AWS Step Functions의 <code>Map</code> 상태를 사용할 수 있다.
+          </p>
+
+          <h2>1. 기존 구조의 문제</h2>
+          <p>다음과 같은 Lambda 함수가 있다고 가정한다.</p>
+          <pre><code>def handler(event, context):
+    device_ids = get_unregistered_devices()
+
+    for device_id in device_ids:
+        activate_device(device_id)</code></pre>
+          <p>
+            논리적으로는 간단하다. 하지만 <code>Retrieve Lambda</code>가 처리할 데이터를 조회하고,
+            모든 하위 작업의 실행까지 직접 제어한다. 즉 비즈니스 로직과 오케스트레이션 로직이
+            결합되어 있다.
+          </p>
+          <dl class="service-summary">
+            <div>
+              <dt>Retrieve Lambda</dt>
+              <dd>데이터 조회, 반복문 관리, Activate 호출, 실패 처리, 전체 실행시간 관리</dd>
+            </div>
+          </dl>
+          <p>
+            처리 대상이 적을 때는 문제가 없지만 작업량이 증가하면 하나의 Lambda 실행시간에 전체
+            처리가 종속된다. Lambda의 최대 실행시간은 제한되어 있기 때문에 장기적으로 확장하기 어렵다.
+          </p>
+
+          <h2>2. Step Functions로 Orchestration 분리</h2>
+          <p>구조를 다음과 같이 변경할 수 있다.</p>
+          <div class="mermaid diagram">
+flowchart TB
+    step[AWS Step Functions]
+    retrieve[Retrieve Lambda]
+    list[device_id list]
+    map[Map State]
+    a1[Activate Lambda]
+    a2[Activate Lambda]
+    a3[Activate Lambda]
+
+    step --- retrieve
+    retrieve --- list
+    list --- map
+    map --- a1
+    map --- a2
+    map --- a3
+          </div>
+          <p><code>Retrieve Lambda</code>는 처리 대상만 반환한다.</p>
+          <pre><code>{
+  "devices": [
+    "device-001",
+    "device-002",
+    "device-003"
+  ]
+}</code></pre>
+          <p>
+            Step Functions가 이 배열을 받아 <code>Map</code> 상태를 이용해 각 항목에 대해
+            <code>Activate Lambda</code>를 실행한다. 이렇게 하면 Lambda 함수 자체가 반복 작업
+            전체를 관리할 필요가 없다.
+          </p>
+
+          <h2>3. Map State</h2>
+          <p>
+            Step Functions의 Map 상태는 배열이나 데이터 집합의 각 항목에 동일한 워크플로를 적용할 때
+            사용할 수 있다.
+          </p>
+          <div class="mermaid diagram compact-diagram">
+flowchart LR
+    input[Input<br/>device-001<br/>device-002<br/>device-003]
+    map[Map State]
+    activate[Activate Lambda<br/>per item]
+
+    input --- map
+    map --- activate
+          </div>
+          <p>Amazon States Language로 단순화하면 다음과 같은 형태다.</p>
+          <pre><code>{
+  "StartAt": "RetrieveDevices",
+  "States": {
+    "RetrieveDevices": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "Next": "ActivateDevices"
+    },
+
+    "ActivateDevices": {
+      "Type": "Map",
+      "ItemsPath": "$.Payload.devices",
+      "Iterator": {
+        "StartAt": "ActivateDevice",
+        "States": {
+          "ActivateDevice": {
+            "Type": "Task",
+            "Resource": "arn:aws:states:::lambda:invoke",
+            "End": true
+          }
+        }
+      },
+      "End": true
+    }
+  }
+}</code></pre>
+          <p>핵심은 반복문이 Lambda 코드가 아니라 워크플로 정의에 있다는 점이다.</p>
+
+          <h2>4. Lambda 내부 반복문과 무엇이 다른가?</h2>
+          <dl class="service-summary">
+            <div>
+              <dt>Lambda 직접 반복</dt>
+              <dd>전체 작업이 하나의 Lambda 실행시간 안에 끝나야 하며 실패 처리도 직접 구현해야 한다.</dd>
+            </div>
+            <div>
+              <dt>Step Functions Map</dt>
+              <dd>각 작업을 독립적인 실행 단위로 다루고 상태와 실행 흐름을 워크플로에서 관리한다.</dd>
+            </div>
+          </dl>
+          <p>
+            Step Functions가 상태와 실행 흐름을 관리하기 때문에 Lambda는 개별 비즈니스 작업에 집중할 수 있다.
+          </p>
+
+          <h2>5. 병렬 처리</h2>
+          <p>Map 상태의 장점 중 하나는 여러 작업을 병렬로 실행할 수 있다는 점이다.</p>
+          <div class="mermaid diagram compact-diagram">
+flowchart LR
+    sequential[Sequential<br/>A, B, C, D]
+    parallel[Map<br/>A / B / C / D]
+    result[Reduced total runtime<br/>when tasks are independent]
+
+    sequential --- parallel
+    parallel --- result
+          </div>
+          <p>
+            물론 항상 최대 병렬성이 좋은 것은 아니다. Downstream 시스템이 DynamoDB, RDS 또는 외부 API라면
+            과도한 병렬 호출이 오히려 병목을 만들 수 있다. 따라서 동시 실행 수를 제어하는 것이 중요하다.
+          </p>
+
+          <h2>6. Concurrency 제어</h2>
+          <p>
+            예를 들어 Activate Lambda가 외부 API를 호출한다고 가정해보자. 수천 개의 작업을 한 번에
+            실행하면 외부 API의 Rate Limit을 초과할 수 있다.
+          </p>
+          <pre><code>"MaxConcurrency": 20</code></pre>
+          <div class="mermaid diagram compact-diagram">
+flowchart TB
+    tasks[5000 Tasks]
+    limit[동시에 최대 20개]
+    protect[Downstream 보호]
+
+    tasks --- limit
+    limit --- protect
+          </div>
+          <p>
+            즉 Step Functions는 단순히 병렬성을 높이는 서비스라기보다
+            <strong>병렬성을 제어하는 orchestration layer</strong>로 사용할 수 있다.
+          </p>
+
+          <h2>7. Retry와 Error Handling</h2>
+          <p>Lambda 내부에서 다른 Lambda를 반복 호출하면 실패 처리를 직접 구현해야 한다.</p>
+          <pre><code>for device_id in device_ids:
+    try:
+        activate(device_id)
+    except Exception:
+        retry(...)</code></pre>
+          <p>Step Functions에서는 이를 워크플로 정의에 포함할 수 있다.</p>
+          <pre><code>"Retry": [
+  {
+    "ErrorEquals": [
+      "Lambda.ServiceException",
+      "Lambda.TooManyRequestsException"
+    ],
+    "IntervalSeconds": 2,
+    "MaxAttempts": 3,
+    "BackoffRate": 2
+  }
+]</code></pre>
+          <p>또한 재시도 후에도 실패한다면 <code>Catch</code>를 이용해 별도의 처리 경로로 보낼 수 있다.</p>
+          <div class="mermaid diagram compact-diagram">
+flowchart TB
+    activate[Activate Lambda]
+    retry[Retry]
+    catchState[Catch]
+    failure[Failure Handler]
+
+    activate --- retry
+    retry --- catchState
+    catchState --- failure
+          </div>
+          <p>따라서 재시도 정책이 애플리케이션 코드와 분리된다.</p>
+
+          <h2>8. Lambda는 Worker, Step Functions는 Orchestrator</h2>
+          <p>이 구조에서 역할을 명확하게 나눌 수 있다.</p>
+          <dl class="service-summary">
+            <div>
+              <dt>Lambda</dt>
+              <dd>개별 작업 수행</dd>
+            </div>
+            <div>
+              <dt>Step Functions</dt>
+              <dd>어떤 작업을 언제, 몇 번, 어떤 순서로 실행할지 관리</dd>
+            </div>
+          </dl>
+          <div class="mermaid diagram">
+flowchart TB
+    before[Before<br/>Lambda owns business logic, loop, retry, error handling, workflow state]
+    afterLambda[After<br/>Lambda owns business logic]
+    afterStep[Step Functions owns loop, retry, error handling, workflow state]
+
+    before --- afterLambda
+    before --- afterStep
+          </div>
+          <p>이렇게 하면 Lambda 함수가 더 작고 독립적인 컴포넌트가 된다.</p>
+
+          <h2>9. EventBridge Scheduler와는 무엇이 다른가?</h2>
+          <p>EventBridge Scheduler는 특정 시간이나 주기에 작업을 실행하는 데 적합하다.</p>
+          <dl class="service-summary">
+            <div>
+              <dt>EventBridge Scheduler</dt>
+              <dd>언제 시작할 것인가</dd>
+            </div>
+            <div>
+              <dt>Step Functions</dt>
+              <dd>작업들을 어떻게 실행할 것인가</dd>
+            </div>
+          </dl>
+          <p>두 서비스를 함께 사용할 수도 있다.</p>
+          <div class="mermaid diagram compact-diagram">
+flowchart TB
+    scheduler[EventBridge Scheduler]
+    step[AWS Step Functions]
+    retrieve[Retrieve]
+    map[Map]
+    activate[Activate Lambdas]
+
+    scheduler --- step
+    step --- retrieve
+    retrieve --- map
+    map --- activate
+          </div>
+
+          <h2>10. 언제 Step Functions Map이 적합한가?</h2>
+          <p>대표적으로 다음과 같은 경우 사용할 수 있다.</p>
+          <dl class="service-summary">
+            <div>
+              <dt>여러 객체 처리</dt>
+              <dd>S3 Object List를 순회하며 각 객체를 변환한다.</dd>
+            </div>
+            <div>
+              <dt>사용자별 작업 수행</dt>
+              <dd>User List를 순회하며 알림이나 상태 변경 작업을 수행한다.</dd>
+            </div>
+            <div>
+              <dt>디바이스 일괄 처리</dt>
+              <dd>Device IDs를 순회하며 Activate Device 작업을 수행한다.</dd>
+            </div>
+            <div>
+              <dt>데이터 Batch 처리</dt>
+              <dd>Dataset을 순회하며 Transform 또는 Validate 작업을 수행한다.</dd>
+            </div>
+          </dl>
+          <p>공통점은 하나의 큰 작업을 여러 독립적인 작은 작업으로 나눌 수 있다는 것이다.</p>
+
+          <h2>정리</h2>
+          <p>
+            Lambda 내부에서 반복문을 사용해 여러 Lambda를 호출하는 구조는 작은 규모에서는 단순하고
+            효과적이다. 하지만 작업 수가 증가하면 전체 실행시간이 하나의 Lambda에 종속되고,
+            Timeout과 재시도 관리 문제가 발생할 수 있다.
+          </p>
+          <p>
+            이때 AWS Step Functions의 Map 상태를 이용하면 작업의 오케스트레이션을 Lambda 밖으로
+            분리할 수 있다.
+          </p>
+          <div class="mermaid diagram compact-diagram">
+flowchart TB
+    old[기존<br/>Lambda Loop with Lambda Calls]
+    improved[개선<br/>Step Functions Map with Lambda Workers]
+
+    old --- improved
+          </div>
+          <p>이를 통해 다음과 같은 장점을 얻을 수 있다.</p>
+          <ul>
+            <li>Lambda 실행시간과 전체 Batch 처리시간 분리</li>
+            <li>병렬 실행 및 동시성 제어</li>
+            <li>Retry와 Error Handling 중앙 관리</li>
+            <li>Workflow 상태 가시성 확보</li>
+            <li>Lambda 비즈니스 로직 단순화</li>
+          </ul>
+          <blockquote>
+            <p><strong>Lambda</strong>: Worker</p>
+            <p><strong>Step Functions</strong>: Orchestrator</p>
+          </blockquote>
+          <p>
+            서버리스 시스템에서도 작업량이 증가할수록 단순한 함수 호출 구조보다
+            <strong>실행 흐름과 상태를 관리하는 orchestration layer</strong>가 중요해진다.
+          </p>
+        </div>
+      </article>
+    </main>
+
+    <footer class="site-footer">
+      <p>© 2026 Jiwon Kim. Technical writing, notes, and experiments.</p>
+      <div class="footer-links">
+        <span id="visitStatus">Analytics ready</span>
+        <a href="https://github.com/andrewkimswe">github.com/andrewkimswe</a>
+      </div>
+    </footer>
+
+    <script src="../script.js"></script>
+    <script type="module">
+      import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
+
+      mermaid.initialize({
+        startOnLoad: true,
+        securityLevel: "strict",
+        theme: "base",
+        themeVariables: {
+          background: "#fbfaf7",
+          primaryColor: "#fbfaf7",
+          primaryTextColor: "#161616",
+          primaryBorderColor: "#161616",
+          lineColor: "#6f6a60",
+          secondaryColor: "#ece5d8",
+          tertiaryColor: "#f4f1ea",
+          fontSize: "14px",
+          fontFamily: "ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif"
+        },
+        flowchart: {
+          curve: "basis",
+          htmlLabels: true
+        }
+      });
+    </script>
+    <script
+      data-goatcounter="https://jiwonkim-blog.goatcounter.com/count"
+      async
+      src="https://gc.zgo.at/count.js"
+    ></script>
+  </body>
+</html>

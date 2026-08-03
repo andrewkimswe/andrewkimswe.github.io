@@ -102,6 +102,7 @@
             <button class="tag-button active" data-filter="all" type="button">All</button>
             <button class="tag-button" data-filter="Cloud" type="button">Cloud</button>
             <button class="tag-button" data-filter="Data" type="button">Data</button>
+            <button class="tag-button" data-filter="Serverless" type="button">Serverless</button>
             <button class="tag-button" data-filter="Architecture" type="button">Architecture</button>
             <button class="tag-button" data-filter="Operations" type="button">Operations</button>
           </div>
@@ -110,14 +111,14 @@
         <div class="post-list" id="postGrid">
           <article
             class="post-row"
-            data-tags="Cloud Architecture Operations AWS Security"
-            data-title="CloudFront 설정 변경을 실시간으로 탐지하고 알림 보내기"
+            data-tags="Cloud Architecture Operations AWS Serverless"
+            data-title="Lambda 반복 호출을 Step Functions Map으로 분리하기 Serverless Orchestration 설계"
           >
-            <a href="./posts/cloudfront-logging-change-detection.html">
-              <time datetime="2026-08-31">2026.08.31</time>
-              <span class="post-topic">Cloud</span>
-              <h3>[AWS] CloudFront 설정 변경을 실시간으로 탐지하고 알림 보내기</h3>
-              <p>CloudTrail, EventBridge, Lambda, SNS로 CloudFront Logging 비활성화를 탐지하는 패턴입니다.</p>
+            <a href="./posts/lambda-step-functions-map-orchestration.html">
+              <time datetime="2026-08-03">2026.08.03</time>
+              <span class="post-topic">Serverless</span>
+              <h3>[AWS] Lambda 반복 호출을 Step Functions Map으로 분리하기 - Serverless Orchestration 설계</h3>
+              <p>반복 호출과 재시도 책임을 Lambda 코드에서 Step Functions Map 상태로 분리하는 설계입니다.</p>
             </a>
           </article>
           <article
@@ -126,10 +127,22 @@
             data-title="Multi-Tenant Data Lake에서 Tenant 데이터 격리하기 S3와 Lake Formation Row-Level Security"
           >
             <a href="./posts/s3-data-lake-lake-formation-row-level-access-control.html">
-              <time datetime="2026-08-31">2026.08.31</time>
+              <time datetime="2026-08-02">2026.08.02</time>
               <span class="post-topic">Data</span>
               <h3>[AWS] Multi-Tenant Data Lake에서 Tenant 데이터 격리하기 - S3와 Lake Formation Row-Level Security</h3>
               <p>B2B SaaS 분석 환경에서 Tenant Isolation을 Data Lake Governance Layer까지 확장하는 패턴입니다.</p>
+            </a>
+          </article>
+          <article
+            class="post-row"
+            data-tags="Cloud Architecture Operations AWS Security"
+            data-title="CloudFront 설정 변경을 실시간으로 탐지하고 알림 보내기"
+          >
+            <a href="./posts/cloudfront-logging-change-detection.html">
+              <time datetime="2026-08-01">2026.08.01</time>
+              <span class="post-topic">Cloud</span>
+              <h3>[AWS] CloudFront 설정 변경을 실시간으로 탐지하고 알림 보내기</h3>
+              <p>CloudTrail, EventBridge, Lambda, SNS로 CloudFront Logging 비활성화를 탐지하는 패턴입니다.</p>
             </a>
           </article>
         </div>

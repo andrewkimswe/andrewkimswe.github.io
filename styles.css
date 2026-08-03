@@ -358,6 +358,11 @@ h3 {
   font-size: clamp(28px, 4vw, 46px);
 }
 
+.article-body h3 {
+  margin: 34px 0 12px;
+  font-size: 22px;
+}
+
 .article-body p,
 .article-body li {
   color: #39352f;

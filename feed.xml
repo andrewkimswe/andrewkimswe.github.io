@@ -5,20 +5,27 @@
     <link>https://andrewkimswe.github.io/</link>
     <description>백엔드, 클라우드, 아키텍처, 운영, 트러블슈팅을 기록하는 기술 블로그입니다.</description>
     <language>ko-KR</language>
-    <lastBuildDate>Mon, 31 Aug 2026 00:00:00 +0900</lastBuildDate>
+    <lastBuildDate>Mon, 03 Aug 2026 00:00:00 +0900</lastBuildDate>
     <item>
-      <title>[AWS] CloudFront 설정 변경을 실시간으로 탐지하고 알림 보내기</title>
-      <link>https://andrewkimswe.github.io/posts/cloudfront-logging-change-detection.html</link>
-      <guid>https://andrewkimswe.github.io/posts/cloudfront-logging-change-detection.html</guid>
-      <pubDate>Mon, 31 Aug 2026 00:00:00 +0900</pubDate>
-      <description>CloudTrail, EventBridge, Lambda, SNS로 CloudFront Logging 비활성화를 탐지하는 패턴입니다.</description>
+      <title>[AWS] Lambda 반복 호출을 Step Functions Map으로 분리하기 - Serverless Orchestration 설계</title>
+      <link>https://andrewkimswe.github.io/posts/lambda-step-functions-map-orchestration.html</link>
+      <guid>https://andrewkimswe.github.io/posts/lambda-step-functions-map-orchestration.html</guid>
+      <pubDate>Mon, 03 Aug 2026 00:00:00 +0900</pubDate>
+      <description>반복 호출과 재시도 책임을 Lambda 코드에서 Step Functions Map 상태로 분리하는 Serverless Orchestration 설계입니다.</description>
     </item>
     <item>
       <title>[AWS] Multi-Tenant Data Lake에서 Tenant 데이터 격리하기 - S3와 Lake Formation Row-Level Security</title>
       <link>https://andrewkimswe.github.io/posts/s3-data-lake-lake-formation-row-level-access-control.html</link>
       <guid>https://andrewkimswe.github.io/posts/s3-data-lake-lake-formation-row-level-access-control.html</guid>
-      <pubDate>Mon, 31 Aug 2026 00:00:00 +0900</pubDate>
+      <pubDate>Sun, 02 Aug 2026 00:00:00 +0900</pubDate>
       <description>B2B SaaS 분석 환경에서 Tenant Isolation을 S3 Data Lake와 Lake Formation Row-Level Security까지 확장하는 패턴입니다.</description>
+    </item>
+    <item>
+      <title>[AWS] CloudFront 설정 변경을 실시간으로 탐지하고 알림 보내기</title>
+      <link>https://andrewkimswe.github.io/posts/cloudfront-logging-change-detection.html</link>
+      <guid>https://andrewkimswe.github.io/posts/cloudfront-logging-change-detection.html</guid>
+      <pubDate>Sat, 01 Aug 2026 00:00:00 +0900</pubDate>
+      <description>CloudTrail, EventBridge, Lambda, SNS로 CloudFront Logging 비활성화를 탐지하는 패턴입니다.</description>
     </item>
   </channel>
 </rss>
