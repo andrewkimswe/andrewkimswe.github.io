@@ -5,7 +5,14 @@
     <link>https://andrewkimswe.github.io/</link>
     <description>백엔드, 클라우드, 아키텍처, 운영, 트러블슈팅을 기록하는 기술 블로그입니다.</description>
     <language>ko-KR</language>
-    <lastBuildDate>Mon, 03 Aug 2026 00:00:00 +0900</lastBuildDate>
+    <lastBuildDate>Tue, 04 Aug 2026 00:00:00 +0900</lastBuildDate>
+    <item>
+      <title>[AWS] CloudFront 뒤의 ALB를 Private하게 구성하기 - VPC Origins</title>
+      <link>https://andrewkimswe.github.io/posts/cloudfront-private-alb-vpc-origins.html</link>
+      <guid>https://andrewkimswe.github.io/posts/cloudfront-private-alb-vpc-origins.html</guid>
+      <pubDate>Tue, 04 Aug 2026 00:00:00 +0900</pubDate>
+      <description>CloudFront VPC Origins로 Internal ALB를 Origin으로 두고 직접 접근 경로를 줄이는 구조입니다.</description>
+    </item>
     <item>
       <title>[AWS] Lambda 반복 호출을 Step Functions Map으로 분리하기 - Serverless Orchestration 설계</title>
       <link>https://andrewkimswe.github.io/posts/lambda-step-functions-map-orchestration.html</link>
