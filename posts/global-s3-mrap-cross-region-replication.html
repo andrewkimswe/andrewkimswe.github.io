@@ -1,0 +1,394 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>[AWS] 글로벌 S3 아키텍처 구성하기 | Jiwon Kim's Blog</title>
+    <meta
+      name="description"
+      content="Amazon S3 Multi-Region Access Point와 Cross-Region Replication을 함께 사용해 글로벌 S3 아키텍처를 구성하는 방식입니다."
+    />
+    <meta name="author" content="Jiwon Kim" />
+    <meta name="robots" content="index, follow, max-image-preview:large" />
+    <link rel="canonical" href="https://andrewkimswe.github.io/posts/global-s3-mrap-cross-region-replication.html" />
+    <meta property="og:site_name" content="Jiwon Kim's Blog" />
+    <meta
+      property="og:title"
+      content="[AWS] 글로벌 S3 아키텍처 구성하기 - Multi-Region Access Point와 Cross-Region Replication"
+    />
+    <meta
+      property="og:description"
+      content="MRAP는 글로벌 요청 라우팅을, CRR은 리전 간 데이터 복제를 담당한다는 관점에서 정리한 구조입니다."
+    />
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="https://andrewkimswe.github.io/posts/global-s3-mrap-cross-region-replication.html" />
+    <meta property="article:published_time" content="2026-08-05T00:00:00+09:00" />
+    <meta property="article:author" content="Jiwon Kim" />
+    <meta property="article:tag" content="AWS" />
+    <meta property="article:tag" content="S3" />
+    <meta property="article:tag" content="Multi-Region Access Point" />
+    <meta property="article:tag" content="Cross-Region Replication" />
+    <link rel="stylesheet" href="../styles.css" />
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "BlogPosting",
+        "headline": "[AWS] 글로벌 S3 아키텍처 구성하기 - Multi-Region Access Point와 Cross-Region Replication",
+        "description": "Amazon S3 Multi-Region Access Point와 Cross-Region Replication을 함께 사용해 글로벌 S3 아키텍처를 구성하는 방식입니다.",
+        "datePublished": "2026-08-05T00:00:00+09:00",
+        "dateModified": "2026-08-05T00:00:00+09:00",
+        "author": {
+          "@type": "Person",
+          "name": "Jiwon Kim",
+          "url": "https://github.com/andrewkimswe"
+        },
+        "publisher": {
+          "@type": "Person",
+          "name": "Jiwon Kim"
+        },
+        "mainEntityOfPage": "https://andrewkimswe.github.io/posts/global-s3-mrap-cross-region-replication.html",
+        "inLanguage": "ko-KR"
+      }
+    </script>
+  </head>
+  <body>
+    <header class="site-header">
+      <a class="brand" href="../" aria-label="Jiwon Kim's Blog 홈">
+        <span class="brand-mark">JK</span>
+        <span>
+          <strong>Jiwon Kim's Blog</strong>
+          <small>Engineering notes</small>
+        </span>
+      </a>
+      <nav class="nav-links" aria-label="주요 메뉴">
+        <a href="../#writing">Writing</a>
+        <a href="../#topics">Topics</a>
+        <a href="../#about">About</a>
+        <a href="https://github.com/andrewkimswe">GitHub</a>
+      </nav>
+    </header>
+
+    <main>
+      <article class="article-page">
+        <header class="article-hero">
+          <a class="back-link" href="../#writing">Back to writing</a>
+          <p class="eyebrow">Cloud · Storage · Multi-Region</p>
+          <h1>[AWS] 글로벌 S3 아키텍처 구성하기 - Multi-Region Access Point와 Cross-Region Replication</h1>
+          <p class="article-summary">
+            글로벌 서비스에서 S3를 여러 리전에 구성할 때는 요청을 어디로 보낼지와 데이터를 어떻게
+            복제할지를 분리해서 생각해야 한다. MRAP와 CRR의 역할을 나누어 정리한다.
+          </p>
+          <div class="article-meta">
+            <time datetime="2026-08-05">2026.08.05</time>
+            <span>AWS</span>
+            <span>S3</span>
+            <span>Multi-Region</span>
+          </div>
+        </header>
+
+        <div class="article-body">
+          <p>
+            글로벌 서비스를 운영하다 보면 하나의 AWS 리전에 데이터를 저장하는 것만으로는 부족한 경우가 있다.
+            예를 들어 한국과 미국 사용자가 동일한 서비스를 사용하고 있다고 가정해보자.
+          </p>
+          <p>
+            서울 리전에만 S3 버킷이 있다면 미국 사용자의 요청도 서울까지 전달되어야 한다. 반대로 각 리전에
+            S3 버킷을 하나씩 만든다면 애플리케이션에서 어느 버킷으로 요청할지 결정해야 하고, 특정 리전에
+            장애가 발생했을 때의 처리도 고려해야 한다.
+          </p>
+          <p>
+            이런 상황에서 사용할 수 있는 기능이
+            <strong>Amazon S3 Multi-Region Access Point(MRAP)</strong>이다.
+          </p>
+
+          <h2>1. 문제 상황</h2>
+          <p>다음과 같은 요구사항이 있다고 가정한다.</p>
+          <ul>
+            <li>서울과 미국 리전에 각각 S3 버킷이 존재한다.</li>
+            <li>사용자는 가능한 가까운 리전으로 접근해야 한다.</li>
+            <li>인터넷 구간의 영향을 줄이고 AWS 글로벌 네트워크를 활용하고 싶다.</li>
+            <li>애플리케이션에서는 리전별 S3 endpoint를 직접 관리하고 싶지 않다.</li>
+            <li>특정 리전에 문제가 발생하더라도 다른 리전에서 데이터를 제공할 수 있어야 한다.</li>
+          </ul>
+          <p>단순히 두 개의 S3 버킷을 생성하는 것만으로는 이러한 요구사항을 모두 해결하기 어렵다.</p>
+          <div class="mermaid diagram compact-diagram">
+flowchart TB
+    client[Client]
+    seoul[Seoul S3 Endpoint]
+    us[US S3 Endpoint]
+    app[Application chooses endpoint]
+
+    client --- app
+    app --- seoul
+    app --- us
+          </div>
+          <p>
+            애플리케이션이 직접 사용자의 위치와 리전 상태를 판단한다면 라우팅과 장애 처리 로직이
+            애플리케이션에 들어가게 된다.
+          </p>
+
+          <h2>2. Multi-Region Access Point</h2>
+          <p>
+            Multi-Region Access Point는 여러 AWS 리전의 S3 버킷을 하나의
+            <strong>Global Endpoint</strong> 뒤에 구성할 수 있게 해준다.
+          </p>
+          <div class="mermaid diagram">
+flowchart TB
+    users[Users]
+    mrap[S3 Multi-Region Access Point<br/>Global Endpoint]
+    seoul[Seoul S3 Bucket]
+    us[US S3 Bucket]
+
+    users --- mrap
+    mrap --- seoul
+    mrap --- us
+          </div>
+          <p>
+            애플리케이션은 각 리전의 S3 endpoint를 직접 선택할 필요 없이 하나의 MRAP endpoint로
+            요청한다. MRAP는 요청을 처리할 수 있는 버킷 가운데 네트워크상 가까운 버킷으로 요청을 라우팅한다.
+          </p>
+
+          <h2>3. AWS Global Network를 통한 요청 라우팅</h2>
+          <p>
+            Multi-Region Access Point의 중요한 특징 중 하나는 단순한 DNS 기반 리전 선택 기능이
+            아니라는 것이다. MRAP의 글로벌 endpoint로 전달된 인터넷 기반 요청은 AWS Global Accelerator를
+            활용하여 AWS 글로벌 네트워크를 통해 적절한 S3 버킷으로 전달된다.
+          </p>
+          <div class="mermaid diagram">
+flowchart TB
+    user[User]
+    mrap[MRAP Global Endpoint]
+    network[AWS Global Network]
+    seoul[Seoul S3]
+    us[US S3]
+
+    user --- mrap
+    mrap --- network
+    network --- seoul
+    network --- us
+          </div>
+          <p>
+            따라서 글로벌 사용자를 대상으로 S3 기반 애플리케이션을 구성할 때 네트워크 라우팅을
+            애플리케이션에서 직접 구현해야 하는 부담을 줄일 수 있다.
+          </p>
+
+          <h2>4. MRAP만 구성하면 생기는 문제</h2>
+          <p>
+            여기서 중요한 점이 있다.
+            <strong>Multi-Region Access Point는 각 버킷의 객체 내용을 확인한 뒤 라우팅하는 서비스가 아니다.</strong>
+          </p>
+          <p>예를 들어 다음과 같은 상황을 생각해보자.</p>
+          <pre><code>Seoul Bucket
+└── image.jpg
+
+US Bucket
+└── 없음</code></pre>
+          <p>
+            MRAP가 네트워크 근접성을 기준으로 US 버킷으로 요청을 보냈는데, US 버킷에
+            <code>image.jpg</code>가 없다면 결과는 <code>404 Not Found</code>다.
+          </p>
+          <blockquote>
+            <p>MRAP는 Request Routing을 해결하지만 Data Replication 자체를 해결하지 않는다.</p>
+          </blockquote>
+
+          <h2>5. 그래서 Cross-Region Replication이 필요하다</h2>
+          <p>
+            각 리전의 버킷에 동일한 데이터를 유지하기 위해
+            <strong>S3 Cross-Region Replication(CRR)</strong>을 함께 구성할 수 있다.
+          </p>
+          <div class="mermaid diagram">
+flowchart TB
+    users[Users]
+    mrap[Multi-Region Access Point<br/>Global Endpoint]
+    seoul[Seoul Bucket]
+    us[US Bucket]
+    crr[Cross-Region Replication]
+
+    users --- mrap
+    mrap --- seoul
+    mrap --- us
+    seoul --- crr
+    crr --- us
+          </div>
+          <dl class="service-summary">
+            <div>
+              <dt>MRAP</dt>
+              <dd>어느 리전으로 요청을 보낼 것인가?</dd>
+            </div>
+            <div>
+              <dt>CRR</dt>
+              <dd>각 리전에 필요한 데이터를 어떻게 복제할 것인가?</dd>
+            </div>
+          </dl>
+          <p>
+            서울에서 새로운 객체가 업로드되었다면 CRR을 통해 미국 리전에도 해당 객체를 복제할 수 있다.
+            양쪽 리전 모두에서 쓰기가 발생하는 Active-Active 구조라면 양방향 replication도 고려할 수 있다.
+          </p>
+
+          <h2>6. Active-Active 구조</h2>
+          <p>MRAP는 Active-Active routing을 구성할 수 있다.</p>
+          <div class="mermaid diagram compact-diagram">
+flowchart TB
+    mrap[MRAP]
+    seoul[Seoul<br/>Active]
+    us[US<br/>Active]
+
+    mrap --- seoul
+    mrap --- us
+          </div>
+          <p>
+            모든 활성 리전이 요청을 받을 수 있고 MRAP가 가까운 활성 리전으로 요청을 라우팅한다.
+            다만 Active-Active라고 해서 자동으로 두 버킷의 내용이 동일해지는 것은 아니다.
+            <strong>데이터 동기화 전략은 별도로 설계해야 한다.</strong>
+          </p>
+
+          <h2>7. Active-Passive와 Failover</h2>
+          <p>장애 복구가 더 중요한 시스템에서는 Active-Passive 구성도 가능하다.</p>
+          <div class="mermaid diagram compact-diagram">
+flowchart TB
+    normal[Normal]
+    seoulActive[Seoul<br/>Active]
+    usPassive[US<br/>Passive]
+    failover[Failover]
+    seoulPassive[Seoul<br/>Passive]
+    usActive[US<br/>Active]
+
+    normal --- seoulActive
+    normal --- usPassive
+    failover --- seoulPassive
+    failover --- usActive
+          </div>
+          <p>
+            서울 리전의 트래픽을 다른 리전으로 전환해야 하는 상황에서는 routing status를 변경하여
+            트래픽을 전환할 수 있다. 이 구조에서는 CRR을 이용해 standby 리전에도 필요한 데이터가
+            준비되어 있도록 하는 것이 중요하다.
+          </p>
+
+          <h2>8. 전체 아키텍처</h2>
+          <p>정리하면 글로벌 S3 아키텍처를 다음처럼 구성할 수 있다.</p>
+          <div class="mermaid diagram">
+flowchart TB
+    users[Global Users]
+    mrap[S3 Multi-Region Access Point<br/>Global Endpoint]
+    seoul[ap-northeast-2<br/>S3 Bucket]
+    us[us-east-1<br/>S3 Bucket]
+    crr[Cross-Region Replication]
+
+    users --- mrap
+    mrap --- seoul
+    mrap --- us
+    seoul --- crr
+    crr --- us
+          </div>
+          <p>각 구성 요소의 역할은 명확하다.</p>
+          <dl class="service-summary">
+            <div>
+              <dt>S3</dt>
+              <dd>객체 저장</dd>
+            </div>
+            <div>
+              <dt>Multi-Region Access Point</dt>
+              <dd>Global Endpoint 및 멀티 리전 요청 라우팅</dd>
+            </div>
+            <div>
+              <dt>AWS Global Network</dt>
+              <dd>글로벌 네트워크 경로 활용</dd>
+            </div>
+            <div>
+              <dt>CRR</dt>
+              <dd>리전 간 객체 복제</dd>
+            </div>
+            <div>
+              <dt>MRAP Failover Control</dt>
+              <dd>리전별 Active/Passive routing 제어</dd>
+            </div>
+          </dl>
+
+          <h2>9. 언제 사용하면 좋을까?</h2>
+          <p>MRAP + CRR 구조는 특히 다음과 같은 상황에서 유용하다.</p>
+          <ul>
+            <li>전 세계 사용자가 대용량 객체를 업로드하는 서비스</li>
+            <li>글로벌 미디어 플랫폼</li>
+            <li>멀티 리전 애플리케이션</li>
+            <li>S3 기반 중요 데이터의 리전 장애 대응</li>
+            <li>글로벌 사용자의 S3 접근 성능 개선</li>
+            <li>애플리케이션의 리전별 endpoint 관리 부담을 줄이고 싶은 경우</li>
+          </ul>
+          <p>
+            반대로 사용자가 대부분 하나의 지역에 있고 멀티 리전 장애 복구 요구도 없다면 일반적인 단일
+            리전 S3 구조가 더 단순하고 경제적일 수 있다.
+          </p>
+
+          <h2>10. 정리</h2>
+          <p>
+            Multi-Region Access Point와 Cross-Region Replication은 서로 비슷해 보이지만 해결하는
+            문제가 다르다.
+          </p>
+          <dl class="service-summary">
+            <div>
+              <dt>Multi-Region Access Point</dt>
+              <dd>Routing</dd>
+            </div>
+            <div>
+              <dt>Cross-Region Replication</dt>
+              <dd>Data Replication</dd>
+            </div>
+          </dl>
+          <p>
+            MRAP는 하나의 글로벌 endpoint를 통해 여러 리전의 S3 버킷으로 요청을 라우팅하고, CRR은 각
+            버킷에 필요한 객체를 복제한다. 따라서 글로벌 S3 아키텍처를 설계할 때는 단순히 "여러 리전에
+            버킷을 만든다"에서 끝나는 것이 아니라,
+            <strong>Traffic Routing과 Data Replication을 별도의 문제로 보고 설계하는 것이 중요하다.</strong>
+          </p>
+
+          <h2>References</h2>
+          <ul>
+            <li>AWS Documentation - Managing multi-Region traffic with Multi-Region Access Points</li>
+            <li>AWS Documentation - Multi-Region Access Point request routing</li>
+            <li>AWS Documentation - Configuring replication for use with Multi-Region Access Points</li>
+            <li>AWS Documentation - Multi-Region Access Point failover controls</li>
+          </ul>
+        </div>
+      </article>
+    </main>
+
+    <footer class="site-footer">
+      <p>© 2026 Jiwon Kim. Technical writing, notes, and experiments.</p>
+      <div class="footer-links">
+        <span id="visitStatus">Analytics ready</span>
+        <a href="https://github.com/andrewkimswe">github.com/andrewkimswe</a>
+      </div>
+    </footer>
+
+    <script src="../script.js"></script>
+    <script type="module">
+      import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
+
+      mermaid.initialize({
+        startOnLoad: true,
+        securityLevel: "strict",
+        theme: "base",
+        themeVariables: {
+          background: "#fbfaf7",
+          primaryColor: "#fbfaf7",
+          primaryTextColor: "#161616",
+          primaryBorderColor: "#161616",
+          lineColor: "#6f6a60",
+          secondaryColor: "#ece5d8",
+          tertiaryColor: "#f4f1ea",
+          fontSize: "14px",
+          fontFamily: "ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif"
+        },
+        flowchart: {
+          curve: "basis",
+          htmlLabels: true
+        }
+      });
+    </script>
+    <script
+      data-goatcounter="https://jiwonkim-blog.goatcounter.com/count"
+      async
+      src="https://gc.zgo.at/count.js"
+    ></script>
+  </body>
+</html>

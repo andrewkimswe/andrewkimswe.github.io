@@ -5,7 +5,14 @@
     <link>https://andrewkimswe.github.io/</link>
     <description>백엔드, 클라우드, 아키텍처, 운영, 트러블슈팅을 기록하는 기술 블로그입니다.</description>
     <language>ko-KR</language>
-    <lastBuildDate>Tue, 04 Aug 2026 00:00:00 +0900</lastBuildDate>
+    <lastBuildDate>Wed, 05 Aug 2026 00:00:00 +0900</lastBuildDate>
+    <item>
+      <title>[AWS] 글로벌 S3 아키텍처 구성하기 - Multi-Region Access Point와 Cross-Region Replication</title>
+      <link>https://andrewkimswe.github.io/posts/global-s3-mrap-cross-region-replication.html</link>
+      <guid>https://andrewkimswe.github.io/posts/global-s3-mrap-cross-region-replication.html</guid>
+      <pubDate>Wed, 05 Aug 2026 00:00:00 +0900</pubDate>
+      <description>MRAP는 글로벌 요청 라우팅을, CRR은 리전 간 데이터 복제를 담당한다는 관점에서 정리한 구조입니다.</description>
+    </item>
     <item>
       <title>[AWS] CloudFront 뒤의 ALB를 Private하게 구성하기 - VPC Origins</title>
       <link>https://andrewkimswe.github.io/posts/cloudfront-private-alb-vpc-origins.html</link>
