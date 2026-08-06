@@ -1,0 +1,513 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>[AWS] 이미지 업로드 병목 제거하기 | Jiwon Kim's Blog</title>
+    <meta
+      name="description"
+      content="S3 Presigned URL, S3 Event Notification, AWS Lambda를 이용해 이미지 업로드와 리사이징 처리를 웹 서버 요청 경로에서 분리하는 구조입니다."
+    />
+    <meta name="author" content="Jiwon Kim" />
+    <meta name="robots" content="index, follow, max-image-preview:large" />
+    <link rel="canonical" href="https://andrewkimswe.github.io/posts/s3-presigned-url-lambda-image-processing.html" />
+    <meta property="og:site_name" content="Jiwon Kim's Blog" />
+    <meta
+      property="og:title"
+      content="[AWS] 이미지 업로드 병목 제거하기 - S3 Presigned URL과 Lambda로 Event-Driven Processing 구성"
+    />
+    <meta
+      property="og:description"
+      content="대용량 이미지 업로드 경로에서 애플리케이션 서버를 분리하고 S3 이벤트와 Lambda로 후처리하는 구조입니다."
+    />
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="https://andrewkimswe.github.io/posts/s3-presigned-url-lambda-image-processing.html" />
+    <meta property="article:published_time" content="2026-08-06T00:00:00+09:00" />
+    <meta property="article:author" content="Jiwon Kim" />
+    <meta property="article:tag" content="AWS" />
+    <meta property="article:tag" content="S3" />
+    <meta property="article:tag" content="Presigned URL" />
+    <meta property="article:tag" content="Lambda" />
+    <meta property="article:tag" content="Event-Driven Architecture" />
+    <link rel="stylesheet" href="../styles.css" />
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "BlogPosting",
+        "headline": "[AWS] 이미지 업로드 병목 제거하기 - S3 Presigned URL과 Lambda로 Event-Driven Processing 구성",
+        "description": "S3 Presigned URL, S3 Event Notification, AWS Lambda를 이용해 이미지 업로드와 리사이징 처리를 웹 서버 요청 경로에서 분리하는 구조입니다.",
+        "datePublished": "2026-08-06T00:00:00+09:00",
+        "dateModified": "2026-08-06T00:00:00+09:00",
+        "author": {
+          "@type": "Person",
+          "name": "Jiwon Kim",
+          "url": "https://github.com/andrewkimswe"
+        },
+        "publisher": {
+          "@type": "Person",
+          "name": "Jiwon Kim"
+        },
+        "mainEntityOfPage": "https://andrewkimswe.github.io/posts/s3-presigned-url-lambda-image-processing.html",
+        "inLanguage": "ko-KR"
+      }
+    </script>
+  </head>
+  <body>
+    <header class="site-header">
+      <a class="brand" href="../" aria-label="Jiwon Kim's Blog 홈">
+        <span class="brand-mark">JK</span>
+        <span>
+          <strong>Jiwon Kim's Blog</strong>
+          <small>Engineering notes</small>
+        </span>
+      </a>
+      <nav class="nav-links" aria-label="주요 메뉴">
+        <a href="../#writing">Writing</a>
+        <a href="../#topics">Topics</a>
+        <a href="../#about">About</a>
+        <a href="https://github.com/andrewkimswe">GitHub</a>
+      </nav>
+    </header>
+
+    <main>
+      <article class="article-page">
+        <header class="article-hero">
+          <a class="back-link" href="../#writing">Back to writing</a>
+          <p class="eyebrow">Cloud · Storage · Event-Driven</p>
+          <h1>[AWS] 이미지 업로드 병목 제거하기 - S3 Presigned URL과 Lambda로 Event-Driven Processing 구성</h1>
+          <p class="article-summary">
+            이미지 업로드를 애플리케이션 서버가 직접 받으면 네트워크, CPU, 메모리 부담이 요청 경로에 쌓인다.
+            Presigned URL로 업로드 경로를 S3로 넘기고, S3 이벤트와 Lambda로 후처리를 분리하는 패턴을 정리한다.
+          </p>
+          <div class="article-meta">
+            <time datetime="2026-08-06">2026.08.06</time>
+            <span>AWS</span>
+            <span>S3</span>
+            <span>Lambda</span>
+          </div>
+        </header>
+
+        <div class="article-body">
+          <p>
+            웹 서비스에서 이미지 업로드 기능을 구현할 때 가장 단순한 방법은 사용자가 업로드한 파일을
+            애플리케이션 서버가 직접 받은 뒤 처리하는 것이다.
+          </p>
+          <p>예를 들어 EC2에서 웹 애플리케이션을 실행하고 있다면 다음과 같이 구현할 수 있다.</p>
+          <div class="mermaid diagram">
+flowchart TB
+    browser[Browser]
+    server[EC2 Web Server<br/>Receive / Resize / Upload]
+    s3[Amazon S3]
+
+    browser --- server
+    server --- s3
+          </div>
+          <p>
+            처음에는 단순하고 구현하기 쉽다. 하지만 이미지 크기가 커지고 사용자 수가 증가하면 웹 서버가
+            일반 API 요청뿐만 아니라 대용량 파일 업로드와 이미지 처리까지 담당하면서 CPU, 메모리,
+            네트워크 대역폭을 함께 소비하게 된다.
+          </p>
+          <p>
+            이 글에서는 이미지 업로드 경로를 애플리케이션 서버에서 분리하고
+            <strong>S3 Presigned URL, S3 Event Notification, AWS Lambda</strong>를 이용해 이미지 업로드와
+            후처리를 이벤트 기반 구조로 변경해본다.
+          </p>
+
+          <h2>1. 기존 구조의 문제</h2>
+          <p>기존에는 모든 이미지가 웹 서버를 거쳐간다고 가정한다.</p>
+          <div class="mermaid diagram compact-diagram">
+flowchart TB
+    user[User]
+    web[Web Server<br/>Resize and S3 Upload]
+    s3[Amazon S3]
+
+    user --- web
+    web --- s3
+          </div>
+          <p>
+            사용자가 1MB 이미지를 업로드하면 서버가 1MB를 받아야 한다. 100명의 사용자가 동시에
+            10MB 이미지를 올리면 웹 서버에는 약 1GB의 업로드 트래픽이 들어온다. 여기에 이미지 디코딩 및
+            리사이징 작업까지 수행한다.
+          </p>
+          <dl class="service-summary">
+            <div>
+              <dt>Web Server</dt>
+              <dd>웹 API 처리, 파일 업로드, 이미지 처리, S3 저장을 모두 담당한다.</dd>
+            </div>
+          </dl>
+          <p>
+            사용자가 많아질수록 이미지 관련 작업 때문에 일반적인 API 응답까지 느려질 수 있다.
+            특히 이미지 리사이징처럼 CPU를 사용하는 작업이 요청 처리 경로에 포함되어 있다면 사용자는
+            작업이 끝날 때까지 기다려야 한다.
+          </p>
+
+          <h2>2. 파일 자체는 웹 서버를 거칠 필요가 없다</h2>
+          <p>
+            애플리케이션 서버가 해야 할 일과 대용량 데이터를 전송하는 일을 분리할 수 있다.
+            서버는 사용자의 업로드 권한만 확인하고, 실제 이미지는 브라우저가 S3로 직접 전송하도록 만든다.
+          </p>
+          <div class="mermaid diagram">
+flowchart TB
+    browser[Browser]
+    app[Application<br/>Auth and Presigned URL]
+    s3[Private S3 Bucket]
+
+    browser --- app
+    app --- browser
+    browser --- s3
+          </div>
+          <p>
+            애플리케이션 서버는 파일 데이터를 직접 받지 않는다. 대신 일정 시간 동안 특정 S3 객체에 업로드할
+            수 있는 URL을 생성한다. 사용자는 이 URL을 이용해 S3로 직접 이미지를 업로드한다.
+          </p>
+
+          <h2>3. Presigned URL이란?</h2>
+          <p>
+            S3 버킷은 일반적으로 public access를 차단한 상태로 운영하는 것이 좋다. 그렇다고 모든 사용자에게
+            AWS IAM Credential을 제공할 수는 없다. Presigned URL은 이런 상황에서 사용할 수 있다.
+          </p>
+          <blockquote>
+            <p>이 사용자는 앞으로 5분 동안 <code>uploads/user-123/image.jpg</code>에 PUT 요청을 할 수 있다.</p>
+          </blockquote>
+          <p>예를 들어 Python의 boto3에서는 다음과 같이 생성할 수 있다.</p>
+          <pre><code>import boto3
+
+s3 = boto3.client("s3")
+
+url = s3.generate_presigned_url(
+    ClientMethod="put_object",
+    Params={
+        "Bucket": "my-image-bucket",
+        "Key": "uploads/user-123/image.jpg",
+        "ContentType": "image/jpeg"
+    },
+    ExpiresIn=300
+)</code></pre>
+          <p>
+            생성된 URL을 클라이언트에게 전달하면 클라이언트는 그 URL을 이용하여 S3에 직접 PUT 요청을 보낸다.
+            버킷 자체를 공개할 필요도 없고 사용자에게 AWS Credential을 제공할 필요도 없다.
+          </p>
+
+          <h2>4. 웹 서버의 역할을 Control Plane으로 제한한다</h2>
+          <p>이 구조에서 중요한 설계 포인트는 실제 파일 전송 경로에서 애플리케이션 서버가 빠진다는 것이다.</p>
+          <dl class="service-summary">
+            <div>
+              <dt>기존</dt>
+              <dd>Browser, Application Server, S3 사이로 10MB 이미지가 모두 흐른다.</dd>
+            </div>
+            <div>
+              <dt>개선</dt>
+              <dd>Browser는 S3로 직접 업로드하고 Application Server는 작은 JSON과 URL만 처리한다.</dd>
+            </div>
+          </dl>
+          <p>웹 서버는 사용자 인증, 업로드 권한 확인, Object Key 결정, Presigned URL 생성에 집중한다.</p>
+
+          <h2>5. 이미지 리사이징도 요청 경로에서 제거한다</h2>
+          <p>
+            파일 업로드를 S3로 분리했더라도 이미지 리사이징을 애플리케이션 서버에서 수행한다면 여전히 서버
+            부하가 남는다. 이 작업도 비동기로 분리할 수 있다. S3는 객체가 생성되었을 때 Event Notification을
+            발생시킬 수 있다.
+          </p>
+          <div class="mermaid diagram">
+flowchart TB
+    browser[Browser]
+    api[API<br/>Presigned URL]
+    original[S3<br/>original/]
+    lambda[Lambda<br/>Image Resize]
+    resized[S3<br/>resized/]
+
+    browser --- api
+    api --- browser
+    browser --- original
+    original --- lambda
+    lambda --- resized
+          </div>
+          <p>이제 이미지 업로드 요청과 이미지 처리 작업이 서로 분리된다.</p>
+
+          <h2>6. 이벤트 기반 이미지 처리</h2>
+          <p>예를 들어 다음과 같은 S3 prefix 구조를 사용할 수 있다.</p>
+          <pre><code>my-image-bucket/
+
+original/
+    └── user-123/photo.jpg
+
+resized/
+    └── user-123/photo.jpg</code></pre>
+          <p>
+            S3 Event Notification을 <code>Prefix = original/</code>,
+            <code>Event = s3:ObjectCreated:*</code>로 설정하면 <code>original/</code> 아래에 객체가
+            업로드될 때만 Lambda가 실행된다.
+          </p>
+          <pre><code>import boto3
+from PIL import Image
+from io import BytesIO
+
+s3 = boto3.client("s3")
+
+def lambda_handler(event, context):
+    record = event["Records"][0]
+
+    bucket = record["s3"]["bucket"]["name"]
+    key = record["s3"]["object"]["key"]
+
+    response = s3.get_object(
+        Bucket=bucket,
+        Key=key
+    )
+
+    image = Image.open(
+        BytesIO(response["Body"].read())
+    )
+
+    image.thumbnail((800, 800))
+
+    output = BytesIO()
+    image.save(output, format="JPEG")
+    output.seek(0)
+
+    resized_key = key.replace(
+        "original/",
+        "resized/"
+    )
+
+    s3.put_object(
+        Bucket=bucket,
+        Key=resized_key,
+        Body=output,
+        ContentType="image/jpeg"
+    )</code></pre>
+          <p>
+            실제 구현에서는 포맷 검사, 오류 처리, 메타데이터 처리, 여러 이미지 크기 생성 등의 로직을
+            추가할 수 있다.
+          </p>
+
+          <h2>7. 왜 EventBridge Scheduler가 아니라 S3 Event인가?</h2>
+          <p>이미지 업로드 자체가 이벤트이기 때문에 굳이 polling 방식으로 처리할 필요가 없다.</p>
+          <dl class="service-summary">
+            <div>
+              <dt>Polling</dt>
+              <dd>Scheduler가 주기적으로 Lambda를 실행하고 S3에서 새 파일을 검색한다.</dd>
+            </div>
+            <div>
+              <dt>Event Driven</dt>
+              <dd>업로드가 발생했을 때만 S3 Event가 Lambda를 호출한다.</dd>
+            </div>
+          </dl>
+          <p>파일이 들어왔을 때만 컴퓨팅 리소스를 사용하므로 구조가 더 단순하고 처리 지연도 줄어든다.</p>
+
+          <h2>8. Decoupling</h2>
+          <p>이 구조의 핵심은 단순히 EC2 대신 Lambda를 사용했다는 것이 아니라 책임을 분리했다는 데 있다.</p>
+          <dl class="service-summary">
+            <div>
+              <dt>Application</dt>
+              <dd>Authentication / Authorization</dd>
+            </div>
+            <div>
+              <dt>S3</dt>
+              <dd>File Transfer / Storage</dd>
+            </div>
+            <div>
+              <dt>Lambda</dt>
+              <dd>Image Processing</dd>
+            </div>
+          </dl>
+          <p>각 컴포넌트가 독립적인 역할을 가지게 되고, 웹 서버의 트래픽과 이미지 처리 부하가 직접 연결되지 않는다.</p>
+
+          <h2>9. 트래픽이 급증하면 어떻게 될까?</h2>
+          <p>
+            기존 구조에서는 이미지 업로드 트래픽이 웹 서버의 네트워크, CPU, 메모리를 직접 압박한다.
+            Presigned URL을 사용하면 대용량 파일 전송을 S3가 처리하고, 이후 이미지 처리 또한 Lambda가
+            이벤트에 따라 확장된다.
+          </p>
+          <div class="mermaid diagram compact-diagram">
+flowchart TB
+    users[Many Users]
+    s3[S3 Direct Upload]
+    events[S3 Events]
+    lambda[Lambda Scaling]
+
+    users --- s3
+    s3 --- events
+    events --- lambda
+          </div>
+          <p>즉, 웹 서버의 Auto Scaling 여부와 이미지 처리량을 분리할 수 있다.</p>
+
+          <h2>10. SQS를 추가한다면?</h2>
+          <p>
+            더 높은 안정성이 필요한 구조라면 S3 이벤트와 이미지 처리 Lambda 사이에 SQS를 넣는 방법도 있다.
+          </p>
+          <div class="mermaid diagram compact-diagram">
+flowchart TB
+    s3[S3]
+    sqs[SQS<br/>Buffer]
+    lambda[Lambda]
+    resized[Resized S3]
+    dlq[DLQ]
+
+    s3 --- sqs
+    sqs --- lambda
+    lambda --- resized
+    lambda --- dlq
+          </div>
+          <p>
+            이렇게 하면 이미지 처리 요청을 queue에 보관할 수 있다. 순간적으로 이미지가 매우 많이 업로드되어도
+            SQS가 버퍼 역할을 하고, Lambda 처리에 실패한 메시지를 DLQ로 보내는 구조도 구성할 수 있다.
+          </p>
+          <p>
+            단순한 이미지 처리 규모에서는 S3와 Lambda만으로 충분할 수 있지만, 처리 내구성과 failure isolation이
+            중요하면 queue를 추가하는 것도 고려할 수 있다.
+          </p>
+
+          <h2>11. Presigned URL 사용 시 보안 고려사항</h2>
+          <h3>URL 만료 시간을 짧게 설정한다</h3>
+          <p>예를 들어 <code>ExpiresIn = 300 seconds</code>처럼 필요한 시간만 허용한다.</p>
+
+          <h3>Object Key를 서버가 결정한다</h3>
+          <p>
+            사용자가 원하는 arbitrary key를 직접 지정하게 하기보다 애플리케이션에서
+            <code>original/{userId}/{uuid}.jpg</code>와 같이 업로드 위치를 결정하는 것이 안전하다.
+          </p>
+
+          <h3>파일 형식과 크기를 검증한다</h3>
+          <p>
+            Presigned URL이 있다고 해서 업로드된 파일을 무조건 신뢰하면 안 된다. 이미지 처리 Lambda에서
+            실제 MIME type, 파일 크기, 이미지 디코딩 가능 여부 등을 검증할 수 있다.
+          </p>
+
+          <h3>S3 버킷은 Private으로 유지한다</h3>
+          <p>Presigned URL을 사용하는 목적은 버킷 자체를 public으로 만드는 것이 아니다.</p>
+          <blockquote>
+            <p>Private Bucket + Presigned URL 구조가 기본이다.</p>
+          </blockquote>
+
+          <h2>12. 최종 아키텍처</h2>
+          <div class="mermaid diagram">
+flowchart TB
+    browser[Browser]
+    app[Application<br/>Auth + Presigned URL]
+    original[S3<br/>original/]
+    lambda[Lambda<br/>Image Resize]
+    resized[S3<br/>resized/]
+
+    browser --- app
+    app --- browser
+    browser --- original
+    original --- lambda
+    lambda --- resized
+          </div>
+          <p>역할은 다음처럼 정리할 수 있다.</p>
+          <dl class="service-summary">
+            <div>
+              <dt>Application</dt>
+              <dd>인증, 권한 확인, Presigned URL 발급</dd>
+            </div>
+            <div>
+              <dt>Presigned URL</dt>
+              <dd>제한된 시간 동안 S3 직접 업로드 허용</dd>
+            </div>
+            <div>
+              <dt>Amazon S3</dt>
+              <dd>원본/변환 이미지 저장</dd>
+            </div>
+            <div>
+              <dt>S3 Event Notification</dt>
+              <dd>신규 이미지 업로드 이벤트 발생</dd>
+            </div>
+            <div>
+              <dt>AWS Lambda</dt>
+              <dd>이미지 리사이징 및 후처리</dd>
+            </div>
+          </dl>
+
+          <h2>13. 정리</h2>
+          <p>
+            기존 서버 중심 구조에서는 하나의 애플리케이션 서버가 Upload, Processing, Storage를 모두
+            담당했다. 이를 AWS의 관리형 서비스를 이용해 분리할 수 있다.
+          </p>
+          <dl class="service-summary">
+            <div>
+              <dt>Upload</dt>
+              <dd>S3 Presigned URL</dd>
+            </div>
+            <div>
+              <dt>Processing</dt>
+              <dd>Lambda</dd>
+            </div>
+            <div>
+              <dt>Trigger</dt>
+              <dd>S3 Event</dd>
+            </div>
+            <div>
+              <dt>Storage</dt>
+              <dd>S3</dd>
+            </div>
+          </dl>
+          <p>
+            가장 중요한 변화는 <strong>대용량 데이터 경로에서 애플리케이션 서버를 제거하는 것</strong>이다.
+            Presigned URL을 이용하면 브라우저가 S3로 직접 파일을 업로드할 수 있고, 이미지 처리 역시 S3 이벤트와
+            Lambda를 이용해 요청 흐름에서 분리할 수 있다.
+          </p>
+          <p>결과적으로 다음 효과를 얻을 수 있다.</p>
+          <ul>
+            <li>웹 서버의 네트워크 부하 감소</li>
+            <li>이미지 처리와 API 요청의 결합도 감소</li>
+            <li>이벤트 기반 비동기 처리</li>
+            <li>트래픽 증가에 따른 확장성 향상</li>
+            <li>Private S3 버킷을 유지하면서 외부 사용자 업로드 지원</li>
+          </ul>
+          <p>
+            이 패턴은 이미지뿐 아니라 동영상, PDF, 사용자 첨부파일 등
+            <strong>대용량 파일을 웹 서버가 직접 처리할 필요가 없는 대부분의 업로드 시스템</strong>에 적용할 수 있다.
+          </p>
+
+          <h2>References</h2>
+          <ul>
+            <li>AWS Documentation - Sharing objects with presigned URLs</li>
+            <li>AWS Documentation - Amazon S3 Event Notifications</li>
+            <li>AWS Documentation - Using AWS Lambda with Amazon S3</li>
+            <li>AWS Documentation - Configuring event notifications using object key name filtering</li>
+          </ul>
+        </div>
+      </article>
+    </main>
+
+    <footer class="site-footer">
+      <p>© 2026 Jiwon Kim. Technical writing, notes, and experiments.</p>
+      <div class="footer-links">
+        <span id="visitStatus">Analytics ready</span>
+        <a href="https://github.com/andrewkimswe">github.com/andrewkimswe</a>
+      </div>
+    </footer>
+
+    <script src="../script.js"></script>
+    <script type="module">
+      import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
+
+      mermaid.initialize({
+        startOnLoad: true,
+        securityLevel: "strict",
+        theme: "base",
+        themeVariables: {
+          background: "#fbfaf7",
+          primaryColor: "#fbfaf7",
+          primaryTextColor: "#161616",
+          primaryBorderColor: "#161616",
+          lineColor: "#6f6a60",
+          secondaryColor: "#ece5d8",
+          tertiaryColor: "#f4f1ea",
+          fontSize: "14px",
+          fontFamily: "ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif"
+        },
+        flowchart: {
+          curve: "basis",
+          htmlLabels: true
+        }
+      });
+    </script>
+    <script
+      data-goatcounter="https://jiwonkim-blog.goatcounter.com/count"
+      async
+      src="https://gc.zgo.at/count.js"
+    ></script>
+  </body>
+</html>
