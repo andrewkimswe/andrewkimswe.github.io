@@ -5,7 +5,14 @@
     <link>https://andrewkimswe.github.io/</link>
     <description>백엔드, 클라우드, 아키텍처, 운영, 트러블슈팅을 기록하는 기술 블로그입니다.</description>
     <language>ko-KR</language>
-    <lastBuildDate>Thu, 06 Aug 2026 00:00:00 +0900</lastBuildDate>
+    <lastBuildDate>Fri, 07 Aug 2026 00:00:00 +0900</lastBuildDate>
+    <item>
+      <title>[AWS] S3에서 PII를 자동 탐지하고 삭제를 방지하기 - Macie + EventBridge + Object Lock</title>
+      <link>https://andrewkimswe.github.io/posts/s3-pii-detection-macie-object-lock.html</link>
+      <guid>https://andrewkimswe.github.io/posts/s3-pii-detection-macie-object-lock.html</guid>
+      <pubDate>Fri, 07 Aug 2026 00:00:00 +0900</pubDate>
+      <description>Macie finding을 EventBridge와 Lambda로 처리하고 S3 Object Lock Legal Hold로 검토 대상 객체를 보호하는 구조입니다.</description>
+    </item>
     <item>
       <title>[AWS] 이미지 업로드 병목 제거하기 - S3 Presigned URL과 Lambda로 Event-Driven Processing 구성</title>
       <link>https://andrewkimswe.github.io/posts/s3-presigned-url-lambda-image-processing.html</link>
