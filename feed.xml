@@ -5,7 +5,14 @@
     <link>https://andrewkimswe.github.io/</link>
     <description>백엔드, 클라우드, 아키텍처, 운영, 트러블슈팅을 기록하는 기술 블로그입니다.</description>
     <language>ko-KR</language>
-    <lastBuildDate>Fri, 07 Aug 2026 00:00:00 +0900</lastBuildDate>
+    <lastBuildDate>Sat, 08 Aug 2026 00:00:00 +0900</lastBuildDate>
+    <item>
+      <title>[LLM] API 호출부터 LangChain까지 - LLM 애플리케이션의 구조 이해하기</title>
+      <link>https://andrewkimswe.github.io/posts/llm-api-langchain-application-architecture.html</link>
+      <guid>https://andrewkimswe.github.io/posts/llm-api-langchain-application-architecture.html</guid>
+      <pubDate>Sat, 08 Aug 2026 00:00:00 +0900</pubDate>
+      <description>LLM serving layer와 LangChain orchestration layer를 분리해 LLM 애플리케이션 구조를 정리합니다.</description>
+    </item>
     <item>
       <title>[AWS] S3에서 PII를 자동 탐지하고 삭제를 방지하기 - Macie + EventBridge + Object Lock</title>
       <link>https://andrewkimswe.github.io/posts/s3-pii-detection-macie-object-lock.html</link>
