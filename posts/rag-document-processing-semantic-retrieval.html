@@ -1,0 +1,394 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>[RAG] 긴 문서에서 필요한 근거를 찾는 과정 | Jiwon Kim's Blog</title>
+    <meta
+      name="description"
+      content="Chunking, MapReduce, Refine, Embedding, Vector Store, Retriever를 연결해 RAG retrieval pipeline이 필요한 이유를 설명합니다."
+    />
+    <meta name="author" content="Jiwon Kim" />
+    <meta name="robots" content="index, follow, max-image-preview:large" />
+    <link rel="canonical" href="https://andrewkimswe.github.io/posts/rag-document-processing-semantic-retrieval.html" />
+    <meta property="og:site_name" content="Jiwon Kim's Blog" />
+    <meta
+      property="og:title"
+      content="[RAG] 긴 문서에서 필요한 근거를 찾는 과정 - Chunking, Embedding, Vector Store와 Semantic Retrieval"
+    />
+    <meta
+      property="og:description"
+      content="긴 문서를 작은 chunk로 나누고 의미 기반 검색으로 필요한 근거를 찾는 RAG retrieval pipeline입니다."
+    />
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="https://andrewkimswe.github.io/posts/rag-document-processing-semantic-retrieval.html" />
+    <meta property="article:published_time" content="2026-08-10T00:00:00+09:00" />
+    <meta property="article:author" content="Jiwon Kim" />
+    <meta property="article:tag" content="RAG" />
+    <meta property="article:tag" content="Embedding" />
+    <meta property="article:tag" content="Vector Store" />
+    <meta property="article:tag" content="Semantic Retrieval" />
+    <link rel="stylesheet" href="../styles.css" />
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "BlogPosting",
+        "headline": "[RAG] 긴 문서에서 필요한 근거를 찾는 과정 - Chunking, Embedding, Vector Store와 Semantic Retrieval",
+        "description": "Chunking, MapReduce, Refine, Embedding, Vector Store, Retriever를 연결해 RAG retrieval pipeline이 필요한 이유를 설명합니다.",
+        "datePublished": "2026-08-10T00:00:00+09:00",
+        "dateModified": "2026-08-10T00:00:00+09:00",
+        "author": {
+          "@type": "Person",
+          "name": "Jiwon Kim",
+          "url": "https://github.com/andrewkimswe"
+        },
+        "publisher": {
+          "@type": "Person",
+          "name": "Jiwon Kim"
+        },
+        "mainEntityOfPage": "https://andrewkimswe.github.io/posts/rag-document-processing-semantic-retrieval.html",
+        "inLanguage": "ko-KR"
+      }
+    </script>
+  </head>
+  <body>
+    <header class="site-header">
+      <a class="brand" href="../" aria-label="Jiwon Kim's Blog 홈">
+        <span class="brand-mark">JK</span>
+        <span>
+          <strong>Jiwon Kim's Blog</strong>
+          <small>Engineering notes</small>
+        </span>
+      </a>
+      <nav class="nav-links" aria-label="주요 메뉴">
+        <a href="../#writing">Writing</a>
+        <a href="../#topics">Topics</a>
+        <a href="../#about">About</a>
+        <a href="https://github.com/andrewkimswe">GitHub</a>
+      </nav>
+    </header>
+
+    <main>
+      <article class="article-page">
+        <header class="article-hero">
+          <a class="back-link" href="../#writing">Back to writing</a>
+          <p class="eyebrow">RAG · Retrieval · Embedding</p>
+          <h1>[RAG] 긴 문서에서 필요한 근거를 찾는 과정 - Chunking, Embedding, Vector Store와 Semantic Retrieval</h1>
+          <p class="article-summary">
+            긴 문서를 LLM prompt에 통째로 넣는 대신, 문서를 chunk로 나누고 embedding/vector store를 통해
+            현재 질문에 필요한 근거만 찾는 흐름을 정리한다.
+          </p>
+          <div class="article-meta">
+            <time datetime="2026-08-10">2026.08.10</time>
+            <span>RAG</span>
+            <span>Embedding</span>
+            <span>Retrieval</span>
+          </div>
+        </header>
+
+        <div class="article-body">
+          <p>
+            LLM에게 문서를 읽히는 가장 단순한 방법은 문서 전체를 prompt에 넣는 것이다. 문서가 짧다면 충분하지만,
+            수십 페이지의 PDF, 기술 문서 모음, 사내 지식 베이스처럼 입력이 커지면 다른 접근이 필요하다.
+          </p>
+          <div class="mermaid diagram compact-diagram">
+flowchart TB
+    document[Document]
+    question[Question]
+    llm[LLM]
+
+    document --- llm
+    question --- llm
+          </div>
+          <p>문제는 크게 두 가지로 나눌 수 있다.</p>
+          <ul>
+            <li>긴 문서를 어떻게 작은 단위로 처리할 것인가?</li>
+            <li>그중 현재 질문에 필요한 부분을 어떻게 찾을 것인가?</li>
+          </ul>
+
+          <h2>1. 긴 문서를 그대로 넣기 어려운 이유</h2>
+          <p>
+            Context window가 커졌다고 해서 항상 전체 문서를 넣는 것이 최적이라는 뜻은 아니다. 질문과 무관한
+            내용까지 함께 전달하면 모델이 처리해야 할 정보가 증가하고 비용과 latency도 증가한다.
+          </p>
+          <dl class="service-summary">
+            <div>
+              <dt>Cost</dt>
+              <dd>불필요한 context까지 토큰으로 처리한다.</dd>
+            </div>
+            <div>
+              <dt>Latency</dt>
+              <dd>입력이 커질수록 응답 시간이 늘어날 수 있다.</dd>
+            </div>
+            <div>
+              <dt>Noise</dt>
+              <dd>질문과 무관한 정보가 답변 품질을 흐릴 수 있다.</dd>
+            </div>
+          </dl>
+
+          <h2>2. Chunking</h2>
+          <p>
+            문서를 작은 단위로 나누면 각 chunk가 이후 처리의 기본 단위가 된다. 너무 작으면 문맥이 끊기고,
+            너무 크면 한 chunk 안에 불필요한 정보가 많아진다.
+          </p>
+          <div class="mermaid diagram compact-diagram">
+flowchart TB
+    long[Long Document]
+    chunking[Chunking]
+    c1[Chunk 1]
+    c2[Chunk 2]
+    c3[Chunk 3]
+    c4[Chunk 4]
+
+    long --- chunking
+    chunking --- c1
+    chunking --- c2
+    chunking --- c3
+    chunking --- c4
+          </div>
+          <p>
+            Overlap은 chunk 경계에서 중요한 문맥이 잘리는 문제를 완화하지만 중복 chunk를 늘리고 vector store
+            크기와 retrieval duplicate 문제를 키울 수 있다. 따라서 chunk size와 overlap은 retrieval 성능과 비용에
+            영향을 주는 hyperparameter다.
+          </p>
+
+          <h2>3. 모든 Chunk를 처리하는 방법: MapReduce</h2>
+          <p>문서 전체를 요약해야 한다면 모든 chunk를 처리할 수 있다.</p>
+          <div class="mermaid diagram">
+flowchart TB
+    c1[Chunk 1]
+    c2[Chunk 2]
+    c3[Chunk 3]
+    s1[Summary 1]
+    s2[Summary 2]
+    s3[Summary 3]
+    reduce[Reduce]
+    final[Final Summary]
+
+    c1 --- s1
+    c2 --- s2
+    c3 --- s3
+    s1 --- reduce
+    s2 --- reduce
+    s3 --- reduce
+    reduce --- final
+          </div>
+          <p>
+            Map 단계에서는 각 chunk에 동일한 작업을 수행하고, Reduce 단계에서는 중간 결과를 통합한다. 병렬화하기
+            쉽지만 chunk 사이의 관계를 직접 고려하기 어렵고 최종 통합 과정에서 세부 정보가 사라질 수 있다.
+          </p>
+
+          <h2>4. 이전 결과를 누적하는 Refine</h2>
+          <p>다른 접근은 이전 결과를 다음 chunk와 함께 전달하는 것이다.</p>
+          <div class="mermaid diagram compact-diagram">
+flowchart TB
+    c1[Chunk 1]
+    s1[Summary v1]
+    c2[Chunk 2]
+    s2[Summary v2]
+    c3[Chunk 3]
+    s3[Summary v3]
+
+    c1 --- s1
+    s1 --- c2
+    c2 --- s2
+    s2 --- c3
+    c3 --- s3
+          </div>
+          <p>
+            이는 running state와 비슷한 관점이다. 문서 전체 요약이나 핵심 정보 추출에는 유용하지만 순차 처리라
+            Map 방식보다 병렬화가 어렵고, 초기에 잘못 요약된 정보가 이후 단계에 영향을 줄 수 있다.
+          </p>
+
+          <h2>5. 모든 Chunk를 읽을 필요가 없는 질문</h2>
+          <p>
+            문서 요약이라면 모든 chunk가 중요할 수 있다. 하지만 <code>EKS Pod가 Pending 상태일 때 어떤 원인을
+            확인해야 하나요?</code>라는 질문에 AWS와 Kubernetes 공식 문서 수백 개를 전부 LLM에 전달할 이유는 없다.
+          </p>
+          <blockquote>
+            <p>필요한 것은 전체 문서 중 질문과 관련된 일부 chunk를 선택하는 방법이다.</p>
+          </blockquote>
+          <p>여기서 retrieval이 등장한다.</p>
+
+          <h2>6. Keyword가 아니라 의미로 검색하기</h2>
+          <p>
+            질문과 문서가 정확히 같은 단어를 사용하지 않을 수 있다. <code>Pod가 스케줄링되지 않아요</code>와
+            <code>Debug Pods in Pending state</code>는 표현은 다르지만 의미는 가깝다.
+          </p>
+          <div class="mermaid diagram compact-diagram">
+flowchart TB
+    text[Text]
+    embedding[Embedding Model]
+    vector[Vector<br/>0.12, -0.43, 0.77]
+
+    text --- embedding
+    embedding --- vector
+          </div>
+          <p>좋은 embedding model에서는 의미가 비슷한 텍스트의 vector도 가까워지도록 학습된다.</p>
+
+          <h2>7. Semantic Similarity</h2>
+          <p>Query와 document를 각각 embedding한 뒤 vector 간 거리를 계산한다.</p>
+          <table>
+            <thead>
+              <tr>
+                <th>Metric</th>
+                <th>해석</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Cosine similarity</td>
+                <td>일반적으로 클수록 유사하다.</td>
+              </tr>
+              <tr>
+                <td>Euclidean distance</td>
+                <td>일반적으로 작을수록 가깝다.</td>
+              </tr>
+              <tr>
+                <td>Dot product</td>
+                <td>vector 정규화 여부에 따라 해석이 달라질 수 있다.</td>
+              </tr>
+            </tbody>
+          </table>
+          <p>threshold를 사용할 때는 vector store가 반환하는 score의 의미를 반드시 확인해야 한다.</p>
+
+          <h2>8. Bi-Encoder와 Cross-Encoder</h2>
+          <p>
+            대규모 retrieval에서는 문서를 미리 embedding해두고 사용자 요청 시 query만 embedding하는 Bi-Encoder
+            구조가 자주 사용된다.
+          </p>
+          <div class="mermaid diagram">
+flowchart TB
+    docs[Documents]
+    docEmbed[Offline Embedding]
+    vectors[Stored Vectors]
+    query[Query]
+    queryEmbed[Online Embedding]
+    search[Similarity Search]
+
+    docs --- docEmbed
+    docEmbed --- vectors
+    query --- queryEmbed
+    queryEmbed --- search
+    vectors --- search
+          </div>
+          <p>
+            Cross-Encoder는 query와 document를 함께 모델에 넣어 relevance를 직접 평가한다. 전체 corpus에 대해
+            매번 실행하기에는 비싸기 때문에 보통 vector search로 후보를 줄인 뒤 reranking에 사용한다.
+          </p>
+
+          <h2>9. Vector Store와 Retriever</h2>
+          <p>
+            Embedding vector가 많아지면 이를 저장하고 효율적으로 검색할 구조가 필요하다. Vector store는 vector,
+            chunk text, document id, source URL, metadata를 함께 관리한다.
+          </p>
+          <pre><code>documents = retriever.invoke(question)</code></pre>
+          <p>
+            애플리케이션에서는 vector store를 직접 조작하기보다 retriever interface로 추상화할 수 있다. 내부에서는
+            query embedding, similarity search, ranking, top-k documents 선택이 수행된다.
+          </p>
+
+          <h2>10. RAG</h2>
+          <p>이제 retrieval 결과를 LLM context에 추가한다.</p>
+          <div class="mermaid diagram">
+flowchart TB
+    question[User Question]
+    retriever[Retriever]
+    chunks[Relevant Chunks]
+    prompt[Prompt<br/>Question + Retrieved Docs]
+    llm[LLM]
+    answer[Answer]
+
+    question --- retriever
+    retriever --- chunks
+    chunks --- prompt
+    prompt --- llm
+    llm --- answer
+          </div>
+          <p>
+            핵심은 LLM의 parameter에 새로운 지식을 학습시키는 것이 아니라 질문 시점에 외부 지식을 검색해 context로
+            제공하는 것이다.
+          </p>
+
+          <h2>11. Offline과 Online을 분리해서 보기</h2>
+          <dl class="service-summary">
+            <div>
+              <dt>Offline / Ingestion</dt>
+              <dd>Documents, parse, chunk, embedding, vector store를 미리 준비한다.</dd>
+            </div>
+            <div>
+              <dt>Online / Query</dt>
+              <dd>Question, query embedding, vector search, top-k chunks, LLM answer가 실행된다.</dd>
+            </div>
+          </dl>
+          <p>문서 embedding을 미리 수행할 수 있기 때문에 사용자 요청마다 전체 corpus를 다시 처리하지 않는다.</p>
+
+          <h2>12. Naive RAG</h2>
+          <p>
+            가장 단순한 RAG는 모든 질문에서 retrieval을 수행한다. 구조가 단순하고 평가하기 쉽지만 모든 질문에
+            retrieval이 필요한 것은 아니다. 더 발전된 시스템에서는 planner나 router가 retrieval 여부 자체를
+            결정할 수 있다.
+          </p>
+          <div class="mermaid diagram compact-diagram">
+flowchart TB
+    question[Question]
+    router[Planner / Router]
+    retrieval[Retriever]
+    direct[Direct Response]
+
+    question --- router
+    router --- retrieval
+    router --- direct
+          </div>
+
+          <h2>정리</h2>
+          <p>
+            RAG는 긴 문서를 통째로 prompt에 넣는 문제가 아니라, 문서를 검색 가능한 단위로 준비하고 질문 시점에
+            필요한 근거를 찾아 context로 제공하는 구조다. Chunking은 문서 처리 단위를 결정하고, embedding과 vector
+            store는 의미 기반 검색을 가능하게 하며, retriever는 이 과정을 애플리케이션에서 사용할 수 있는 component로
+            감싼다.
+          </p>
+        </div>
+      </article>
+    </main>
+
+    <footer class="site-footer">
+      <p>© 2026 Jiwon Kim. Technical writing, notes, and experiments.</p>
+      <div class="footer-links">
+        <span id="visitStatus">Analytics ready</span>
+        <a href="https://github.com/andrewkimswe">github.com/andrewkimswe</a>
+      </div>
+    </footer>
+
+    <script src="../script.js"></script>
+    <script type="module">
+      import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
+
+      mermaid.initialize({
+        startOnLoad: true,
+        securityLevel: "strict",
+        theme: "base",
+        themeVariables: {
+          background: "#fbfaf7",
+          primaryColor: "#fbfaf7",
+          primaryTextColor: "#161616",
+          primaryBorderColor: "#161616",
+          lineColor: "#6f6a60",
+          secondaryColor: "#ece5d8",
+          tertiaryColor: "#f4f1ea",
+          fontSize: "14px",
+          fontFamily: "ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif"
+        },
+        flowchart: {
+          curve: "basis",
+          htmlLabels: true
+        }
+      });
+    </script>
+    <script
+      data-goatcounter="https://jiwonkim-blog.goatcounter.com/count"
+      async
+      src="https://gc.zgo.at/count.js"
+    ></script>
+  </body>
+</html>
