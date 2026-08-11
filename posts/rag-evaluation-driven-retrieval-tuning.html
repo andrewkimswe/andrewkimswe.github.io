@@ -1,0 +1,398 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>[RAG] 감으로 Top-k를 정하지 않기 | Jiwon Kim's Blog</title>
+    <meta
+      name="description"
+      content="CloudOps RAG에서 chunk size, embedding model, top_k, distance threshold를 Development set과 Held-out set으로 나누어 선택한 과정입니다."
+    />
+    <meta name="author" content="Jiwon Kim" />
+    <meta name="robots" content="index, follow, max-image-preview:large" />
+    <link rel="canonical" href="https://andrewkimswe.github.io/posts/rag-evaluation-driven-retrieval-tuning.html" />
+    <meta property="og:site_name" content="Jiwon Kim's Blog" />
+    <meta
+      property="og:title"
+      content="[RAG] 감으로 Top-k를 정하지 않기 - Chunking, Embedding, Threshold를 실험으로 선택한 과정"
+    />
+    <meta
+      property="og:description"
+      content="RAG configuration을 tutorial default가 아니라 Build, Measure, Compare, Freeze, Held-out Validate 흐름으로 선택한 기록입니다."
+    />
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="https://andrewkimswe.github.io/posts/rag-evaluation-driven-retrieval-tuning.html" />
+    <meta property="article:published_time" content="2026-08-11T00:00:00+09:00" />
+    <meta property="article:author" content="Jiwon Kim" />
+    <meta property="article:tag" content="RAG" />
+    <meta property="article:tag" content="Evaluation" />
+    <meta property="article:tag" content="Retrieval" />
+    <meta property="article:tag" content="Chroma" />
+    <link rel="stylesheet" href="../styles.css" />
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "BlogPosting",
+        "headline": "[RAG] 감으로 Top-k를 정하지 않기 - Chunking, Embedding, Threshold를 실험으로 선택한 과정",
+        "description": "CloudOps RAG에서 chunk size, embedding model, top_k, distance threshold를 Development set과 Held-out set으로 나누어 선택한 과정입니다.",
+        "datePublished": "2026-08-11T00:00:00+09:00",
+        "dateModified": "2026-08-11T00:00:00+09:00",
+        "author": {
+          "@type": "Person",
+          "name": "Jiwon Kim",
+          "url": "https://github.com/andrewkimswe"
+        },
+        "publisher": {
+          "@type": "Person",
+          "name": "Jiwon Kim"
+        },
+        "mainEntityOfPage": "https://andrewkimswe.github.io/posts/rag-evaluation-driven-retrieval-tuning.html",
+        "inLanguage": "ko-KR"
+      }
+    </script>
+  </head>
+  <body>
+    <header class="site-header">
+      <a class="brand" href="../" aria-label="Jiwon Kim's Blog 홈">
+        <span class="brand-mark">JK</span>
+        <span>
+          <strong>Jiwon Kim's Blog</strong>
+          <small>Engineering notes</small>
+        </span>
+      </a>
+      <nav class="nav-links" aria-label="주요 메뉴">
+        <a href="../#writing">Writing</a>
+        <a href="../#topics">Topics</a>
+        <a href="../#about">About</a>
+        <a href="https://github.com/andrewkimswe">GitHub</a>
+      </nav>
+    </header>
+
+    <main>
+      <article class="article-page">
+        <header class="article-hero">
+          <a class="back-link" href="../#writing">Back to writing</a>
+          <p class="eyebrow">RAG · Evaluation · Retrieval Tuning</p>
+          <h1>[RAG] 감으로 Top-k를 정하지 않기 - Chunking, Embedding, Threshold를 실험으로 선택한 과정</h1>
+          <p class="article-summary">
+            작은 RAG 프로젝트에서도 chunk size, embedding model, top_k, threshold를 감으로 고르면 이후 결과를
+            설명하기 어렵다. Development set에서 비교하고 freeze한 뒤 held-out으로 확인한 과정을 정리한다.
+          </p>
+          <div class="article-meta">
+            <time datetime="2026-08-11">2026.08.11</time>
+            <span>RAG</span>
+            <span>Evaluation</span>
+            <span>Retrieval</span>
+          </div>
+        </header>
+
+        <div class="article-body">
+          <p>RAG를 처음 구현할 때는 많은 값이 임의로 정해진다.</p>
+          <pre><code>chunk_size = 1000
+overlap = 100
+top_k = 4</code></pre>
+          <p>
+            튜토리얼에서는 충분하다. 하지만 실제 프로젝트에서는 왜 이 chunk size인지, 왜 이 embedding model인지,
+            왜 Top-5인지, 검색 결과를 언제 신뢰하지 않아야 하는지 설명할 수 있어야 한다.
+          </p>
+          <p>
+            CloudOps RAG에서는 이 질문에 답하기 위해 <strong>Build, Measure, Compare, Freeze, Held-out Validate</strong>
+            순서로 retrieval configuration을 선택했다.
+          </p>
+
+          <h2>1. 평가 대상</h2>
+          <p>
+            Corpus는 AWS와 Kubernetes 공식 troubleshooting 문서 20개로 구성했다. Retrieval dataset은 직접 작성한
+            50개 질문이고, development와 held-out으로 나눴다.
+          </p>
+          <table>
+            <thead>
+              <tr>
+                <th>Split</th>
+                <th>구성</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Development</td>
+                <td>40 questions, in-scope 36, out-of-scope 4</td>
+              </tr>
+              <tr>
+                <td>Held-out</td>
+                <td>10 questions, in-scope 8, out-of-scope 2</td>
+              </tr>
+            </tbody>
+          </table>
+          <p>작은 dataset이므로 이 결과를 일반 benchmark로 해석하지 않는다.</p>
+
+          <h2>2. Ground Truth를 Document로 정의한 이유</h2>
+          <p>
+            Chunking 설정을 바꾸면 chunk ID와 경계가 바뀐다. 특정 chunk를 정답으로 고정하면 chunking experiment
+            자체가 ground truth를 바꾼다. 그래서 expected source는 document ID 수준으로 정의했다.
+          </p>
+          <pre><code>expected_doc_ids = ["k8s_debug_pods"]</code></pre>
+          <p>평가는 검색된 chunk가 어느 expected document에서 왔는지를 확인한다.</p>
+
+          <h2>3. Hit@k와 MRR</h2>
+          <p>
+            Hit@k는 expected document가 Top-k 안에 하나라도 존재하면 hit로 본다. MRR은 첫 번째 relevant result가
+            얼마나 높은 순위에 있는지 본다.
+          </p>
+          <table>
+            <thead>
+              <tr>
+                <th>Metric</th>
+                <th>의미</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Hit@k</td>
+                <td>필요한 문서가 Top-k 안에 있는가?</td>
+              </tr>
+              <tr>
+                <td>MRR</td>
+                <td>첫 relevant result가 얼마나 앞에 있는가?</td>
+              </tr>
+              <tr>
+                <td>Multi All-Hit</td>
+                <td>복수 evidence가 필요한 질문에서 모두 검색됐는가?</td>
+              </tr>
+            </tbody>
+          </table>
+          <p>RAG generator는 한 개 문서만 사용하는 것이 아니므로 Hit@1만으로 retrieval quality를 판단하기 어렵다.</p>
+
+          <h2>4. Chunking Experiment</h2>
+          <p>대표 설정으로 <code>512/0</code>과 <code>1024/128</code>을 비교했다.</p>
+          <table>
+            <thead>
+              <tr>
+                <th>설정</th>
+                <th>관찰</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>512 / 0</td>
+                <td>더 세밀하지만 문맥이 끊길 수 있다.</td>
+              </tr>
+              <tr>
+                <td>1024 / 128</td>
+                <td>Hit@3가 32/36에서 33/36으로 개선됐지만 Hit@1과 MRR은 감소했다.</td>
+              </tr>
+            </tbody>
+          </table>
+          <p>
+            프로젝트에서는 generation에 여러 context가 들어간다는 점과 Top-3 evidence coverage를 고려해
+            <code>1024/128</code>을 선택했다. 이는 universal optimum이 아니라 이 corpus와 evaluation set에서의
+            engineering trade-off다.
+          </p>
+
+          <h2>5. Embedding Model 비교</h2>
+          <p>
+            선택된 chunking 설정에서 OpenAI <code>text-embedding-3-small</code>과
+            <code>sentence-transformers/all-MiniLM-L6-v2</code>를 비교했다.
+          </p>
+          <table>
+            <thead>
+              <tr>
+                <th>Embedding</th>
+                <th>Development Hit@3</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>MiniLM</td>
+                <td>31/36</td>
+              </tr>
+              <tr>
+                <td>OpenAI text-embedding-3-small</td>
+                <td>33/36</td>
+              </tr>
+            </tbody>
+          </table>
+          <p>
+            MiniLM이 잘못된 모델이라는 뜻은 아니다. 로컬 실행, privacy, cost, latency 요구사항이 다르면 선택도
+            달라질 수 있다.
+          </p>
+
+          <h2>6. Top-k</h2>
+          <p>
+            <code>k</code>를 늘리면 relevant document를 찾을 가능성이 높아질 수 있지만 무한정 늘릴 수는 없다.
+          </p>
+          <dl class="service-summary">
+            <div>
+              <dt>장점</dt>
+              <dd>Recall이 증가할 수 있고 multi-document question에서 coverage가 좋아질 수 있다.</dd>
+            </div>
+            <div>
+              <dt>비용</dt>
+              <dd>Context size, generation cost, noise, duplicate evidence가 함께 증가할 수 있다.</dd>
+            </div>
+          </dl>
+          <p>
+            프로젝트에서는 <code>k=3</code>과 <code>k=5</code>를 비교했고, multi-document query에서 Multi All-Hit이
+            <code>0/6</code>에서 <code>2/6</code>으로 개선되어 최종 <code>top_k = 5</code>를 선택했다.
+          </p>
+
+          <h2>7. Out-of-Scope 질문과 Distance Threshold</h2>
+          <p>
+            CloudOps 문서만 가진 시스템에 <code>프랑스 혁명은 왜 일어났나요?</code> 같은 질문이 들어와도 vector
+            store는 가장 가까운 문서를 반환한다. Nearest neighbor search에는 기본적으로 관련 문서 없음이라는 결과가
+            없다.
+          </p>
+          <p>그래서 가장 가까운 문서가 충분히 가까운지 판단하는 gate가 필요하다.</p>
+          <pre><code>top_1_l2_distance <= 1.042478
+accept
+
+top_1_l2_distance > 1.042478
+fallback</code></pre>
+          <p>Development에서는 in-scope 36/36 accept, out-of-scope 4/4 reject를 기록한 뒤 threshold를 freeze했다.</p>
+
+          <h2>8. Freeze</h2>
+          <div class="mermaid diagram compact-diagram">
+flowchart TB
+    experiments[Development Experiments]
+    decision[Configuration Decision]
+    freeze[Freeze]
+    heldout[Held-out Evaluation]
+
+    experiments --- decision
+    decision --- freeze
+    freeze --- heldout
+          </div>
+          <pre><code>chunk_size = 1024
+chunk_overlap = 128
+embedding = text-embedding-3-small
+top_k = 5
+threshold = L2 <= 1.042478
+generation = gpt-4o-mini</code></pre>
+          <p>
+            Held-out 결과를 보고 다시 threshold나 chunking을 바꾸면 held-out set은 더 이상 held-out이 아니다.
+            이후 개선 아이디어는 frozen result와 분리해 post-hoc experiment로 취급했다.
+          </p>
+
+          <h2>9. Held-out Validation</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>항목</th>
+                <th>결과</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Hit@1</td>
+                <td>7/8</td>
+              </tr>
+              <tr>
+                <td>Hit@3</td>
+                <td>8/8</td>
+              </tr>
+              <tr>
+                <td>MRR</td>
+                <td>0.9375</td>
+              </tr>
+              <tr>
+                <td>Threshold</td>
+                <td>8/8 in-scope accepted, 2/2 out-of-scope rejected</td>
+              </tr>
+            </tbody>
+          </table>
+          <p>
+            좋은 snapshot이지만 표본이 매우 작다. 따라서 <code>CloudOps 질문을 100% 정확하게 검색한다</code>가
+            아니라, 8개의 in-scope held-out questions에서 expected document가 모두 Top-3 내에 나타났다고 제한해서
+            말해야 한다.
+          </p>
+
+          <h2>10. Threshold가 해결하지 못하는 것</h2>
+          <p>
+            Distance gate가 잘 작동해도 semantic misretrieval을 막지는 못한다. ConfigMap 질문이 Secrets 문서와
+            높은 similarity를 보이면 threshold는 high-confidence wrong retrieval을 accept할 수 있다.
+          </p>
+          <dl class="service-summary">
+            <div>
+              <dt>해결하는 것</dt>
+              <dd>low-confidence out-of-scope retrieval</dd>
+            </div>
+            <div>
+              <dt>해결하지 못하는 것</dt>
+              <dd>high-confidence wrong retrieval</dd>
+            </div>
+          </dl>
+
+          <h2>11. Evaluation Collection과 Runtime Collection</h2>
+          <p>
+            서비스에 새로운 URL을 등록할 수 있게 만들면서 evaluation index가 변경되면 과거 실험을 재현하기 어렵다.
+            그래서 frozen experiments용 Evaluation Chroma와 mutable service data용 Runtime Chroma를 분리했다.
+          </p>
+          <div class="mermaid diagram">
+flowchart TB
+    official[Official Corpus]
+    eval[Frozen Eval Collection]
+    results[Evaluation Results]
+    ingestion[Runtime Ingestion]
+    runtime[Mutable Runtime Collection]
+    query[Production-like Query Path]
+
+    official --- eval
+    eval --- results
+    ingestion --- runtime
+    runtime --- query
+          </div>
+
+          <h2>정리</h2>
+          <p>
+            CloudOps RAG에서 최종 configuration은 <code>1024/128</code> character chunking,
+            <code>text-embedding-3-small</code>, Chroma, <code>top_k = 5</code>,
+            <code>L2 threshold = 1.042478</code>, <code>gpt-4o-mini</code>였다.
+          </p>
+          <p>
+            하지만 핵심은 숫자 자체가 아니다. RAG configuration을 tutorial default나 감으로 고르지 않고,
+            Development set에서 비교하고 freeze한 뒤 Held-out set에서 검증하는 과정이 더 중요했다. retrieval을
+            측정하고 나면 다음 질문이 생긴다. expected document를 잘 찾았으면 최종 답변도 좋은가?
+          </p>
+        </div>
+      </article>
+    </main>
+
+    <footer class="site-footer">
+      <p>© 2026 Jiwon Kim. Technical writing, notes, and experiments.</p>
+      <div class="footer-links">
+        <span id="visitStatus">Analytics ready</span>
+        <a href="https://github.com/andrewkimswe">github.com/andrewkimswe</a>
+      </div>
+    </footer>
+
+    <script src="../script.js"></script>
+    <script type="module">
+      import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
+
+      mermaid.initialize({
+        startOnLoad: true,
+        securityLevel: "strict",
+        theme: "base",
+        themeVariables: {
+          background: "#fbfaf7",
+          primaryColor: "#fbfaf7",
+          primaryTextColor: "#161616",
+          primaryBorderColor: "#161616",
+          lineColor: "#6f6a60",
+          secondaryColor: "#ece5d8",
+          tertiaryColor: "#f4f1ea",
+          fontSize: "14px",
+          fontFamily: "ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif"
+        },
+        flowchart: {
+          curve: "basis",
+          htmlLabels: true
+        }
+      });
+    </script>
+    <script
+      data-goatcounter="https://jiwonkim-blog.goatcounter.com/count"
+      async
+      src="https://gc.zgo.at/count.js"
+    ></script>
+  </body>
+</html>
