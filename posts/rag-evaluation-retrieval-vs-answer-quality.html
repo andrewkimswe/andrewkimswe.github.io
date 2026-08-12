@@ -1,0 +1,412 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>[RAG] Hit@k가 높으면 좋은 RAG일까? | Jiwon Kim's Blog</title>
+    <meta
+      name="description"
+      content="CloudOps RAG에서 retrieval metric과 answer quality를 분리해 평가하고, faithfulness와 correctness가 다른 문제임을 정리합니다."
+    />
+    <meta name="author" content="Jiwon Kim" />
+    <meta name="robots" content="index, follow, max-image-preview:large" />
+    <link rel="canonical" href="https://andrewkimswe.github.io/posts/rag-evaluation-retrieval-vs-answer-quality.html" />
+    <meta property="og:site_name" content="Jiwon Kim's Blog" />
+    <meta
+      property="og:title"
+      content="[RAG] Hit@k가 높으면 좋은 RAG일까? - Retrieval과 Answer Quality를 따로 평가해본 과정"
+    />
+    <meta
+      property="og:description"
+      content="좋은 retrieval과 좋은 answer는 같은 문제가 아니라는 점을 answer evaluation, LLM-as-a-Judge, human validation으로 정리합니다."
+    />
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="https://andrewkimswe.github.io/posts/rag-evaluation-retrieval-vs-answer-quality.html" />
+    <meta property="article:published_time" content="2026-08-12T00:00:00+09:00" />
+    <meta property="article:author" content="Jiwon Kim" />
+    <meta property="article:tag" content="RAG" />
+    <meta property="article:tag" content="Evaluation" />
+    <meta property="article:tag" content="LLM-as-a-Judge" />
+    <link rel="stylesheet" href="../styles.css" />
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "BlogPosting",
+        "headline": "[RAG] Hit@k가 높으면 좋은 RAG일까? - Retrieval과 Answer Quality를 따로 평가해본 과정",
+        "description": "CloudOps RAG에서 retrieval metric과 answer quality를 분리해 평가하고, faithfulness와 correctness가 다른 문제임을 정리합니다.",
+        "datePublished": "2026-08-12T00:00:00+09:00",
+        "dateModified": "2026-08-12T00:00:00+09:00",
+        "author": {
+          "@type": "Person",
+          "name": "Jiwon Kim",
+          "url": "https://github.com/andrewkimswe"
+        },
+        "publisher": {
+          "@type": "Person",
+          "name": "Jiwon Kim"
+        },
+        "mainEntityOfPage": "https://andrewkimswe.github.io/posts/rag-evaluation-retrieval-vs-answer-quality.html",
+        "inLanguage": "ko-KR"
+      }
+    </script>
+  </head>
+  <body>
+    <header class="site-header">
+      <a class="brand" href="../" aria-label="Jiwon Kim's Blog 홈">
+        <span class="brand-mark">JK</span>
+        <span>
+          <strong>Jiwon Kim's Blog</strong>
+          <small>Engineering notes</small>
+        </span>
+      </a>
+      <nav class="nav-links" aria-label="주요 메뉴">
+        <a href="../#writing">Writing</a>
+        <a href="../#topics">Topics</a>
+        <a href="../#about">About</a>
+        <a href="https://github.com/andrewkimswe">GitHub</a>
+      </nav>
+    </header>
+
+    <main>
+      <article class="article-page">
+        <header class="article-hero">
+          <a class="back-link" href="../#writing">Back to writing</a>
+          <p class="eyebrow">RAG · Answer Evaluation · LLM-as-a-Judge</p>
+          <h1>[RAG] Hit@k가 높으면 좋은 RAG일까? - Retrieval과 Answer Quality를 따로 평가해본 과정</h1>
+          <p class="article-summary">
+            Retrieval metric이 높아도 최종 답변이 항상 좋은 것은 아니다. 필요한 evidence를 찾았는지와 그 evidence로
+            좋은 답을 만들었는지를 분리해 평가한 과정을 정리한다.
+          </p>
+          <div class="article-meta">
+            <time datetime="2026-08-12">2026.08.12</time>
+            <span>RAG</span>
+            <span>Evaluation</span>
+            <span>LLM Judge</span>
+          </div>
+        </header>
+
+        <div class="article-body">
+          <p>CloudOps RAG의 frozen configuration은 작은 held-out set에서 다음 retrieval 결과를 기록했다.</p>
+          <pre><code>Hit@1 = 7/8
+Hit@3 = 8/8
+MRR = 0.9375</code></pre>
+          <p>처음 보면 꽤 좋아 보인다. 그렇다면 최종 답변도 거의 모두 정확해야 할까? 실제 human answer evaluation 결과는 달랐다.</p>
+          <table>
+            <thead>
+              <tr>
+                <th>Dimension</th>
+                <th>Score</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Correctness</td>
+                <td>15/22 = 1.36/2</td>
+              </tr>
+              <tr>
+                <td>Completeness</td>
+                <td>13/22 = 1.18/2</td>
+              </tr>
+              <tr>
+                <td>Faithfulness</td>
+                <td>21/22 = 1.91/2</td>
+              </tr>
+              <tr>
+                <td>Source Support</td>
+                <td>18/22 = 1.64/2</td>
+              </tr>
+            </tbody>
+          </table>
+          <blockquote>
+            <p>좋은 retrieval과 좋은 answer는 같은 문제가 아니다.</p>
+          </blockquote>
+
+          <h2>1. RAG에는 최소 두 개의 문제가 있다</h2>
+          <div class="mermaid diagram compact-diagram">
+flowchart TB
+    question[Question]
+    retriever[Retriever]
+    evidence[Evidence]
+    generator[Generator]
+    answer[Answer]
+
+    question --- retriever
+    retriever --- evidence
+    evidence --- generator
+    generator --- answer
+          </div>
+          <dl class="service-summary">
+            <div>
+              <dt>Retrieval Failure</dt>
+              <dd>Wrong 또는 missing evidence 때문에 generator가 틀린 근거를 받는다.</dd>
+            </div>
+            <div>
+              <dt>Generation Failure</dt>
+              <dd>Correct evidence가 있어도 답변이 incomplete하거나 incorrect할 수 있다.</dd>
+            </div>
+          </dl>
+          <p>두 문제를 하나의 end-to-end accuracy만으로 측정하면 원인을 알기 어렵다.</p>
+
+          <h2>2. Retrieval Evaluation의 질문</h2>
+          <p>Retrieval metric이 답하려는 것은 필요한 근거 문서를 찾았는가이다.</p>
+          <ul>
+            <li>Hit@k</li>
+            <li>MRR</li>
+            <li>Multi Any-Hit</li>
+            <li>Multi All-Hit</li>
+            <li>threshold accept/reject</li>
+          </ul>
+          <p>
+            하지만 이 metric은 generator가 해당 문서의 내용을 제대로 사용했는지 알려주지 않는다. 그래서 answer
+            evaluation이 별도로 필요하다.
+          </p>
+
+          <h2>3. Answer Evaluation의 질문</h2>
+          <p>Answer evaluation은 검색된 evidence를 사용해 좋은 답을 만들었는가를 본다.</p>
+          <table>
+            <thead>
+              <tr>
+                <th>Dimension</th>
+                <th>질문</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Correctness</td>
+                <td>질문에 대한 핵심 내용이 사실적으로 맞는가?</td>
+              </tr>
+              <tr>
+                <td>Completeness</td>
+                <td>중요한 요소를 빠뜨리지 않았는가?</td>
+              </tr>
+              <tr>
+                <td>Faithfulness</td>
+                <td>답변이 retrieved context에 근거하는가?</td>
+              </tr>
+              <tr>
+                <td>Source Support</td>
+                <td>제시된 source가 실제 답변을 충분히 뒷받침하는가?</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <h2>4. Faithfulness와 Correctness는 다르다</h2>
+          <p>
+            어떤 답변은 retrieved context에 매우 충실할 수 있다. 하지만 retrieval 자체가 잘못됐다면 generator는
+            충실하게 틀린 답을 만들 수 있다.
+          </p>
+          <div class="mermaid diagram compact-diagram">
+flowchart TB
+    question[Question]
+    wrong[Wrong Context]
+    faithful[Faithful Generator]
+    bad[Faithfully Wrong Answer]
+
+    question --- wrong
+    wrong --- faithful
+    faithful --- bad
+          </div>
+          <p>
+            실제 <code>eval_027</code>에서는 ConfigMap 중심 질문에 Secrets 중심 context가 검색됐다. Generator는
+            context에서 벗어나지 않았지만 질문이 요구한 ConfigMap 문제를 제대로 해결하지 못했다.
+          </p>
+          <blockquote>
+            <p>Grounded answer라고 해서 correct answer인 것은 아니다.</p>
+          </blockquote>
+
+          <h2>5. Expected Document가 없어도 답할 수 있다</h2>
+          <p>
+            반대 사례도 있었다. <code>eval_045</code>에서는 label에 지정된 exact expected document가 Top-k에
+            없었지만, 다른 Auto Scaling 문서가 필요한 evidence를 충분히 포함하고 있었다.
+          </p>
+          <dl class="service-summary">
+            <div>
+              <dt>Document Metric</dt>
+              <dd>expected document가 없으므로 miss로 볼 수 있다.</dd>
+            </div>
+            <div>
+              <dt>Answer Support</dt>
+              <dd>다른 source가 충분한 evidence를 제공했다면 성공일 수 있다.</dd>
+            </div>
+          </dl>
+          <p>이 사례는 document relevance와 evidence sufficiency가 다르다는 점을 보여준다.</p>
+
+          <h2>6. Diagnostic Answer Set</h2>
+          <p>Answer evaluation은 retrieval dataset 전체 50개가 아니라 14개 diagnostic subset에서 수행했다.</p>
+          <pre><code>14 Questions
+11 Generated Answers
+3 Fallback Cases</code></pre>
+          <p>
+            목적은 broad benchmark가 아니라 현재 pipeline에서 answer failure가 어떤 형태로 나타나는지 확인하는
+            것이었다.
+          </p>
+
+          <h2>7. Human Review 결과</h2>
+          <p>
+            11개 generated answer에 대해 사람이 직접 correctness, completeness, faithfulness, source support를
+            검토했다. 특히 completeness가 낮았고, 이는 단순 hallucination보다 다른 문제가 많았다는 의미다.
+          </p>
+          <ul>
+            <li>비교 항목 하나를 누락한다.</li>
+            <li>필요한 diagnostic step을 빠뜨린다.</li>
+            <li>여러 evidence 중 일부만 사용한다.</li>
+            <li>질문의 모든 sub-question에 답하지 않는다.</li>
+          </ul>
+
+          <h2>8. Failure를 원인별로 분류하기</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>Failure Type</th>
+                <th>Count</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Generation-side failure</td>
+                <td>4</td>
+              </tr>
+              <tr>
+                <td>Retrieval + Generation</td>
+                <td>2</td>
+              </tr>
+              <tr>
+                <td>Retrieval failure</td>
+                <td>1</td>
+              </tr>
+              <tr>
+                <td>No material failure</td>
+                <td>4</td>
+              </tr>
+            </tbody>
+          </table>
+          <p>
+            Retrieval 문제라면 chunking, embedding, query rewriting, reranking, hybrid retrieval, diversification을
+            검토할 수 있다. Generation 문제라면 prompt, context formatting, instruction, model, answer planning,
+            citation behavior를 봐야 한다.
+          </p>
+
+          <h2>9. LLM-as-a-Judge</h2>
+          <p>사람이 모든 answer를 반복 평가하는 것은 비용이 크다. 따라서 evaluator LLM에게 rubric 기반 평가를 맡길 수 있다.</p>
+          <div class="mermaid diagram compact-diagram">
+flowchart TB
+    question[Question]
+    context[Retrieved Context]
+    candidate[Candidate Answer]
+    rubric[Rubric]
+    judge[Judge LLM]
+    score[Score]
+
+    question --- judge
+    context --- judge
+    candidate --- judge
+    rubric --- judge
+    judge --- score
+          </div>
+          <pre><code>{
+  "correctness": 2,
+  "completeness": 1,
+  "faithfulness": 2,
+  "source_support": 2
+}</code></pre>
+          <p>
+            반복 실험에서 정형화된 score를 만들 수 있다는 것이 장점이지만, Judge도 모델이므로 그대로 믿을 수는 없다.
+          </p>
+
+          <h2>10. Judge Calibration</h2>
+          <p>
+            CloudOps RAG에서는 Judge 결과를 사람이 직접 평가한 결과와 비교했다. 작은 sample에서 39/44 exact
+            agreement, 44/44 within one point를 기록했다.
+          </p>
+          <p>
+            이는 judge의 일반적 신뢰성을 증명하는 결과가 아니라, 현재 rubric과 diagnostic set에서 어느 정도 일치하는지
+            확인한 calibration snapshot이다.
+          </p>
+          <div class="mermaid diagram compact-diagram">
+flowchart TB
+    human[Human Evaluation]
+    rubric[Rubric Definition]
+    calibration[Judge Calibration]
+    auto[Automated Repeated Evaluation]
+    audit[Periodic Human Audit]
+
+    human --- rubric
+    rubric --- calibration
+    calibration --- auto
+    auto --- audit
+          </div>
+
+          <h2>11. Retrieval과 Generation을 독립적으로 실험하기</h2>
+          <p>
+            RAG generation을 개선할 때 retrieval 결과까지 함께 바뀌면 원인을 알기 어렵다. Retrieval context를 고정하고
+            prompt 또는 model만 바꾸는 controlled experiment가 필요하다.
+          </p>
+          <pre><code>Fixed Retrieval Context
+Prompt A: Answer A
+Prompt B: Answer B
+Model C: Answer C</code></pre>
+          <p>반대로 retrieval 실험에서는 generator를 거치지 않고 Hit@k, MRR 같은 retrieval metric만 비교할 수 있다.</p>
+
+          <h2>12. Fallback도 평가 대상이다</h2>
+          <p>
+            CloudOps RAG는 low-confidence query에서 LLM을 호출하지 않는다. 따라서 fallback은 failure exception이 아니라
+            정상적인 system behavior다.
+          </p>
+          <pre><code>Top-1 L2 > threshold
+Fallback
+Generation skipped</code></pre>
+          <p>Held-out의 작은 snapshot에서는 8/8 in-scope accepted, 2/2 out-of-scope rejected였다.</p>
+
+          <h2>정리</h2>
+          <p>
+            CloudOps RAG의 answer evaluation에서 가장 인상적이었던 결과는 faithfulness 1.91/2와 correctness 1.36/2의
+            차이였다. 이 차이는 RAG 품질을 단순히 hallucination이 적다는 말로 설명할 수 없다는 것을 보여준다.
+          </p>
+          <p>
+            Retrieval quality와 answer quality는 관련되어 있지만 동일하지 않다. LLM-as-a-Judge 역시 유용한 자동화
+            도구지만, 먼저 human evaluation과 비교해 현재 rubric에서 어느 정도 믿을 수 있는지 확인해야 한다.
+          </p>
+        </div>
+      </article>
+    </main>
+
+    <footer class="site-footer">
+      <p>© 2026 Jiwon Kim. Technical writing, notes, and experiments.</p>
+      <div class="footer-links">
+        <span id="visitStatus">Analytics ready</span>
+        <a href="https://github.com/andrewkimswe">github.com/andrewkimswe</a>
+      </div>
+    </footer>
+
+    <script src="../script.js"></script>
+    <script type="module">
+      import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
+
+      mermaid.initialize({
+        startOnLoad: true,
+        securityLevel: "strict",
+        theme: "base",
+        themeVariables: {
+          background: "#fbfaf7",
+          primaryColor: "#fbfaf7",
+          primaryTextColor: "#161616",
+          primaryBorderColor: "#161616",
+          lineColor: "#6f6a60",
+          secondaryColor: "#ece5d8",
+          tertiaryColor: "#f4f1ea",
+          fontSize: "14px",
+          fontFamily: "ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif"
+        },
+        flowchart: {
+          curve: "basis",
+          htmlLabels: true
+        }
+      });
+    </script>
+    <script
+      data-goatcounter="https://jiwonkim-blog.goatcounter.com/count"
+      async
+      src="https://gc.zgo.at/count.js"
+    ></script>
+  </body>
+</html>
