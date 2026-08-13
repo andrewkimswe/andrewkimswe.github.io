@@ -5,48 +5,55 @@
     <link>https://andrewkimswe.github.io/</link>
     <description>백엔드, 클라우드, 아키텍처, 운영, 트러블슈팅을 기록하는 기술 블로그입니다.</description>
     <language>ko-KR</language>
-    <lastBuildDate>Thu, 13 Aug 2026 00:00:00 +0900</lastBuildDate>
+    <lastBuildDate>Fri, 14 Aug 2026 00:00:00 +0900</lastBuildDate>
+    <item>
+      <title>[AWS/FinOps] NAT Gateway 비용은 어디서 발생할까? - CUR, Athena, QuickSight로 비용 대시보드 만들기</title>
+      <link>https://andrewkimswe.github.io/posts/aws-finops-nat-gateway-cost-dashboard.html</link>
+      <guid>https://andrewkimswe.github.io/posts/aws-finops-nat-gateway-cost-dashboard.html</guid>
+      <pubDate>Fri, 14 Aug 2026 00:00:00 +0900</pubDate>
+      <description>NAT Gateway 비용을 월 누적, 계정, Region, 일별 추세로 나누어 분석하고 architecture optimization으로 연결하는 FinOps 구조입니다.</description>
+    </item>
     <item>
       <title>[RAG] Top-k를 늘렸는데 왜 필요한 문서를 못 찾을까? - Duplicate Chunk와 Retrieval Diversification</title>
       <link>https://andrewkimswe.github.io/posts/rag-multi-document-retrieval-diversification.html</link>
       <guid>https://andrewkimswe.github.io/posts/rag-multi-document-retrieval-diversification.html</guid>
       <pubDate>Thu, 13 Aug 2026 00:00:00 +0900</pubDate>
-      <description>Top-k 증가만으로는 해결되지 않는 duplicate chunk와 multi-document completeness 문제를 정리합니다.</description>
+      <description>Top-5가 다섯 개의 독립 근거를 의미하지 않는 이유와 multi-document completeness를 높이기 위한 retrieval diversification 실험입니다.</description>
     </item>
     <item>
       <title>[RAG] Hit@k가 높으면 좋은 RAG일까? - Retrieval과 Answer Quality를 따로 평가해본 과정</title>
       <link>https://andrewkimswe.github.io/posts/rag-evaluation-retrieval-vs-answer-quality.html</link>
       <guid>https://andrewkimswe.github.io/posts/rag-evaluation-retrieval-vs-answer-quality.html</guid>
       <pubDate>Wed, 12 Aug 2026 00:00:00 +0900</pubDate>
-      <description>Retrieval metric과 answer quality를 분리해 faithfulness, correctness, source support를 평가한 과정입니다.</description>
+      <description>좋은 retrieval과 좋은 answer는 같은 문제가 아니라는 점을 answer evaluation, LLM-as-a-Judge, human validation으로 정리합니다.</description>
     </item>
     <item>
       <title>[RAG] 감으로 Top-k를 정하지 않기 - Chunking, Embedding, Threshold를 실험으로 선택한 과정</title>
       <link>https://andrewkimswe.github.io/posts/rag-evaluation-driven-retrieval-tuning.html</link>
       <guid>https://andrewkimswe.github.io/posts/rag-evaluation-driven-retrieval-tuning.html</guid>
       <pubDate>Tue, 11 Aug 2026 00:00:00 +0900</pubDate>
-      <description>RAG retrieval configuration을 development set에서 비교하고 freeze한 뒤 held-out으로 검증한 기록입니다.</description>
+      <description>RAG configuration을 tutorial default가 아니라 Build, Measure, Compare, Freeze, Held-out Validate 흐름으로 선택한 기록입니다.</description>
     </item>
     <item>
       <title>[RAG] 긴 문서에서 필요한 근거를 찾는 과정 - Chunking, Embedding, Vector Store와 Semantic Retrieval</title>
       <link>https://andrewkimswe.github.io/posts/rag-document-processing-semantic-retrieval.html</link>
       <guid>https://andrewkimswe.github.io/posts/rag-document-processing-semantic-retrieval.html</guid>
       <pubDate>Mon, 10 Aug 2026 00:00:00 +0900</pubDate>
-      <description>긴 문서를 chunk로 나누고 embedding/vector store로 필요한 근거를 찾는 RAG retrieval pipeline입니다.</description>
+      <description>긴 문서를 작은 chunk로 나누고 의미 기반 검색으로 필요한 근거를 찾는 RAG retrieval pipeline입니다.</description>
     </item>
     <item>
       <title>[RAG] 불완전한 질문을 바로 검색하지 않기 - Running State와 Slot Filling으로 Query Clarification 설계하기</title>
       <link>https://andrewkimswe.github.io/posts/rag-stateful-query-clarification.html</link>
       <guid>https://andrewkimswe.github.io/posts/rag-stateful-query-clarification.html</guid>
       <pubDate>Sun, 09 Aug 2026 00:00:00 +0900</pubDate>
-      <description>검색 전에 running state와 slot filling으로 모호한 CloudOps 질문을 구조화하는 설계입니다.</description>
+      <description>모호한 운영 질문을 곧바로 embedding하지 않고 state, branch, slot filling으로 retrieval-ready query를 만드는 설계입니다.</description>
     </item>
     <item>
       <title>[LLM] API 호출부터 LangChain까지 - LLM 애플리케이션의 구조 이해하기</title>
       <link>https://andrewkimswe.github.io/posts/llm-api-langchain-application-architecture.html</link>
       <guid>https://andrewkimswe.github.io/posts/llm-api-langchain-application-architecture.html</guid>
       <pubDate>Sat, 08 Aug 2026 00:00:00 +0900</pubDate>
-      <description>LLM serving layer와 LangChain orchestration layer를 분리해 LLM 애플리케이션 구조를 정리합니다.</description>
+      <description>단순한 model.invoke 호출 뒤에 있는 LLM serving layer와, 앞단의 orchestration layer를 구분해서 정리합니다.</description>
     </item>
     <item>
       <title>[AWS] S3에서 PII를 자동 탐지하고 삭제를 방지하기 - Macie + EventBridge + Object Lock</title>
@@ -74,28 +81,28 @@
       <link>https://andrewkimswe.github.io/posts/cloudfront-private-alb-vpc-origins.html</link>
       <guid>https://andrewkimswe.github.io/posts/cloudfront-private-alb-vpc-origins.html</guid>
       <pubDate>Tue, 04 Aug 2026 00:00:00 +0900</pubDate>
-      <description>CloudFront VPC Origins로 Internal ALB를 Origin으로 두고 직접 접근 경로를 줄이는 구조입니다.</description>
+      <description>CloudFront VPC Origins로 Internal ALB를 Origin으로 두고 Public Entry Point를 CloudFront로 집중시키는 구조입니다.</description>
     </item>
     <item>
       <title>[AWS] Lambda 반복 호출을 Step Functions Map으로 분리하기 - Serverless Orchestration 설계</title>
       <link>https://andrewkimswe.github.io/posts/lambda-step-functions-map-orchestration.html</link>
       <guid>https://andrewkimswe.github.io/posts/lambda-step-functions-map-orchestration.html</guid>
       <pubDate>Mon, 03 Aug 2026 00:00:00 +0900</pubDate>
-      <description>반복 호출과 재시도 책임을 Lambda 코드에서 Step Functions Map 상태로 분리하는 Serverless Orchestration 설계입니다.</description>
+      <description>반복 호출과 재시도 책임을 Lambda 코드에서 Step Functions Map 상태로 분리하는 설계입니다.</description>
     </item>
     <item>
       <title>[AWS] Multi-Tenant Data Lake에서 Tenant 데이터 격리하기 - S3와 Lake Formation Row-Level Security</title>
       <link>https://andrewkimswe.github.io/posts/s3-data-lake-lake-formation-row-level-access-control.html</link>
       <guid>https://andrewkimswe.github.io/posts/s3-data-lake-lake-formation-row-level-access-control.html</guid>
       <pubDate>Sun, 02 Aug 2026 00:00:00 +0900</pubDate>
-      <description>B2B SaaS 분석 환경에서 Tenant Isolation을 S3 Data Lake와 Lake Formation Row-Level Security까지 확장하는 패턴입니다.</description>
+      <description>B2B SaaS Multi-Tenant 환경에서 하나의 S3 Data Lake를 유지하면서 Tenant별 Row 접근 범위를 제한하는 패턴입니다.</description>
     </item>
     <item>
       <title>[AWS] CloudFront 설정 변경을 실시간으로 탐지하고 알림 보내기</title>
       <link>https://andrewkimswe.github.io/posts/cloudfront-logging-change-detection.html</link>
       <guid>https://andrewkimswe.github.io/posts/cloudfront-logging-change-detection.html</guid>
       <pubDate>Sat, 01 Aug 2026 00:00:00 +0900</pubDate>
-      <description>CloudTrail, EventBridge, Lambda, SNS로 CloudFront Logging 비활성화를 탐지하는 패턴입니다.</description>
+      <description>CloudTrail, EventBridge, Lambda, SNS를 사용해 CloudFront Logging 비활성화를 탐지하는 패턴입니다.</description>
     </item>
   </channel>
 </rss>

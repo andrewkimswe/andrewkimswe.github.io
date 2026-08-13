@@ -20,7 +20,9 @@
     />
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://andrewkimswe.github.io/" />
+    <meta property="og:image" content="https://andrewkimswe.github.io/assets/social-card.svg" />
     <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://andrewkimswe.github.io/assets/social-card.svg" />
     <meta name="twitter:title" content="Jiwon Kim's Blog | 기술 블로그" />
     <meta
       name="twitter:description"
@@ -105,6 +107,7 @@
             <button class="tag-button" data-filter="Serverless" type="button">Serverless</button>
             <button class="tag-button" data-filter="LLM" type="button">LLM</button>
             <button class="tag-button" data-filter="RAG" type="button">RAG</button>
+            <button class="tag-button" data-filter="FinOps" type="button">FinOps</button>
             <button class="tag-button" data-filter="Architecture" type="button">Architecture</button>
             <button class="tag-button" data-filter="Operations" type="button">Operations</button>
           </div>
@@ -113,128 +116,140 @@
         <div class="post-list" id="postGrid">
           <article
             class="post-row"
-            data-tags="RAG LLM Retrieval Evaluation Diversification Architecture"
-            data-title="Top-k를 늘렸는데 왜 필요한 문서를 못 찾을까 Duplicate Chunk와 Retrieval Diversification"
+            data-tags="Architecture Athena AWS Cloud Cost Analytics CUR FinOps Gateway NAT NAT Gateway QuickSight"
+            data-title="[AWS/FinOps] NAT Gateway 비용은 어디서 발생할까? - CUR, Athena, QuickSight로 비용 대시보드 만들기"
+          >
+            <a href="./posts/aws-finops-nat-gateway-cost-dashboard.html">
+              <time datetime="2026-08-14">2026.08.14</time>
+              <span class="post-topic">FinOps</span>
+              <h3>[AWS/FinOps] NAT Gateway 비용은 어디서 발생할까? - CUR, Athena, QuickSight로 비용 대시보드 만들기</h3>
+              <p>NAT Gateway 비용을 월 누적, 계정, Region, 일별 추세로 나누어 분석하고 architecture optimization으로 연결하는 FinOps 구조입니다.</p>
+            </a>
+          </article>
+          <article
+            class="post-row"
+            data-tags="Chunk Cloud Diversification Duplicate MMR Multi-Document Retrieval RAG Retrieval Top-k"
+            data-title="[RAG] Top-k를 늘렸는데 왜 필요한 문서를 못 찾을까? - Duplicate Chunk와 Retrieval Diversification"
           >
             <a href="./posts/rag-multi-document-retrieval-diversification.html">
               <time datetime="2026-08-13">2026.08.13</time>
               <span class="post-topic">RAG</span>
               <h3>[RAG] Top-k를 늘렸는데 왜 필요한 문서를 못 찾을까? - Duplicate Chunk와 Retrieval Diversification</h3>
-              <p>Top-k 증가만으로는 해결되지 않는 duplicate chunk와 multi-document completeness 문제를 정리합니다.</p>
+              <p>Top-5가 다섯 개의 독립 근거를 의미하지 않는 이유와 multi-document completeness를 높이기 위한 retrieval diversification 실험입니다.</p>
             </a>
           </article>
           <article
             class="post-row"
-            data-tags="RAG LLM Evaluation Answer Quality LLM-as-a-Judge Architecture"
-            data-title="Hit@k가 높으면 좋은 RAG일까 Retrieval과 Answer Quality를 따로 평가해본 과정"
+            data-tags="Answer Answer Evaluation Cloud Evaluation Hit@k LLM-as-a-Judge Quality RAG Retrieval"
+            data-title="[RAG] Hit@k가 높으면 좋은 RAG일까? - Retrieval과 Answer Quality를 따로 평가해본 과정"
           >
             <a href="./posts/rag-evaluation-retrieval-vs-answer-quality.html">
               <time datetime="2026-08-12">2026.08.12</time>
               <span class="post-topic">RAG</span>
               <h3>[RAG] Hit@k가 높으면 좋은 RAG일까? - Retrieval과 Answer Quality를 따로 평가해본 과정</h3>
-              <p>Retrieval metric과 answer quality를 분리해 faithfulness, correctness, source support를 평가한 과정입니다.</p>
+              <p>좋은 retrieval과 좋은 answer는 같은 문제가 아니라는 점을 answer evaluation, LLM-as-a-Judge, human validation으로 정리합니다.</p>
             </a>
           </article>
           <article
             class="post-row"
-            data-tags="RAG LLM Retrieval Evaluation Chroma Architecture"
-            data-title="감으로 Top-k를 정하지 않기 Chunking Embedding Threshold를 실험으로 선택한 과정"
+            data-tags="AWS Chroma Chunking Cloud Embedding Evaluation RAG Retrieval Retrieval Tuning Threshold Top-k"
+            data-title="[RAG] 감으로 Top-k를 정하지 않기 - Chunking, Embedding, Threshold를 실험으로 선택한 과정"
           >
             <a href="./posts/rag-evaluation-driven-retrieval-tuning.html">
               <time datetime="2026-08-11">2026.08.11</time>
               <span class="post-topic">RAG</span>
               <h3>[RAG] 감으로 Top-k를 정하지 않기 - Chunking, Embedding, Threshold를 실험으로 선택한 과정</h3>
-              <p>RAG retrieval configuration을 development set에서 비교하고 freeze한 뒤 held-out으로 검증한 기록입니다.</p>
+              <p>RAG configuration을 tutorial default가 아니라 Build, Measure, Compare, Freeze, Held-out Validate 흐름으로 선택한 기록입니다.</p>
             </a>
           </article>
           <article
             class="post-row"
-            data-tags="RAG LLM Embedding Vector Store Semantic Retrieval Architecture"
-            data-title="긴 문서에서 필요한 근거를 찾는 과정 Chunking Embedding Vector Store와 Semantic Retrieval"
+            data-tags="AWS Chunking Embedding RAG Retrieval Semantic Semantic Retrieval Store Vector Vector Store"
+            data-title="[RAG] 긴 문서에서 필요한 근거를 찾는 과정 - Chunking, Embedding, Vector Store와 Semantic Retrieval"
           >
             <a href="./posts/rag-document-processing-semantic-retrieval.html">
               <time datetime="2026-08-10">2026.08.10</time>
               <span class="post-topic">RAG</span>
               <h3>[RAG] 긴 문서에서 필요한 근거를 찾는 과정 - Chunking, Embedding, Vector Store와 Semantic Retrieval</h3>
-              <p>긴 문서를 chunk로 나누고 embedding/vector store로 필요한 근거를 찾는 RAG retrieval pipeline입니다.</p>
+              <p>긴 문서를 작은 chunk로 나누고 의미 기반 검색으로 필요한 근거를 찾는 RAG retrieval pipeline입니다.</p>
             </a>
           </article>
           <article
             class="post-row"
-            data-tags="RAG LLM LangChain CloudOps Query Clarification Architecture"
-            data-title="불완전한 질문을 바로 검색하지 않기 Running State와 Slot Filling으로 Query Clarification 설계하기"
+            data-tags="Clarification Cloud Filling LangChain LLM Query Query Clarification RAG Running Slot State"
+            data-title="[RAG] 불완전한 질문을 바로 검색하지 않기 - Running State와 Slot Filling으로 Query Clarification 설계하기"
           >
             <a href="./posts/rag-stateful-query-clarification.html">
               <time datetime="2026-08-09">2026.08.09</time>
               <span class="post-topic">RAG</span>
               <h3>[RAG] 불완전한 질문을 바로 검색하지 않기 - Running State와 Slot Filling으로 Query Clarification 설계하기</h3>
-              <p>검색 전에 running state와 slot filling으로 모호한 CloudOps 질문을 구조화하는 설계입니다.</p>
+              <p>모호한 운영 질문을 곧바로 embedding하지 않고 state, branch, slot filling으로 retrieval-ready query를 만드는 설계입니다.</p>
             </a>
           </article>
           <article
             class="post-row"
-            data-tags="LLM AI LangChain Architecture Orchestration"
-            data-title="API 호출부터 LangChain까지 LLM 애플리케이션의 구조 이해하기"
+            data-tags="AI Application API Architecture Cloud LangChain LLM Orchestration"
+            data-title="[LLM] API 호출부터 LangChain까지 - LLM 애플리케이션의 구조 이해하기"
           >
             <a href="./posts/llm-api-langchain-application-architecture.html">
               <time datetime="2026-08-08">2026.08.08</time>
               <span class="post-topic">LLM</span>
               <h3>[LLM] API 호출부터 LangChain까지 - LLM 애플리케이션의 구조 이해하기</h3>
-              <p>LLM serving layer와 LangChain orchestration layer를 분리해 LLM 애플리케이션 구조를 정리합니다.</p>
+              <p>단순한 model.invoke 호출 뒤에 있는 LLM serving layer와, 앞단의 orchestration layer를 구분해서 정리합니다.</p>
             </a>
           </article>
           <article
             class="post-row"
-            data-tags="Cloud Architecture Operations AWS Security Storage Data"
-            data-title="S3에서 PII를 자동 탐지하고 삭제를 방지하기 Macie EventBridge Object Lock"
+            data-tags="AWS Cloud Data Protection EventBridge Lock Macie Object Object Lock PII S3 Security Security Automation"
+            data-title="[AWS] S3에서 PII를 자동 탐지하고 삭제를 방지하기 - Macie + EventBridge + Object Lock"
           >
             <a href="./posts/s3-pii-detection-macie-object-lock.html">
               <time datetime="2026-08-07">2026.08.07</time>
-              <span class="post-topic">Security</span>
+              <span class="post-topic">Data</span>
               <h3>[AWS] S3에서 PII를 자동 탐지하고 삭제를 방지하기 - Macie + EventBridge + Object Lock</h3>
-              <p>Macie finding을 EventBridge와 Lambda로 처리하고 Object Lock Legal Hold로 검토 대상 객체를 보호하는 구조입니다.</p>
+              <p>Macie finding을 EventBridge와 Lambda로 처리하고 S3 Object Lock Legal Hold로 검토 대상 객체를 보호하는 구조입니다.</p>
             </a>
           </article>
           <article
             class="post-row"
-            data-tags="Cloud Architecture Operations AWS Storage Serverless"
-            data-title="이미지 업로드 병목 제거하기 S3 Presigned URL과 Lambda로 Event-Driven Processing 구성"
+            data-tags="Architecture AWS Cloud Event-Driven Event-Driven Architecture Lambda Presigned Presigned URL Processing S3 Storage URL"
+            data-title="[AWS] 이미지 업로드 병목 제거하기 - S3 Presigned URL과 Lambda로 Event-Driven Processing 구성"
           >
             <a href="./posts/s3-presigned-url-lambda-image-processing.html">
               <time datetime="2026-08-06">2026.08.06</time>
-              <span class="post-topic">Storage</span>
+              <span class="post-topic">RAG</span>
               <h3>[AWS] 이미지 업로드 병목 제거하기 - S3 Presigned URL과 Lambda로 Event-Driven Processing 구성</h3>
               <p>대용량 이미지 업로드 경로에서 애플리케이션 서버를 분리하고 S3 이벤트와 Lambda로 후처리하는 구조입니다.</p>
             </a>
           </article>
           <article
             class="post-row"
-            data-tags="Cloud Architecture Operations AWS Storage Network"
-            data-title="글로벌 S3 아키텍처 구성하기 Multi-Region Access Point와 Cross-Region Replication"
+            data-tags="Access AWS Cloud Cross-Region Cross-Region Replication Multi-Region Multi-Region Access Point Point Replication S3 Storage"
+            data-title="[AWS] 글로벌 S3 아키텍처 구성하기 - Multi-Region Access Point와 Cross-Region Replication"
           >
             <a href="./posts/global-s3-mrap-cross-region-replication.html">
               <time datetime="2026-08-05">2026.08.05</time>
-              <span class="post-topic">Storage</span>
+              <span class="post-topic">RAG</span>
               <h3>[AWS] 글로벌 S3 아키텍처 구성하기 - Multi-Region Access Point와 Cross-Region Replication</h3>
               <p>MRAP는 글로벌 요청 라우팅을, CRR은 리전 간 데이터 복제를 담당한다는 관점에서 정리한 구조입니다.</p>
             </a>
           </article>
           <article
             class="post-row"
-            data-tags="Cloud Architecture Operations AWS Security Network"
-            data-title="CloudFront 뒤의 ALB를 Private하게 구성하기 VPC Origins"
+            data-tags="ALB Architecture AWS Cloud CloudFront Network Origins Private Security VPC VPC Origins"
+            data-title="[AWS] CloudFront 뒤의 ALB를 Private하게 구성하기 - VPC Origins"
           >
             <a href="./posts/cloudfront-private-alb-vpc-origins.html">
               <time datetime="2026-08-04">2026.08.04</time>
-              <span class="post-topic">Cloud</span>
+              <span class="post-topic">Security</span>
               <h3>[AWS] CloudFront 뒤의 ALB를 Private하게 구성하기 - VPC Origins</h3>
-              <p>CloudFront VPC Origins로 Internal ALB를 Origin으로 두고 직접 접근 경로를 줄이는 구조입니다.</p>
+              <p>CloudFront VPC Origins로 Internal ALB를 Origin으로 두고 Public Entry Point를 CloudFront로 집중시키는 구조입니다.</p>
             </a>
           </article>
           <article
             class="post-row"
-            data-tags="Cloud Architecture Operations AWS Serverless"
-            data-title="Lambda 반복 호출을 Step Functions Map으로 분리하기 Serverless Orchestration 설계"
+            data-tags="AWS Cloud Functions Lambda Map Orchestration Serverless Step Step Functions"
+            data-title="[AWS] Lambda 반복 호출을 Step Functions Map으로 분리하기 - Serverless Orchestration 설계"
           >
             <a href="./posts/lambda-step-functions-map-orchestration.html">
               <time datetime="2026-08-03">2026.08.03</time>
@@ -245,26 +260,26 @@
           </article>
           <article
             class="post-row"
-            data-tags="Cloud Architecture Data AWS Security Governance"
-            data-title="Multi-Tenant Data Lake에서 Tenant 데이터 격리하기 S3와 Lake Formation Row-Level Security"
+            data-tags="Architecture AWS Cloud Data Data Governance Data Lake Formation Lake Lake Formation Multi-Tenant Row-Level S3 Security Tenant"
+            data-title="[AWS] Multi-Tenant Data Lake에서 Tenant 데이터 격리하기 - S3와 Lake Formation Row-Level Security"
           >
             <a href="./posts/s3-data-lake-lake-formation-row-level-access-control.html">
               <time datetime="2026-08-02">2026.08.02</time>
               <span class="post-topic">Data</span>
               <h3>[AWS] Multi-Tenant Data Lake에서 Tenant 데이터 격리하기 - S3와 Lake Formation Row-Level Security</h3>
-              <p>B2B SaaS 분석 환경에서 Tenant Isolation을 Data Lake Governance Layer까지 확장하는 패턴입니다.</p>
+              <p>B2B SaaS Multi-Tenant 환경에서 하나의 S3 Data Lake를 유지하면서 Tenant별 Row 접근 범위를 제한하는 패턴입니다.</p>
             </a>
           </article>
           <article
             class="post-row"
-            data-tags="Cloud Architecture Operations AWS Security"
-            data-title="CloudFront 설정 변경을 실시간으로 탐지하고 알림 보내기"
+            data-tags="Architecture AWS Cloud CloudFront Operations Security"
+            data-title="[AWS] CloudFront 설정 변경을 실시간으로 탐지하고 알림 보내기"
           >
             <a href="./posts/cloudfront-logging-change-detection.html">
               <time datetime="2026-08-01">2026.08.01</time>
-              <span class="post-topic">Cloud</span>
+              <span class="post-topic">Security</span>
               <h3>[AWS] CloudFront 설정 변경을 실시간으로 탐지하고 알림 보내기</h3>
-              <p>CloudTrail, EventBridge, Lambda, SNS로 CloudFront Logging 비활성화를 탐지하는 패턴입니다.</p>
+              <p>CloudTrail, EventBridge, Lambda, SNS를 사용해 CloudFront Logging 비활성화를 탐지하는 패턴입니다.</p>
             </a>
           </article>
         </div>

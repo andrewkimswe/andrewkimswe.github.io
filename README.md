@@ -7,9 +7,23 @@ Jiwon Kim의 기술 블로그입니다. 백엔드, 클라우드, 아키텍처, �
 - `index.html`: 블로그 홈, 포스트 목록, 검색/태그 필터
 - `styles.css`: 반응형 UI 스타일
 - `script.js`: 포스트 검색과 필터링
-- `posts/`: Markdown 포스트 원문을 둘 위치
+- `posts/`: HTML 포스트 원문
+- `assets/social-card.svg`: 공유 미리보기 기본 이미지
+- `scripts/generate_site.py`: 포스트 HTML에서 홈, RSS, sitemap, llms.txt 자동 생성
+- `scripts/validate_site.py`: 포스트 목록과 메타 파일 일관성 검증
 - `robots.txt`, `sitemap.xml`, `llms.txt`, `feed.xml`: 검색 엔진과 AI 크롤러를 위한 공개 메타 파일
 - `.github/workflows/pages.yml`: GitHub Pages 자동 배포
+
+## 새 글 발행 흐름
+
+포스트 HTML을 `posts/`에 추가하거나 수정한 뒤 아래 명령으로 공개 메타 파일을 갱신합니다.
+
+```bash
+python3 scripts/generate_site.py
+python3 scripts/validate_site.py
+```
+
+`generate_site.py`는 각 포스트의 `og:title`, `description`, `article:published_time`, `article:tag`, 본문 요약을 읽어 `index.html`, `feed.xml`, `sitemap.xml`, `llms.txt`를 다시 생성합니다.
 
 ## 방문자 수 체크
 
