@@ -14,12 +14,18 @@ Jiwon Kim's Blog is a Korean technical blog about backend engineering, cloud inf
 - Backend API design
 - Cloud architecture
 - LLM application architecture
+- Retrieval-augmented generation evaluation
 - AWS deployment and operations
 - Incident reviews
 - Engineering documentation
 
 ## Posts
 
+- [[RAG] Top-k를 늘렸는데 왜 필요한 문서를 못 찾을까? - Duplicate Chunk와 Retrieval Diversification](https://andrewkimswe.github.io/posts/rag-multi-document-retrieval-diversification.html): A CloudOps RAG failure analysis on duplicate chunk occupancy, multi-document completeness, per-document caps, MMR, reranking, and hybrid retrieval.
+- [[RAG] Hit@k가 높으면 좋은 RAG일까? - Retrieval과 Answer Quality를 따로 평가해본 과정](https://andrewkimswe.github.io/posts/rag-evaluation-retrieval-vs-answer-quality.html): A RAG evaluation note separating retrieval metrics from answer quality, including faithfulness, correctness, source support, human review, and LLM-as-a-Judge calibration.
+- [[RAG] 감으로 Top-k를 정하지 않기 - Chunking, Embedding, Threshold를 실험으로 선택한 과정](https://andrewkimswe.github.io/posts/rag-evaluation-driven-retrieval-tuning.html): An evaluation-driven retrieval tuning write-up for CloudOps RAG, covering chunking, embeddings, top_k, distance thresholds, freeze, and held-out validation.
+- [[RAG] 긴 문서에서 필요한 근거를 찾는 과정 - Chunking, Embedding, Vector Store와 Semantic Retrieval](https://andrewkimswe.github.io/posts/rag-document-processing-semantic-retrieval.html): A RAG retrieval pipeline explanation covering chunking, MapReduce, Refine, embeddings, vector stores, retrievers, and offline versus online processing.
+- [[RAG] 불완전한 질문을 바로 검색하지 않기 - Running State와 Slot Filling으로 Query Clarification 설계하기](https://andrewkimswe.github.io/posts/rag-stateful-query-clarification.html): A CloudOps RAG design note on using running state, branches, slot filling, structured output, and query rewriting before semantic retrieval.
 - [[LLM] API 호출부터 LangChain까지 - LLM 애플리케이션의 구조 이해하기](https://andrewkimswe.github.io/posts/llm-api-langchain-application-architecture.html): A layered explanation of LLM applications, from hosted model endpoints and serving infrastructure to LangChain orchestration, Gradio, and LangServe.
 - [[AWS] S3에서 PII를 자동 탐지하고 삭제를 방지하기 - Macie + EventBridge + Object Lock](https://andrewkimswe.github.io/posts/s3-pii-detection-macie-object-lock.html): An event-driven security automation pattern using Amazon Macie, EventBridge, Lambda, and S3 Object Lock Legal Hold to protect PII objects before security review.
 - [[AWS] 이미지 업로드 병목 제거하기 - S3 Presigned URL과 Lambda로 Event-Driven Processing 구성](https://andrewkimswe.github.io/posts/s3-presigned-url-lambda-image-processing.html): An event-driven image upload architecture using S3 Presigned URLs, S3 Event Notifications, and AWS Lambda.

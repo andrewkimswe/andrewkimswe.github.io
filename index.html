@@ -104,12 +104,73 @@
             <button class="tag-button" data-filter="Data" type="button">Data</button>
             <button class="tag-button" data-filter="Serverless" type="button">Serverless</button>
             <button class="tag-button" data-filter="LLM" type="button">LLM</button>
+            <button class="tag-button" data-filter="RAG" type="button">RAG</button>
             <button class="tag-button" data-filter="Architecture" type="button">Architecture</button>
             <button class="tag-button" data-filter="Operations" type="button">Operations</button>
           </div>
         </div>
 
         <div class="post-list" id="postGrid">
+          <article
+            class="post-row"
+            data-tags="RAG LLM Retrieval Evaluation Diversification Architecture"
+            data-title="Top-k를 늘렸는데 왜 필요한 문서를 못 찾을까 Duplicate Chunk와 Retrieval Diversification"
+          >
+            <a href="./posts/rag-multi-document-retrieval-diversification.html">
+              <time datetime="2026-08-13">2026.08.13</time>
+              <span class="post-topic">RAG</span>
+              <h3>[RAG] Top-k를 늘렸는데 왜 필요한 문서를 못 찾을까? - Duplicate Chunk와 Retrieval Diversification</h3>
+              <p>Top-k 증가만으로는 해결되지 않는 duplicate chunk와 multi-document completeness 문제를 정리합니다.</p>
+            </a>
+          </article>
+          <article
+            class="post-row"
+            data-tags="RAG LLM Evaluation Answer Quality LLM-as-a-Judge Architecture"
+            data-title="Hit@k가 높으면 좋은 RAG일까 Retrieval과 Answer Quality를 따로 평가해본 과정"
+          >
+            <a href="./posts/rag-evaluation-retrieval-vs-answer-quality.html">
+              <time datetime="2026-08-12">2026.08.12</time>
+              <span class="post-topic">RAG</span>
+              <h3>[RAG] Hit@k가 높으면 좋은 RAG일까? - Retrieval과 Answer Quality를 따로 평가해본 과정</h3>
+              <p>Retrieval metric과 answer quality를 분리해 faithfulness, correctness, source support를 평가한 과정입니다.</p>
+            </a>
+          </article>
+          <article
+            class="post-row"
+            data-tags="RAG LLM Retrieval Evaluation Chroma Architecture"
+            data-title="감으로 Top-k를 정하지 않기 Chunking Embedding Threshold를 실험으로 선택한 과정"
+          >
+            <a href="./posts/rag-evaluation-driven-retrieval-tuning.html">
+              <time datetime="2026-08-11">2026.08.11</time>
+              <span class="post-topic">RAG</span>
+              <h3>[RAG] 감으로 Top-k를 정하지 않기 - Chunking, Embedding, Threshold를 실험으로 선택한 과정</h3>
+              <p>RAG retrieval configuration을 development set에서 비교하고 freeze한 뒤 held-out으로 검증한 기록입니다.</p>
+            </a>
+          </article>
+          <article
+            class="post-row"
+            data-tags="RAG LLM Embedding Vector Store Semantic Retrieval Architecture"
+            data-title="긴 문서에서 필요한 근거를 찾는 과정 Chunking Embedding Vector Store와 Semantic Retrieval"
+          >
+            <a href="./posts/rag-document-processing-semantic-retrieval.html">
+              <time datetime="2026-08-10">2026.08.10</time>
+              <span class="post-topic">RAG</span>
+              <h3>[RAG] 긴 문서에서 필요한 근거를 찾는 과정 - Chunking, Embedding, Vector Store와 Semantic Retrieval</h3>
+              <p>긴 문서를 chunk로 나누고 embedding/vector store로 필요한 근거를 찾는 RAG retrieval pipeline입니다.</p>
+            </a>
+          </article>
+          <article
+            class="post-row"
+            data-tags="RAG LLM LangChain CloudOps Query Clarification Architecture"
+            data-title="불완전한 질문을 바로 검색하지 않기 Running State와 Slot Filling으로 Query Clarification 설계하기"
+          >
+            <a href="./posts/rag-stateful-query-clarification.html">
+              <time datetime="2026-08-09">2026.08.09</time>
+              <span class="post-topic">RAG</span>
+              <h3>[RAG] 불완전한 질문을 바로 검색하지 않기 - Running State와 Slot Filling으로 Query Clarification 설계하기</h3>
+              <p>검색 전에 running state와 slot filling으로 모호한 CloudOps 질문을 구조화하는 설계입니다.</p>
+            </a>
+          </article>
           <article
             class="post-row"
             data-tags="LLM AI LangChain Architecture Orchestration"
