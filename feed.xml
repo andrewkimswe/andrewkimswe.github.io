@@ -5,7 +5,14 @@
     <link>https://andrewkimswe.github.io/</link>
     <description>백엔드, 클라우드, 아키텍처, 운영, 트러블슈팅을 기록하는 기술 블로그입니다.</description>
     <language>ko-KR</language>
-    <lastBuildDate>Fri, 14 Aug 2026 00:00:00 +0900</lastBuildDate>
+    <lastBuildDate>Sat, 15 Aug 2026 00:00:00 +0900</lastBuildDate>
+    <item>
+      <title>[AWS/Security] 취약점은 찾았는데 패치는 누가 하지? - Amazon Inspector와 Systems Manager로 EC2 패치 관리하기</title>
+      <link>https://andrewkimswe.github.io/posts/aws-security-inspector-systems-manager-patch-management.html</link>
+      <guid>https://andrewkimswe.github.io/posts/aws-security-inspector-systems-manager-patch-management.html</guid>
+      <pubDate>Sat, 15 Aug 2026 00:00:00 +0900</pubDate>
+      <description>Inspector는 취약점을 찾고 Systems Manager Patch Manager는 패치 운영을 관리한다는 관점에서 EC2 보안 패치 구조를 정리합니다.</description>
+    </item>
     <item>
       <title>[AWS/FinOps] NAT Gateway 비용은 어디서 발생할까? - CUR, Athena, QuickSight로 비용 대시보드 만들기</title>
       <link>https://andrewkimswe.github.io/posts/aws-finops-nat-gateway-cost-dashboard.html</link>
