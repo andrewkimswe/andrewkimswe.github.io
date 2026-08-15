@@ -22,6 +22,7 @@ Jiwon Kim's Blog is a Korean technical blog about backend engineering, cloud inf
 
 ## Posts
 
+- [[AWS/Security] EC2 패치 자동화는 어디까지 자동화해야 할까? - Maintenance Window, Compliance, Staged Rollout](https://andrewkimswe.github.io/posts/aws-security-ec2-patch-rollout-compliance.html): EC2 패치 자동화를 Maintenance Window, staged rollout, compliance, health check 관점에서 설계하는 AWS 보안 운영 노트입니다.
 - [[AWS/Security] 취약점은 찾았는데 패치는 누가 하지? - Amazon Inspector와 Systems Manager로 EC2 패치 관리하기](https://andrewkimswe.github.io/posts/aws-security-inspector-systems-manager-patch-management.html): Amazon Inspector와 AWS Systems Manager Patch Manager를 분리해 EC2 취약점 탐지, 패치 기준, Scan/Install 흐름을 설계하는 보안 운영 노트입니다.
 - [[AWS/FinOps] NAT Gateway 비용은 어디서 발생할까? - CUR, Athena, QuickSight로 비용 대시보드 만들기](https://andrewkimswe.github.io/posts/aws-finops-nat-gateway-cost-dashboard.html): AWS Organizations, Cost and Usage Report, S3, Glue Data Catalog, Athena, QuickSight로 NAT Gateway 비용을 계정, Region, 날짜별로 분석하는 FinOps 대시보드 설계입니다.
 - [[RAG] Top-k를 늘렸는데 왜 필요한 문서를 못 찾을까? - Duplicate Chunk와 Retrieval Diversification](https://andrewkimswe.github.io/posts/rag-multi-document-retrieval-diversification.html): Multi-document RAG에서 duplicate chunk가 Top-k를 점유하는 문제와 per-document cap, MMR, reranking, hybrid retrieval 개선 방향을 정리합니다.

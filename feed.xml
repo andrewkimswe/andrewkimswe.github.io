@@ -5,7 +5,14 @@
     <link>https://andrewkimswe.github.io/</link>
     <description>백엔드, 클라우드, 아키텍처, 운영, 트러블슈팅을 기록하는 기술 블로그입니다.</description>
     <language>ko-KR</language>
-    <lastBuildDate>Sat, 15 Aug 2026 00:00:00 +0900</lastBuildDate>
+    <lastBuildDate>Sun, 16 Aug 2026 00:00:00 +0900</lastBuildDate>
+    <item>
+      <title>[AWS/Security] EC2 패치 자동화는 어디까지 자동화해야 할까? - Maintenance Window, Compliance, Staged Rollout</title>
+      <link>https://andrewkimswe.github.io/posts/aws-security-ec2-patch-rollout-compliance.html</link>
+      <guid>https://andrewkimswe.github.io/posts/aws-security-ec2-patch-rollout-compliance.html</guid>
+      <pubDate>Sun, 16 Aug 2026 00:00:00 +0900</pubDate>
+      <description>EC2 패치는 보안 자동화이면서 production 변경 작업이므로 Maintenance Window, staged rollout, compliance 검증이 함께 필요합니다.</description>
+    </item>
     <item>
       <title>[AWS/Security] 취약점은 찾았는데 패치는 누가 하지? - Amazon Inspector와 Systems Manager로 EC2 패치 관리하기</title>
       <link>https://andrewkimswe.github.io/posts/aws-security-inspector-systems-manager-patch-management.html</link>
