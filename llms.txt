@@ -22,6 +22,7 @@ Jiwon Kim's Blog is a Korean technical blog about backend engineering, cloud inf
 
 ## Posts
 
+- [[AWS/Database] JOIN이 깊어질수록 왜 Graph DB가 유리할까? - Amazon Neptune으로 다단계 관계 탐색하기](https://andrewkimswe.github.io/posts/aws-database-neptune-graph-multi-hop-traversal.html): 관계형 데이터베이스의 JOIN과 Graph Database의 traversal 관점 차이를 비교하고, Amazon Neptune이 다단계 관계 탐색에 적합한 이유를 정리합니다.
 - [[AWS/Security] EC2 패치 자동화는 어디까지 자동화해야 할까? - Maintenance Window, Compliance, Staged Rollout](https://andrewkimswe.github.io/posts/aws-security-ec2-patch-rollout-compliance.html): EC2 패치 자동화를 Maintenance Window, staged rollout, compliance, health check 관점에서 설계하는 AWS 보안 운영 노트입니다.
 - [[AWS/Security] 취약점은 찾았는데 패치는 누가 하지? - Amazon Inspector와 Systems Manager로 EC2 패치 관리하기](https://andrewkimswe.github.io/posts/aws-security-inspector-systems-manager-patch-management.html): Amazon Inspector와 AWS Systems Manager Patch Manager를 분리해 EC2 취약점 탐지, 패치 기준, Scan/Install 흐름을 설계하는 보안 운영 노트입니다.
 - [[AWS/FinOps] NAT Gateway 비용은 어디서 발생할까? - CUR, Athena, QuickSight로 비용 대시보드 만들기](https://andrewkimswe.github.io/posts/aws-finops-nat-gateway-cost-dashboard.html): AWS Organizations, Cost and Usage Report, S3, Glue Data Catalog, Athena, QuickSight로 NAT Gateway 비용을 계정, Region, 날짜별로 분석하는 FinOps 대시보드 설계입니다.

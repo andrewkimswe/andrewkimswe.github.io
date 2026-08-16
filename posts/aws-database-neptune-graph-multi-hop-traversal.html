@@ -1,0 +1,700 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>[AWS/Database] JOIN이 깊어질수록 왜 Graph DB가 유리할까? | Jiwon Kim's Blog</title>
+    <meta
+      name="description"
+      content="관계형 데이터베이스의 JOIN과 Graph Database의 traversal 관점 차이를 비교하고, Amazon Neptune이 다단계 관계 탐색에 적합한 이유를 정리합니다."
+    />
+    <meta name="author" content="Jiwon Kim" />
+    <meta name="robots" content="index, follow, max-image-preview:large" />
+    <link rel="canonical" href="https://andrewkimswe.github.io/posts/aws-database-neptune-graph-multi-hop-traversal.html" />
+    <meta property="og:site_name" content="Jiwon Kim's Blog" />
+    <meta
+      property="og:title"
+      content="[AWS/Database] JOIN이 깊어질수록 왜 Graph DB가 유리할까? - Amazon Neptune으로 다단계 관계 탐색하기"
+    />
+    <meta
+      property="og:description"
+      content="사용자 100만 명과 관계 1,000만 개에서 최대 5-hop 관계 탐색이 핵심 workload라면 Graph Database를 검토해야 하는 이유를 설명합니다."
+    />
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="https://andrewkimswe.github.io/posts/aws-database-neptune-graph-multi-hop-traversal.html" />
+    <meta property="og:image" content="https://andrewkimswe.github.io/assets/social-card.svg" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://andrewkimswe.github.io/assets/social-card.svg" />
+    <meta property="article:published_time" content="2026-08-17T00:00:00+09:00" />
+    <meta property="article:author" content="Jiwon Kim" />
+    <meta property="article:tag" content="AWS" />
+    <meta property="article:tag" content="Database" />
+    <meta property="article:tag" content="Amazon Neptune" />
+    <meta property="article:tag" content="Graph Database" />
+    <meta property="article:tag" content="Traversal" />
+    <link rel="stylesheet" href="../styles.css" />
+    <script type="application/ld+json">
+{
+      "@context": "https://schema.org",
+      "@type": "BlogPosting",
+      "headline": "[AWS/Database] JOIN이 깊어질수록 왜 Graph DB가 유리할까? - Amazon Neptune으로 다단계 관계 탐색하기",
+      "description": "관계형 데이터베이스의 JOIN과 Graph Database의 traversal 관점 차이를 비교하고, Amazon Neptune이 다단계 관계 탐색에 적합한 이유를 정리합니다.",
+      "datePublished": "2026-08-17T00:00:00+09:00",
+      "dateModified": "2026-08-17T00:00:00+09:00",
+      "author": {
+            "@type": "Person",
+            "name": "Jiwon Kim",
+            "url": "https://github.com/andrewkimswe"
+      },
+      "publisher": {
+            "@type": "Person",
+            "name": "Jiwon Kim"
+      },
+      "mainEntityOfPage": "https://andrewkimswe.github.io/posts/aws-database-neptune-graph-multi-hop-traversal.html",
+      "inLanguage": "ko-KR"
+}
+    </script>
+  </head>
+  <body>
+    <header class="site-header">
+      <a class="brand" href="../" aria-label="Jiwon Kim's Blog 홈">
+        <span class="brand-mark">JK</span>
+        <span>
+          <strong>Jiwon Kim's Blog</strong>
+          <small>Engineering notes</small>
+        </span>
+      </a>
+      <nav class="nav-links" aria-label="주요 메뉴">
+        <a href="../#writing">Writing</a>
+        <a href="../#topics">Topics</a>
+        <a href="../#about">About</a>
+        <a href="https://github.com/andrewkimswe">GitHub</a>
+      </nav>
+    </header>
+
+    <main>
+      <article class="article-page">
+        <header class="article-hero">
+          <a class="back-link" href="../#writing">Back to writing</a>
+          <p class="eyebrow">AWS · Database · Graph Traversal</p>
+          <h1>[AWS/Database] JOIN이 깊어질수록 왜 Graph DB가 유리할까? - Amazon Neptune으로 다단계 관계 탐색하기</h1>
+          <p class="article-summary">
+            사용자와 관계가 많을 때 중요한 것은 데이터 크기만이 아니라 어떤 질문을 반복적으로 수행하는가다. 다단계 관계 탐색에서 RDB JOIN과 Graph traversal의 차이를 정리한다.
+          </p>
+          <div class="article-meta">
+            <time datetime="2026-08-17">2026.08.17</time>
+            <span>AWS</span>
+            <span>Database</span>
+            <span>Amazon Neptune</span>
+          </div>
+        </header>
+
+        <div class="article-body">
+          <p>사용자 100만 명과 사용자 사이의 관계 1,000만 개를 저장하는 서비스를 생각해보자.</p>
+          <p>단순히 특정 사용자의 친구를 찾는 것은 어렵지 않다.</p>
+          <p>하지만 요구사항이 다음과 같다면 이야기가 달라진다.</p>
+          <blockquote>
+            <p><strong>&quot;A 사용자와 최대 5단계 이내로 연결된 사용자를 모두 찾아라.&quot;</strong></p>
+          </blockquote>
+          <p>예를 들어:</p>
+          <pre><code>Alice
+  │ follows
+  ▼
+Bob
+  │ follows
+  ▼
+Carol
+  │ follows
+  ▼
+David
+  │ follows
+  ▼
+Eve</code></pre>
+          <p>이런 <strong>다단계 관계 탐색</strong>이 애플리케이션의 핵심 기능이라면 데이터베이스를 선택할 때 단순히 데이터 크기만 볼 수 없다.</p>
+          <p>중요한 것은 데이터가 어떤 형태로 연결되어 있고, 애플리케이션이 <strong>어떤 질문을 반복적으로 수행하는가</strong>다.</p>
+          <p>이 글에서는 관계형 데이터베이스와 Graph Database의 모델링 차이를 살펴보고, 다단계 관계 탐색에서 Amazon Neptune과 같은 Graph Database를 고려할 수 있는 이유를 정리한다.</p>
+          <h2>1. 관계를 관계형 데이터베이스에 저장한다면</h2>
+          <p>소셜 서비스를 RDB로 구현한다고 가정해보자.</p>
+          <p>사용자는 다음과 같은 테이블에 저장할 수 있다.</p>
+          <pre><code>users
+
++---------+--------+
+| user_id | name   |
++---------+--------+
+| 1       | Alice  |
+| 2       | Bob    |
+| 3       | Carol  |
++---------+--------+</code></pre>
+          <p>사용자 간 관계는 별도 테이블로 표현할 수 있다.</p>
+          <pre><code>connections
+
++-------------+-------------+
+| from_user   | to_user     |
++-------------+-------------+
+| 1           | 2           |
+| 2           | 3           |
+| 3           | 4           |
++-------------+-------------+</code></pre>
+          <p>즉:</p>
+          <pre><code>Alice → Bob
+Bob   → Carol
+Carol → David</code></pre>
+          <p>를 관계 테이블에 저장한다.</p>
+          <p>이 모델 자체에는 아무 문제가 없다.</p>
+          <p>RDB는 인덱스, JOIN, 트랜잭션, 정형 데이터 처리에 매우 강력하다.</p>
+          <p>문제는 애플리케이션의 핵심 질문이 <strong>관계 자체를 반복해서 따라가는 것</strong>일 때 나타난다.</p>
+          <h2>2. 1-hop은 간단하다</h2>
+          <p>Alice와 직접 연결된 사용자를 찾는다고 하자.</p>
+          <pre><code>Alice
+  │
+  ├── Bob
+  ├── John
+  └── Sarah</code></pre>
+          <p>개념적으로는 간단한 조회다.</p>
+          <pre><code class="language-sql">SELECT to_user
+FROM connections
+WHERE from_user = 1;</code></pre>
+          <p>이 정도라면 Graph Database가 반드시 필요하지 않다.</p>
+          <p>관계형 데이터베이스도 충분히 효율적으로 처리할 수 있다.</p>
+          <h2>3. 그런데 5-hop이면?</h2>
+          <p>이번에는 질문을 바꿔보자.</p>
+          <blockquote>
+            <p>Alice와 최대 5단계 이내로 연결된 사람은 누구인가?</p>
+          </blockquote>
+          <pre><code>Alice
+  │
+  ▼
+Bob
+  │
+  ▼
+Carol
+  │
+  ▼
+David
+  │
+  ▼
+Eve
+  │
+  ▼
+Frank</code></pre>
+          <p>단순화하면 관계를 반복적으로 탐색해야 한다.</p>
+          <pre><code>1-hop
+Alice → ?
+
+2-hop
+Alice → ? → ?
+
+3-hop
+Alice → ? → ? → ?
+
+...
+
+5-hop
+Alice → ? → ? → ? → ? → ?</code></pre>
+          <p>SQL에서도 recursive CTE 등의 방법으로 계층 또는 그래프 형태의 데이터를 탐색할 수 있다.</p>
+          <p>따라서:</p>
+          <blockquote>
+            <p><strong>&quot;RDB에서는 다단계 관계 탐색이 불가능하다.&quot;</strong></p>
+          </blockquote>
+          <p>라고 말하면 틀리다.</p>
+          <p>정확한 질문은 이것이다.</p>
+          <blockquote>
+            <p><strong>다단계 관계 탐색이 서비스의 핵심 workload라면 어떤 데이터 모델이 그 문제를 더 자연스럽게 표현하는가?</strong></p>
+          </blockquote>
+          <p>여기서 Graph Database가 등장한다.</p>
+          <h2>4. Graph Database는 관계를 1급 데이터로 취급한다</h2>
+          <p>Graph Database에서는 데이터를 주로 <strong>Vertex와 Edge</strong>로 표현한다.</p>
+          <h3>Vertex</h3>
+          <p>개체(Entity)를 나타낸다.</p>
+          <pre><code>(User: Alice)
+(User: Bob)
+(User: Carol)</code></pre>
+          <h3>Edge</h3>
+          <p>개체 사이의 관계를 나타낸다.</p>
+          <pre><code>Alice ──FOLLOWS──&gt; Bob
+Bob   ──FOLLOWS──&gt; Carol</code></pre>
+          <p>전체적으로 보면:</p>
+          <pre><code>      ┌─────────┐
+      │  Alice  │
+      └────┬────┘
+           │ FOLLOWS
+           ▼
+      ┌─────────┐
+      │   Bob   │
+      └────┬────┘
+           │ FOLLOWS
+           ▼
+      ┌─────────┐
+      │  Carol  │
+      └────┬────┘
+           │ FOLLOWS
+           ▼
+      ┌─────────┐
+      │  David  │
+      └─────────┘</code></pre>
+          <p>여기서는 관계가 단순히 다른 테이블의 row가 아니라 <strong>그래프 모델 자체의 핵심 요소</strong>가 된다.</p>
+          <h2>5. JOIN과 Traversal의 관점 차이</h2>
+          <p>RDB에서는 데이터를 보통 테이블 관점에서 생각한다.</p>
+          <pre><code>Users
+  +
+Connections
+  +
+Connections
+  +
+Connections
+  ↓
+관계 탐색</code></pre>
+          <p>Graph Database에서는 질문 자체가 다르게 표현된다.</p>
+          <pre><code>Vertex
+  ↓ Edge
+Vertex
+  ↓ Edge
+Vertex
+  ↓ Edge
+Vertex</code></pre>
+          <p>즉 <strong>Graph Traversal</strong>이다.</p>
+          <p>출발점에서 관계를 따라가며 필요한 노드를 탐색한다.</p>
+          <p>개념적으로:</p>
+          <pre><code>Start: Alice
+
+Step 1
+→ Alice의 이웃
+
+Step 2
+→ 이웃의 이웃
+
+Step 3
+→ 다시 그 이웃
+
+...
+
+Step 5
+→ 최대 5-hop 관계</code></pre>
+          <p>그래서 다음과 같은 질문이 자연스럽다.</p>
+          <pre><code>&quot;이 사람과 3단계 이내로 연결된 사람은?&quot;
+
+&quot;이 두 계정 사이의 연결 경로는?&quot;
+
+&quot;이 계정과 연결된 의심 계정 집단은?&quot;
+
+&quot;이 상품을 구매한 사람과 연관된 다른 상품은?&quot;</code></pre>
+          <h2>6. Amazon Neptune</h2>
+          <p>AWS에서 이러한 graph workload를 위해 제공하는 관리형 Graph Database가 <strong>Amazon Neptune</strong>이다.</p>
+          <p>Neptune은 크게 다음과 같은 그래프 모델과 쿼리 방식을 지원한다.</p>
+          <pre><code>Property Graph
+   ├── Gremlin
+   └── openCypher
+
+RDF
+   └── SPARQL</code></pre>
+          <p>예를 들어 Property Graph에서는 사용자와 관계를 다음처럼 생각할 수 있다.</p>
+          <pre><code>Vertex
+User {
+    id: 1001,
+    name: &quot;Alice&quot;
+}
+
+Edge
+FOLLOWS {
+    since: &quot;2025-03-01&quot;
+}</code></pre>
+          <p>그러면:</p>
+          <pre><code>Alice
+   │
+   │ FOLLOWS
+   │ since=2025-03-01
+   ▼
+Bob</code></pre>
+          <p>처럼 <strong>관계 자체에도 속성을 추가</strong>할 수 있다.</p>
+          <h2>7. 관계에도 데이터가 있다</h2>
+          <p>Graph 모델의 장점 중 하나는 Edge가 단순 연결선에 그치지 않는다는 점이다.</p>
+          <p>예를 들어 송금 관계라면:</p>
+          <pre><code>Account A
+    │
+    │ TRANSFER
+    │ amount=5,000,000
+    │ time=02:31
+    ▼
+Account B</code></pre>
+          <p>소셜 관계라면:</p>
+          <pre><code>Alice
+    │
+    │ FOLLOWS
+    │ since=2024
+    ▼
+Bob</code></pre>
+          <p>추천 시스템이라면:</p>
+          <pre><code>User
+   │
+   │ PURCHASED
+   │ rating=5
+   ▼
+Product</code></pre>
+          <p>처럼 관계 자체에 의미와 속성을 부여할 수 있다.</p>
+          <p>이 때문에 복잡한 관계가 중요한 도메인을 그래프로 표현하기 쉬워진다.</p>
+          <h2>8. 왜 Fraud Detection에서 Graph가 자주 등장할까?</h2>
+          <p>예를 들어 은행에서 다음 계정들을 생각해보자.</p>
+          <pre><code>Account A
+   │
+   ├────→ Account B
+   │
+   └────→ Account C
+
+Account B
+   │
+   └────→ Account D
+
+Account C
+   │
+   └────→ Account D
+
+Account D
+   │
+   └────→ Suspicious Account X</code></pre>
+          <p>단순히 A 계정의 거래만 보면 특별한 문제가 없을 수 있다.</p>
+          <p>하지만 관계를 따라가면:</p>
+          <pre><code>A
+├─ B ─┐
+│     ├─ D → X
+└─ C ─┘</code></pre>
+          <p>특정 의심 계정과 몇 단계 안에 연결되어 있다는 사실을 발견할 수 있다.</p>
+          <p>즉 중요한 정보가 개별 row가 아니라 <strong>관계의 구조</strong>에 존재한다.</p>
+          <p>그래서 Graph Database는 다음과 같은 분야에서 자주 고려된다.</p>
+          <ul>
+            <li>Fraud Detection</li>
+            <li>Social Network</li>
+            <li>Recommendation</li>
+            <li>Knowledge Graph</li>
+            <li>Identity Graph</li>
+            <li>Network/IT Topology</li>
+          </ul>
+          <h2>9. 추천 시스템에서도 같은 문제가 생긴다</h2>
+          <p>예를 들어:</p>
+          <pre><code>Alice
+  │ PURCHASED
+  ▼
+Camera
+  ▲
+  │ PURCHASED
+Bob
+  │ PURCHASED
+  ▼
+Tripod</code></pre>
+          <p>이 관계를 따라가면:</p>
+          <pre><code>Alice
+ ↓
+Camera
+ ↑
+Bob
+ ↓
+Tripod</code></pre>
+          <p>에서</p>
+          <blockquote>
+            <p>Alice와 비슷한 구매 관계를 가진 Bob이 Tripod도 구매했다.</p>
+          </blockquote>
+          <p>라는 관계를 찾을 수 있다.</p>
+          <p>더 복잡하게 만들면:</p>
+          <pre><code>User
+ ↓ PURCHASED
+Product
+ ↓ BELONGS_TO
+Category
+ ↑ BELONGS_TO
+Product
+ ↑ PURCHASED
+User</code></pre>
+          <p>처럼 서로 다른 종류의 Vertex와 Edge를 연결할 수도 있다.</p>
+          <p>Graph Database의 강점은 이런 관계를 데이터 모델 자체로 표현한다는 것이다.</p>
+          <h2>10. 그렇다면 RDB보다 항상 빠른가?</h2>
+          <p>아니다.</p>
+          <p>이 부분이 가장 중요하다.</p>
+          <p>Graph Database가 존재한다고 해서:</p>
+          <blockquote>
+            <p><strong>관계가 하나라도 있으면 Neptune을 사용한다.</strong></p>
+          </blockquote>
+          <p>는 잘못된 판단이다.</p>
+          <p>대부분의 비즈니스 데이터에는 관계가 있다.</p>
+          <p>예를 들어:</p>
+          <pre><code>Customer
+   ↓
+Order
+   ↓
+OrderItem
+   ↓
+Product</code></pre>
+          <p>이런 구조는 일반적인 관계형 데이터베이스에서도 매우 자연스럽다.</p>
+          <p>그리고 다음과 같은 workload라면 RDB가 훨씬 적합할 수 있다.</p>
+          <pre><code>&quot;주문 ID 1234를 조회한다.&quot;
+
+&quot;오늘 주문의 총매출을 계산한다.&quot;
+
+&quot;특정 고객의 최근 주문 10개를 찾는다.&quot;</code></pre>
+          <p>즉 단순하고 예측 가능한 관계를 JOIN하는 것만으로 Graph Database를 선택할 이유는 없다.</p>
+          <h2>11. Graph Database를 고려해야 하는 신호</h2>
+          <p>다음과 같은 질문이 애플리케이션에서 반복된다면 Graph Database를 검토할 가치가 있다.</p>
+          <h3>① 관계의 깊이가 중요하다</h3>
+          <pre><code>A와 5-hop 이내로 연결된 모든 사용자를 찾아라.</code></pre>
+          <h3>② 경로 자체가 중요하다</h3>
+          <pre><code>A와 B가 어떤 경로로 연결되어 있는가?</code></pre>
+          <h3>③ 관계 종류가 많다</h3>
+          <pre><code>User
+ ├─ WORKS_AT → Company
+ ├─ LIVES_IN → City
+ ├─ PURCHASED → Product
+ └─ KNOWS → User</code></pre>
+          <h3>④ 관계 구조가 계속 확장된다</h3>
+          <p>새로운 Entity와 Edge가 지속적으로 추가된다.</p>
+          <h3>⑤ 연결 구조 자체에서 의미를 찾아야 한다</h3>
+          <pre><code>Fraud Ring
+Recommendation
+Dependency
+Network Path
+Identity Relationship</code></pre>
+          <p>이런 경우 Graph 모델이 문제를 훨씬 자연스럽게 표현할 수 있다.</p>
+          <h2>12. 반대로 Neptune이 필요 없는 경우</h2>
+          <p>다음과 같은 시스템이라면 굳이 Graph Database를 추가할 이유가 없다.</p>
+          <pre><code>일반 CRUD
+단순 주문 시스템
+단순 사용자 프로필 저장
+정형화된 회계 데이터
+단순 1:N 관계
+깊은 관계 탐색이 거의 없는 서비스</code></pre>
+          <p>예를 들어:</p>
+          <pre><code>User
+ ↓
+Orders</code></pre>
+          <p>정도의 관계만 있고 대부분의 쿼리가:</p>
+          <pre><code class="language-sql">SELECT *
+FROM orders
+WHERE user_id = ?;</code></pre>
+          <p>라면 RDS나 Aurora 같은 관계형 데이터베이스가 훨씬 단순한 선택일 수 있다.</p>
+          <p>새로운 데이터베이스를 추가하면:</p>
+          <pre><code>운영 복잡성
++
+학습 비용
++
+모니터링
++
+백업/복구
++
+데이터 동기화</code></pre>
+          <p>도 함께 증가한다.</p>
+          <p>따라서 데이터베이스는 기능 수가 아니라 <strong>workload에 맞춰 선택해야 한다.</strong></p>
+          <h2>13. S3 + Athena는 왜 다른 문제인가?</h2>
+          <p>대규모 데이터라는 말을 보면 S3와 Athena를 떠올릴 수도 있다.</p>
+          <pre><code>S3
+ ↓
+Athena
+ ↓
+SQL Analytics</code></pre>
+          <p>이 조합은 대규모 데이터에 SQL을 사용해 분석하는 데 매우 유용하다.</p>
+          <p>하지만 여기서 핵심 요구사항은 단순히:</p>
+          <blockquote>
+            <p>&quot;5TB 데이터를 분석한다.&quot;</p>
+          </blockquote>
+          <p>가 아니다.</p>
+          <p>핵심은:</p>
+          <blockquote>
+            <p><strong>&quot;1,000만 개의 연결 관계에서 최대 5-hop까지 효율적으로 탐색한다.&quot;</strong></p>
+          </blockquote>
+          <p>이다.</p>
+          <p>데이터 크기보다 <strong>access pattern</strong>이 더 중요한 것이다.</p>
+          <p>이 차이를 놓치면 스토리지 크기만 보고 잘못된 데이터베이스를 선택하기 쉽다.</p>
+          <h2>14. QuickSight도 데이터베이스가 아니다</h2>
+          <p>QuickSight는 BI와 시각화를 위한 서비스다.</p>
+          <pre><code>Data Source
+    ↓
+QuickSight
+    ↓
+Dashboard</code></pre>
+          <p>그래프 형태의 차트를 그릴 수 있다는 사실과 <strong>Graph Database</strong>는 전혀 다른 개념이다.</p>
+          <pre><code>Graph Visualization
+≠
+Graph Database</code></pre>
+          <p>Graph Database의 Graph는 차트가 아니라:</p>
+          <blockquote>
+            <p><strong>Vertex와 Edge로 표현되는 데이터 관계 구조</strong></p>
+          </blockquote>
+          <p>를 의미한다.</p>
+          <h2>15. 데이터베이스 선택에서 데이터 크기보다 중요한 것</h2>
+          <p>다음 두 시스템을 비교해보자.</p>
+          <h3>System A</h3>
+          <pre><code>10 TB
+
+Query:
+&quot;customer_id로 고객 하나 조회&quot;</code></pre>
+          <h3>System B</h3>
+          <pre><code>1 TB
+
+Query:
+&quot;A에서 출발해 5-hop 이내의 모든 관계 탐색&quot;</code></pre>
+          <p>System A의 데이터가 10배 크다고 해서 반드시 더 복잡한 데이터베이스가 필요한 것은 아니다.</p>
+          <p>데이터베이스 선택에서 중요한 것은:</p>
+          <pre><code>Data Size
++
+Data Model
++
+Access Pattern
++
+Consistency Requirement
++
+Latency Requirement
++
+Operational Requirement</code></pre>
+          <p>이다.</p>
+          <p>특히 Graph Database 문제에서는 <strong>Access Pattern</strong>을 먼저 봐야 한다.</p>
+          <h2>16. 관계형 모델과 Graph 모델 비교</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>특성</th>
+                <th>Relational DB</th>
+                <th>Graph DB</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>기본 모델</td>
+                <td>Table / Row</td>
+                <td>Vertex / Edge</td>
+              </tr>
+              <tr>
+                <td>관계 표현</td>
+                <td>FK / Join Table</td>
+                <td>Edge</td>
+              </tr>
+              <tr>
+                <td>일반 CRUD</td>
+                <td>매우 강함</td>
+                <td>가능하지만 핵심 강점 아님</td>
+              </tr>
+              <tr>
+                <td>정형 데이터</td>
+                <td>매우 강함</td>
+                <td>가능</td>
+              </tr>
+              <tr>
+                <td>다단계 관계 탐색</td>
+                <td>가능</td>
+                <td><strong>핵심 강점</strong></td>
+              </tr>
+              <tr>
+                <td>경로 탐색</td>
+                <td>상대적으로 복잡</td>
+                <td><strong>자연스러움</strong></td>
+              </tr>
+              <tr>
+                <td>Social Graph</td>
+                <td>가능</td>
+                <td><strong>적합</strong></td>
+              </tr>
+              <tr>
+                <td>Fraud Relationship</td>
+                <td>가능</td>
+                <td><strong>적합</strong></td>
+              </tr>
+              <tr>
+                <td>일반 주문 시스템</td>
+                <td><strong>적합</strong></td>
+                <td>대개 과함</td>
+              </tr>
+            </tbody>
+          </table>
+          <p>따라서:</p>
+          <pre><code>&quot;관계가 존재한다&quot;</code></pre>
+          <p>가 Graph Database의 선택 기준이 아니다.</p>
+          <p>진짜 질문은:</p>
+          <pre><code>&quot;관계를 반복적으로 탐색하는 것이
+애플리케이션의 핵심 workload인가?&quot;</code></pre>
+          <p>이다.</p>
+          <h2>17. 최종 구조</h2>
+          <p>사용자 프로필과 관계가 핵심인 서비스를 단순화하면 다음처럼 볼 수 있다.</p>
+          <pre><code>┌─────────────────────────────┐
+│        Application          │
+└──────────────┬──────────────┘
+               │
+               │ Relationship Query
+               ▼
+┌─────────────────────────────┐
+│       Amazon Neptune        │
+│                             │
+│  Vertex                     │
+│   └─ User                   │
+│                             │
+│  Edge                       │
+│   ├─ FOLLOWS                │
+│   ├─ KNOWS                  │
+│   └─ BLOCKS                 │
+└──────────────┬──────────────┘
+               │
+               ▼
+        Graph Traversal
+
+Alice
+  │
+  ├── Bob
+  │    ├── Carol
+  │    │    └── David
+  │    └── Emma
+  │
+  └── Frank
+       └── Grace</code></pre>
+          <p>애플리케이션은 단순히 row를 조회하는 것이 아니라 <strong>연결된 관계를 탐색</strong>한다.</p>
+          <h2>18. 정리</h2>
+          <p>Amazon Neptune을 이해할 때:</p>
+          <blockquote>
+            <p>&quot;AWS의 Graph Database&quot;</p>
+          </blockquote>
+          <p>라고만 외우면 실제 아키텍처 문제에서 언제 선택해야 하는지 판단하기 어렵다.</p>
+          <p>더 중요한 것은 문제의 형태다.</p>
+          <pre><code>단순 데이터 조회
+        ↓
+RDB / Key-Value 등 검토
+
+대규모 분석
+        ↓
+S3 + Athena 등 검토
+
+다단계 관계 탐색
+        ↓
+Graph Database 검토</code></pre>
+          <p>특히 다음과 같은 표현이 등장하면 Graph Database를 떠올릴 수 있다.</p>
+          <pre><code>many-to-many relationships
+
+multiple degrees of separation
+
+multi-hop traversal
+
+connection path
+
+social graph
+
+fraud relationship
+
+knowledge graph</code></pre>
+          <p>그리고 핵심 원칙은 하나다.</p>
+          <blockquote>
+            <p><strong>데이터베이스는 데이터가 얼마나 많은지가 아니라, 그 데이터를 어떻게 질문할 것인지까지 보고 선택해야 한다.</strong></p>
+          </blockquote>
+          <p>사용자 100만 명과 연결 1,000만 개라는 숫자보다 중요한 것은 <strong>&quot;최대 5단계의 연결을 반복적으로 탐색해야 한다&quot;</strong>는 요구사항이다.</p>
+          <p>그 순간 문제는 단순한 데이터 저장이 아니라 <strong>관계 탐색</strong>의 문제가 되고, Amazon Neptune과 같은 Graph Database가 강력한 선택지가 된다.</p>
+        </div>
+      </article>
+    </main>
+
+    <footer class="site-footer">
+      <p>© 2026 Jiwon Kim. Technical writing, notes, and experiments.</p>
+      <div class="footer-links">
+        <span id="visitStatus">Analytics ready</span>
+        <a href="https://github.com/andrewkimswe">github.com/andrewkimswe</a>
+      </div>
+    </footer>
+
+    <script src="../script.js"></script>
+    <script
+      data-goatcounter="https://jiwonkim-blog.goatcounter.com/count"
+      async
+      src="https://gc.zgo.at/count.js"
+    ></script>
+  </body>
+</html>
