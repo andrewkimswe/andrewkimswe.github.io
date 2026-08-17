@@ -1,0 +1,535 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>[RAG] 튜토리얼 RAG를 운영 가능한 CloudOps RAG로 확장하기 | Jiwon Kim's Blog</title>
+    <meta
+      name="description"
+      content="CloudOps RAG를 단순 데모에서 검색 평가, threshold fallback, 답변 평가, FastAPI serving, timeout/retry, observability를 갖춘 서비스로 확장한 과정입니다."
+    />
+    <meta name="author" content="Jiwon Kim" />
+    <meta name="robots" content="index, follow, max-image-preview:large" />
+    <link rel="canonical" href="https://andrewkimswe.github.io/posts/rag-cloudops-productionish-evaluation-fallback-serving-observability.html" />
+    <meta property="og:site_name" content="Jiwon Kim's Blog" />
+    <meta
+      property="og:title"
+      content="[RAG] 튜토리얼 RAG를 운영 가능한 CloudOps RAG로 확장하기 - 평가, Fallback, Serving, Observability"
+    />
+    <meta
+      property="og:description"
+      content="RAG가 답을 생성한다는 것과 신뢰할 수 있게 동작한다는 것은 다르다. CloudOps RAG를 평가 가능하고 관찰 가능한 서비스로 확장한 lifecycle을 정리합니다."
+    />
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="https://andrewkimswe.github.io/posts/rag-cloudops-productionish-evaluation-fallback-serving-observability.html" />
+    <meta property="og:image" content="https://andrewkimswe.github.io/assets/social-card.svg" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://andrewkimswe.github.io/assets/social-card.svg" />
+    <meta property="article:published_time" content="2026-08-18T00:00:00+09:00" />
+    <meta property="article:author" content="Jiwon Kim" />
+    <meta property="article:tag" content="RAG" />
+    <meta property="article:tag" content="CloudOps" />
+    <meta property="article:tag" content="Evaluation" />
+    <meta property="article:tag" content="Fallback" />
+    <meta property="article:tag" content="Observability" />
+    <link rel="stylesheet" href="../styles.css" />
+    <script type="application/ld+json">
+{
+      "@context": "https://schema.org",
+      "@type": "BlogPosting",
+      "headline": "[RAG] 튜토리얼 RAG를 운영 가능한 CloudOps RAG로 확장하기 - 평가, Fallback, Serving, Observability",
+      "description": "CloudOps RAG를 단순 데모에서 검색 평가, threshold fallback, 답변 평가, FastAPI serving, timeout/retry, observability를 갖춘 서비스로 확장한 과정입니다.",
+      "datePublished": "2026-08-18T00:00:00+09:00",
+      "dateModified": "2026-08-18T00:00:00+09:00",
+      "author": {
+            "@type": "Person",
+            "name": "Jiwon Kim",
+            "url": "https://github.com/andrewkimswe"
+      },
+      "publisher": {
+            "@type": "Person",
+            "name": "Jiwon Kim"
+      },
+      "mainEntityOfPage": "https://andrewkimswe.github.io/posts/rag-cloudops-productionish-evaluation-fallback-serving-observability.html",
+      "inLanguage": "ko-KR"
+}
+    </script>
+  </head>
+  <body>
+    <header class="site-header">
+      <a class="brand" href="../" aria-label="Jiwon Kim's Blog 홈">
+        <span class="brand-mark">JK</span>
+        <span>
+          <strong>Jiwon Kim's Blog</strong>
+          <small>Engineering notes</small>
+        </span>
+      </a>
+      <nav class="nav-links" aria-label="주요 메뉴">
+        <a href="../#writing">Writing</a>
+        <a href="../#topics">Topics</a>
+        <a href="../#about">About</a>
+        <a href="https://github.com/andrewkimswe">GitHub</a>
+      </nav>
+    </header>
+
+    <main>
+      <article class="article-page">
+        <header class="article-hero">
+          <a class="back-link" href="../#writing">Back to writing</a>
+          <p class="eyebrow">RAG · CloudOps · Observability</p>
+          <h1>[RAG] 튜토리얼 RAG를 운영 가능한 CloudOps RAG로 확장하기 - 평가, Fallback, Serving, Observability</h1>
+          <p class="article-summary">
+            RAG는 Chunk, Embed, Retrieve, Generate만으로도 동작하지만 그것만으로 신뢰할 수 있는 시스템이 되지는 않는다. CloudOps RAG를 평가, fallback, serving, observability까지 확장한 흐름을 정리한다.
+          </p>
+          <div class="article-meta">
+            <time datetime="2026-08-18">2026.08.18</time>
+            <span>RAG</span>
+            <span>CloudOps</span>
+            <span>Evaluation</span>
+          </div>
+        </header>
+
+        <div class="article-body">
+          <p>RAG(Retrieval-Augmented Generation)를 처음 구현하는 것은 생각보다 어렵지 않다.</p>
+          <p>문서를 나누고, 임베딩하고, Vector DB에 저장한 뒤, 질문과 유사한 문서를 검색해 LLM에 전달하면 된다.</p>
+          <pre><code>Document
+   ↓
+Chunk
+   ↓
+Embedding
+   ↓
+Vector DB
+
+User Query
+   ↓
+Embedding
+   ↓
+Retrieve
+   ↓
+LLM
+   ↓
+Answer</code></pre>
+          <p>몇십 줄의 코드만으로도 &quot;문서에 질문하면 답하는 RAG&quot;를 만들 수 있다.</p>
+          <p>하지만 CloudOps troubleshooting처럼 운영 판단에 영향을 주는 도메인에서는 질문이 달라진다.</p>
+          <blockquote>
+            <p>검색된 문서가 실제로 맞는 문서인지 어떻게 알 수 있을까?</p>
+          </blockquote>
+          <blockquote>
+            <p>관련 문서가 없는데도 LLM이 답을 만들어내면 어떻게 할까?</p>
+          </blockquote>
+          <blockquote>
+            <p>검색은 성공했지만 답변이 틀렸다면 어디에서 실패한 것일까?</p>
+          </blockquote>
+          <blockquote>
+            <p>외부 LLM API가 느려지거나 실패하면 API 서버는 어떻게 동작해야 할까?</p>
+          </blockquote>
+          <blockquote>
+            <p>실제 요청의 검색, 생성 지연 시간과 fallback 비율은 어떻게 확인할까?</p>
+          </blockquote>
+          <p>CloudOps RAG 프로젝트에서는 AWS와 Kubernetes 공식 트러블슈팅 문서를 대상으로 RAG를 구현한 뒤, 단순한 데모에서 끝내지 않고 다음 lifecycle로 확장했다.</p>
+          <pre><code>Baseline RAG
+      ↓
+Retrieval Evaluation
+      ↓
+Threshold Fallback
+      ↓
+Answer Evaluation
+      ↓
+Failure Analysis
+      ↓
+FastAPI Serving
+      ↓
+Timeout / Retry
+      ↓
+Observability</code></pre>
+          <p>이 글은 각 실험을 깊게 반복하기보다, 프로젝트 전체가 어떻게 &quot;동작하는 RAG&quot;에서 &quot;평가하고 관찰할 수 있는 RAG&quot;로 확장되었는지를 정리한다.</p>
+          <h2>1. Baseline RAG - 답이 나온다고 시스템이 검증된 것은 아니다</h2>
+          <p>CloudOps RAG의 기본 구조는 일반적인 RAG와 크게 다르지 않다.</p>
+          <p>공식 AWS/Kubernetes 문서를 가져와 파싱하고 일정 크기로 나눈 뒤, 각 chunk를 embedding하여 Chroma에 저장한다.</p>
+          <p>질문이 들어오면 동일한 embedding model로 query vector를 생성하고 유사한 chunk를 검색한다.</p>
+          <pre><code>Official AWS / Kubernetes Docs
+              ↓
+            Parse
+              ↓
+            Chunk
+              ↓
+           Embedding
+              ↓
+            Chroma</code></pre>
+          <p>Runtime query는 다음과 같다.</p>
+          <pre><code>User Query
+    ↓
+Query Embedding
+    ↓
+Chroma Retrieval
+    ↓
+Retrieved Context
+    ↓
+gpt-4o-mini
+    ↓
+Answer + Sources</code></pre>
+          <p>최종 frozen configuration은 다음과 같았다.</p>
+          <pre><code>chunk_size       = 1024
+chunk_overlap    = 128
+embedding        = text-embedding-3-small
+vector DB        = Chroma
+retrieval_top_k  = 5
+generation       = gpt-4o-mini</code></pre>
+          <p>여기까지 구현하면 겉으로는 RAG가 완성된 것처럼 보인다. 질문을 입력하면 답이 나오고 관련 문서도 함께 표시된다.</p>
+          <p>하지만 답변이 자연스럽다는 사실은 retrieval이 제대로 작동한다는 증거가 아니다. LLM은 잘못 검색된 context를 기반으로도 자연스러운 답을 만들 수 있기 때문이다.</p>
+          <p>그래서 다음 단계는 prompt를 더 다듬는 것이 아니라 먼저 검색 품질을 측정하는 것이었다.</p>
+          <h2>2. Retrieval Evaluation - 검색이 실제로 맞았는가?</h2>
+          <p>검색 품질을 평가하려면 먼저 정답을 정의해야 한다.</p>
+          <p>CloudOps RAG에서는 각 평가 질문에 대해 해당 질문의 근거가 되는 공식 문서 ID를 직접 지정했다.</p>
+          <pre><code>Question
+&quot;What should I check when an EKS pod cannot access AWS services?&quot;
+
+Expected document
+eks-iam-roles-for-service-accounts</code></pre>
+          <p>Ground truth를 chunk가 아니라 document ID 기준으로 정의했다. Chunk 경계는 chunk size나 overlap을 변경할 때 달라질 수 있기 때문이다.</p>
+          <p>평가 데이터는 총 50개 질문으로 구성했다.</p>
+          <pre><code>50 Questions
+│
+├── Dev: 40
+│   ├── In-scope: 36
+│   └── Out-of-scope: 4
+│
+└── Held-out: 10
+    ├── In-scope: 8
+    └── Out-of-scope: 2</code></pre>
+          <p>Dev set으로 retrieval 설정을 비교한 뒤 configuration을 freeze하고, 이후 held-out set으로 확인했다.</p>
+          <p>주요 metric은 Hit@k와 MRR이었다.</p>
+          <pre><code>Hit@k = expected document가 Top-k 안에 있는가
+MRR   = 첫 번째 expected document가 얼마나 높은 rank에 있는가</code></pre>
+          <p>Frozen configuration은 작은 held-out set에서 Hit@3 = 8/8, MRR = 0.9375를 기록했다.</p>
+          <p>이 수치는 일반 benchmark가 아니라 현재 corpus와 평가 질문에 대한 validation snapshot으로 해석해야 한다.</p>
+          <p>세부 chunking, embedding, top-k, threshold 선택 과정은 기존 retrieval tuning 글에서 따로 다뤘고, 여기서는 핵심만 남긴다.</p>
+          <h2>3. Threshold Fallback - 모르면 LLM을 호출하지 않는다</h2>
+          <p>Retrieval 평가 다음으로 해결하고 싶었던 문제는 관련 문서가 없는 질문이었다.</p>
+          <p>일반적인 RAG에서는 검색 결과가 좋지 않더라도 top-k 결과를 그대로 LLM에 전달할 수 있다.</p>
+          <pre><code>Unsupported Query
+       ↓
+Vector Search
+       ↓
+Irrelevant Context
+       ↓
+LLM
+       ↓
+Plausible-looking Answer</code></pre>
+          <p>CloudOps troubleshooting 도구에서는 이것이 위험하다고 판단했다. 관련 근거가 없다면 억지로 답을 생성하기보다 답변 생성을 거부하는 편이 낫다.</p>
+          <p>그래서 top-1 retrieval distance에 threshold를 적용했다.</p>
+          <pre><code>top_1_l2_distance &lt;= 1.042478 -&gt; accept, call LLM
+top_1_l2_distance &gt;  1.042478 -&gt; reject, return fallback, skip LLM</code></pre>
+          <p>동작은 다음과 같다.</p>
+          <pre><code>                 Query
+                   ↓
+              Retrieval
+                   ↓
+          Top-1 L2 distance
+             /           \
+      &lt;= threshold     &gt; threshold
+           ↓                ↓
+         Accept           Reject
+           ↓                ↓
+       Call LLM          Fallback
+                           ↓
+                      Skip LLM</code></pre>
+          <p>Dev와 held-out의 작은 out-of-scope sample에서는 threshold가 의도대로 동작했다.</p>
+          <p>하지만 threshold는 high-confidence semantic misretrieval을 막지 못한다. 높은 confidence로 잘못된 문서를 검색하면 threshold는 통과할 수 있다.</p>
+          <p>따라서 threshold fallback은 hallucination을 해결하는 만능 장치가 아니라 low-confidence generation을 통제하는 하나의 gate다.</p>
+          <h2>4. Fallback과 Dependency Error는 다르다</h2>
+          <p>구현하면서 구분한 또 하나의 개념은 fallback과 시스템 오류다.</p>
+          <p>둘 다 사용자에게 원하는 답이 나오지 않는다는 점에서는 비슷해 보이지만 원인이 완전히 다르다.</p>
+          <h3>Fallback</h3>
+          <pre><code>Retrieval 정상
+        ↓
+Confidence 부족
+        ↓
+의도적으로 LLM 호출 생략</code></pre>
+          <p>Fallback은 시스템이 설계대로 동작한 결과다.</p>
+          <h3>Dependency Error</h3>
+          <pre><code>Query
+ ↓
+OpenAI API
+ ↓
+Timeout / Failure</code></pre>
+          <p>Dependency error는 외부 서비스나 네트워크 문제다.</p>
+          <p>따라서 두 상황을 동일한 error로 처리하지 않았다.</p>
+          <pre><code>Fallback
+= Controlled low-confidence response
+
+Dependency Error
+= Infrastructure / external service failure</code></pre>
+          <p>이 구분은 metrics에서도 중요했다. Fallback rate가 증가한 것과 OpenAI failure가 증가한 것은 전혀 다른 문제이기 때문이다.</p>
+          <h2>5. Answer Evaluation - 검색 성공은 답변 성공이 아니다</h2>
+          <p>Retrieval 평가만으로 RAG 전체 품질을 설명할 수는 없다.</p>
+          <p>정답 문서를 검색했다고 하더라도 LLM이 중요한 내용을 누락하거나 잘못 해석할 수 있기 때문이다.</p>
+          <p>그래서 retrieval과 answer generation을 별도로 평가했다.</p>
+          <p>Answer evaluation에서는 네 가지 기준을 사용했다.</p>
+          <pre><code>Correctness
+Completeness
+Faithfulness
+Source Support</code></pre>
+          <p>11개 생성 답변에 대한 human evaluation에서는 faithfulness가 가장 높고 correctness와 completeness가 상대적으로 낮았다.</p>
+          <p>이 결과에서 중요한 결론은 단순했다.</p>
+          <blockquote>
+            <p>Faithful하다고 correct한 것은 아니다.</p>
+          </blockquote>
+          <p>대표적인 실패 사례에서는 ConfigMap 관련 질문에 대해 Secrets 중심의 context가 검색됐다.</p>
+          <p>LLM은 검색된 context를 충실하게 사용했지만, 처음부터 context가 질문에 맞지 않았기 때문에 답변의 correctness는 낮아졌다.</p>
+          <pre><code>Question
+   ↓
+Wrong Retrieval
+   ↓
+Wrong Context
+   ↓
+Faithful Generation
+   ↓
+Wrong Answer</code></pre>
+          <p>이 사례는 RAG 평가에서 retrieval quality와 answer quality를 분리해야 하는 이유를 보여준다.</p>
+          <h2>6. Failure Analysis - 점수보다 실패 원인을 찾는다</h2>
+          <p>평가 metric을 계산하는 것만으로는 시스템을 개선하기 어렵다.</p>
+          <p>그래서 생성된 답변의 실패를 유형별로 분류했다.</p>
+          <pre><code>Generation-side failure
+Retrieval + Generation failure
+Retrieval failure
+No material failure</code></pre>
+          <p>중요한 것은 정답/오답보다 어느 단계에서 실패했는가였다.</p>
+          <pre><code>Query
+  ↓
+Retrieval
+  ↓
+Context
+  ↓
+Generation
+  ↓
+Answer</code></pre>
+          <p>각 단계는 서로 다른 failure mode를 가진다.</p>
+          <pre><code>Relevant document 자체를 검색하지 못함
+→ Retrieval failure
+
+Relevant context는 있었지만 LLM이 핵심 내용을 누락
+→ Generation failure
+
+일부 문서는 찾았지만 필요한 여러 문서를 모두 찾지 못함
+→ Multi-document incompleteness
+
+잘못된 문서를 높은 confidence로 검색
+→ High-confidence semantic misretrieval</code></pre>
+          <p>이렇게 원인을 분리해야 다음 실험도 구체적으로 설계할 수 있다.</p>
+          <h2>7. Multi-document Retrieval은 별도의 문제다</h2>
+          <p>Failure analysis에서 특히 크게 드러난 약점은 여러 문서가 동시에 필요한 질문이었다.</p>
+          <p>단일 관련 문서를 하나 찾는 것은 비교적 잘 동작했다. 하지만 두 개 이상의 문서가 모두 필요한 질문에서는 다른 문제가 생겼다.</p>
+          <p>그래서 multi-document query에는 Any-Hit과 All-Hit을 분리해서 봤다.</p>
+          <pre><code>Any-Hit = 필요한 문서 중 하나라도 검색했는가
+All-Hit = 필요한 문서를 모두 검색했는가</code></pre>
+          <p>Held-out에서는 Any-Hit@5는 성공했지만 All-Hit@5는 실패했다.</p>
+          <p>즉 관련 문서를 하나 찾는 능력과 필요한 evidence를 모두 수집하는 능력은 다르다.</p>
+          <p>Top-5를 살펴보니 동일 문서의 유사한 chunk가 여러 자리를 차지하는 경우가 있었다. 그래서 per-document cap을 post-hoc candidate로 실험했지만, 이 설정은 frozen configuration에 넣지 않았다.</p>
+          <p>새로운 untouched validation set으로 확인하지 않았기 때문이다.</p>
+          <p>이 부분은 기존 diversification 글에서 자세히 다뤘고, 여기서는 운영 가능한 RAG로 가기 위해 failure mode를 명시적으로 분류했다는 점만 남긴다.</p>
+          <h2>8. FastAPI Serving - 평가 코드와 실제 서비스는 분리한다</h2>
+          <p>평가가 끝났다고 사용자가 RAG를 사용할 수 있는 것은 아니다.</p>
+          <p>그래서 FastAPI 기반 API로 runtime layer를 구성했다.</p>
+          <p>주요 endpoint는 다음과 같다.</p>
+          <pre><code>GET  /health
+GET  /metrics
+POST /query
+POST /documents
+GET  /documents/{id}/status</code></pre>
+          <p>전체 runtime 흐름은 다음과 같다.</p>
+          <pre><code>Client
+  ↓
+FastAPI
+  ↓
+Query Embedding
+  ↓
+Runtime Chroma
+  ↓
+Threshold Gate
+  ├───────────────┐
+  ↓               ↓
+Accept           Reject
+  ↓               ↓
+LLM            Fallback
+  ↓
+Answer + Sources</code></pre>
+          <p>문서 ingestion은 다음 흐름으로 처리한다.</p>
+          <pre><code>URL
+ ↓
+Fetch
+ ↓
+Parse
+ ↓
+Character Chunk
+ ↓
+Embedding
+ ↓
+Runtime Chroma</code></pre>
+          <p>현재 portfolio-scale에서는 ingestion을 synchronous하게 처리한다. 대규모 ingestion pipeline까지 구현한 것은 아니다.</p>
+          <h2>9. Evaluation Chroma와 Runtime Chroma를 분리한 이유</h2>
+          <p>평가용 collection과 실제 runtime collection도 분리했다.</p>
+          <pre><code>Evaluation Corpus
+      ↓
+Evaluation Chroma
+      ↓
+Offline Evaluation</code></pre>
+          <pre><code>Runtime Documents
+      ↓
+Runtime Chroma
+      ↓
+User Query</code></pre>
+          <p>평가 데이터가 실제 runtime state와 섞이면 document ingestion이나 삭제 같은 runtime 변화가 evaluation reproducibility에 영향을 줄 수 있다.</p>
+          <p>따라서 evaluation state와 runtime state의 lifecycle을 분리했다.</p>
+          <p>필요한 경우 evaluation collection을 runtime 초기 데이터로 사용할 수 있지만, 두 collection이 같은 역할을 하는 것은 아니다.</p>
+          <h2>10. Production-ish Reliability - 외부 API 실패를 제한한다</h2>
+          <p>RAG에 <code>/query</code> endpoint를 추가했다고 바로 운영 가능한 시스템이 되는 것은 아니다.</p>
+          <p>CloudOps RAG는 OpenAI API라는 외부 dependency를 가진다.</p>
+          <pre><code>FastAPI
+   ↓
+OpenAI Embedding API
+   ↓
+Retrieval
+   ↓
+OpenAI Generation API</code></pre>
+          <p>외부 API에는 timeout, rate limit, temporary server error, network failure, permanent client error가 발생할 수 있다.</p>
+          <p>그래서 호출을 무한정 기다리거나 모든 오류를 무조건 retry하는 대신 bounded timeout과 bounded retry를 적용했다.</p>
+          <pre><code>Embedding timeout  : 30 seconds
+Generation timeout : 45 seconds
+Retry attempts     : max 3 total attempts</code></pre>
+          <p>Timeout은 504로 구분한다.</p>
+          <pre><code>Request
+  ↓
+OpenAI
+  ↓
+Timeout
+  ↓
+504 external_dependency_timeout</code></pre>
+          <p>Timeout이 아닌 외부 dependency failure는 503으로 구분한다.</p>
+          <pre><code>503 external_dependency_unavailable</code></pre>
+          <p>Retry도 무조건 수행하지 않는다.</p>
+          <pre><code>Retryable failure
+→ bounded retry + backoff
+
+Timeout
+→ fail fast according to timeout policy
+
+Permanent 4xx
+→ fail fast</code></pre>
+          <p>무제한 retry는 dependency 장애 상황에서 트래픽 증폭을 만들 수 있기 때문이다.</p>
+          <h2>11. Observability - RAG 내부 단계를 나눠서 본다</h2>
+          <p>서비스가 실행되기 시작하면 최종 API latency 하나만 보는 것으로는 부족하다.</p>
+          <p>RAG 요청은 내부적으로 여러 단계로 구성된다.</p>
+          <pre><code>Query
+ │
+ ├─ Embedding
+ │
+ ├─ Retrieval
+ │
+ └─ Generation
+ │
+ ↓
+Response</code></pre>
+          <p>전체 latency가 증가했을 때 원인은 여러 가지일 수 있다.</p>
+          <pre><code>Embedding API가 느려짐
+Chroma retrieval이 느려짐
+Generation이 느려짐
+Fallback이 증가함
+OpenAI failure가 증가함</code></pre>
+          <p>그래서 Prometheus metric도 단계별로 분리했다.</p>
+          <pre><code>HTTP latency
+Query latency
+Embedding latency
+Retrieval latency
+Generation latency
+Fallback count/rate
+Document ingestion
+OpenAI failures</code></pre>
+          <p>이렇게 하면 &quot;RAG가 느리다&quot;에서 끝나는 것이 아니라 어느 단계가 느린지, fallback이 늘었는지, 외부 dependency 문제가 늘었는지 구분할 수 있다.</p>
+          <p>Metric label도 제한했다.</p>
+          <pre><code>status=&quot;success|fallback|error&quot;
+stage=&quot;embedding|retrieval|generation&quot;
+error_type=&quot;timeout|dependency|...&quot;</code></pre>
+          <p>사용자 query, document body, raw URL, raw exception message처럼 고유 값이 많은 데이터는 label로 사용하지 않는다.</p>
+          <p>Observability 자체가 새로운 운영 문제를 만들지 않도록 하기 위해서다.</p>
+          <h2>12. 여기까지 했다고 Production-Grade RAG인가?</h2>
+          <p>아니다.</p>
+          <p>CloudOps RAG는 일반적인 tutorial RAG보다 평가와 서비스 운영 요소를 확장했지만, 실제 대규모 production system이라고 주장할 수준은 아니다.</p>
+          <p>현재 구조에는 명확한 한계가 있다.</p>
+          <pre><code>Evaluation set이 작다.
+Large-scale load test가 없다.
+Ingestion이 synchronous하다.
+Circuit breaker가 없다.
+Async retry queue가 없다.
+Diversification candidate는 untouched held-out으로 검증하지 않았다.</code></pre>
+          <p>이 글에서 중요한 것은 production의 모든 문제를 해결했다는 주장이 아니다.</p>
+          <p>오히려 현재 구현된 것과 아직 해결하지 않은 것을 구분하는 것이 중요했다.</p>
+          <h2>13. 튜토리얼 RAG에서 무엇이 달라졌는가</h2>
+          <p>처음에는 다음 구조였다.</p>
+          <pre><code>Chunk
+ ↓
+Embed
+ ↓
+Retrieve
+ ↓
+Generate</code></pre>
+          <p>하지만 프로젝트를 진행하면서 구조는 다음처럼 확장됐다.</p>
+          <pre><code>Build
+  ↓
+Measure
+  ↓
+Compare
+  ↓
+Freeze
+  ↓
+Held-out Validate
+  ↓
+Answer Evaluate
+  ↓
+Analyze Failures
+  ↓
+Serve
+  ↓
+Observe</code></pre>
+          <p>가장 큰 변화는 기술 스택 자체가 아니었다.</p>
+          <p>시스템을 바라보는 질문이 달라졌다.</p>
+          <pre><code>검색은 실제로 맞았는가?
+검색 결과가 불확실하면 답하지 않을 수 있는가?
+검색 성공과 답변 성공을 구분할 수 있는가?
+실패가 Retrieval 때문인지 Generation 때문인지 알 수 있는가?
+외부 API가 실패하면 시스템은 어떻게 반응하는가?
+어느 단계에서 latency가 증가했는지 확인할 수 있는가?</code></pre>
+          <p>CloudOps RAG에서 가장 중요했던 것은 새로운 프레임워크를 하나 더 추가하는 것이 아니라 이 질문들에 답할 수 있는 구조를 만드는 것이었다.</p>
+          <h2>14. 정리</h2>
+          <p>RAG를 구현하는 가장 단순한 구조는 여전히 유효하다.</p>
+          <pre><code>Chunk → Embed → Retrieve → Generate</code></pre>
+          <p>하지만 이것만으로는 retrieval이 맞았는지, unsupported query인지, answer가 올바른지, 어디에서 실패했는지, dependency가 정상인지, latency가 어디서 발생하는지 알 수 없다.</p>
+          <p>CloudOps RAG에서는 이를 평가, fallback, answer evaluation, failure analysis, serving, reliability, observability로 확장했다.</p>
+          <p>그리고 이 과정에서 얻은 가장 중요한 결론은 다음과 같다.</p>
+          <blockquote>
+            <p>RAG가 답을 생성한다는 것과 RAG 시스템이 신뢰할 수 있게 동작한다는 것은 서로 다른 문제다.</p>
+          </blockquote>
+          <p>검색 품질을 측정하고, 근거가 부족하면 생성을 중단하고, retrieval과 generation을 따로 평가하고, 실패 원인을 분류하고, 외부 dependency의 timeout과 retry를 통제하고, 실제 요청의 각 단계를 관찰할 수 있어야 단순한 RAG 데모를 넘어가기 시작한다.</p>
+          <p>CloudOps RAG는 아직 완전한 production-grade 시스템은 아니다.</p>
+          <p>하지만 현재 구현된 것과 아직 해결하지 않은 것을 구분하고, 측정 결과와 한계를 함께 남기는 것.</p>
+          <p>그것이 이번 프로젝트에서 동작하는 RAG를 평가하고 운영할 수 있는 RAG로 확장하면서 가장 중요하게 본 부분이다.</p>
+        </div>
+      </article>
+    </main>
+
+    <footer class="site-footer">
+      <p>© 2026 Jiwon Kim. Technical writing, notes, and experiments.</p>
+      <div class="footer-links">
+        <span id="visitStatus">Analytics ready</span>
+        <a href="https://github.com/andrewkimswe">github.com/andrewkimswe</a>
+      </div>
+    </footer>
+
+    <script src="../script.js"></script>
+    <script
+      data-goatcounter="https://jiwonkim-blog.goatcounter.com/count"
+      async
+      src="https://gc.zgo.at/count.js"
+    ></script>
+  </body>
+</html>

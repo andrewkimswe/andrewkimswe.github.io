@@ -22,6 +22,7 @@ Jiwon Kim's Blog is a Korean technical blog about backend engineering, cloud inf
 
 ## Posts
 
+- [[RAG] 튜토리얼 RAG를 운영 가능한 CloudOps RAG로 확장하기 - 평가, Fallback, Serving, Observability](https://andrewkimswe.github.io/posts/rag-cloudops-productionish-evaluation-fallback-serving-observability.html): CloudOps RAG를 단순 데모에서 검색 평가, threshold fallback, 답변 평가, FastAPI serving, timeout/retry, observability를 갖춘 서비스로 확장한 과정입니다.
 - [[AWS/Database] JOIN이 깊어질수록 왜 Graph DB가 유리할까? - Amazon Neptune으로 다단계 관계 탐색하기](https://andrewkimswe.github.io/posts/aws-database-neptune-graph-multi-hop-traversal.html): 관계형 데이터베이스의 JOIN과 Graph Database의 traversal 관점 차이를 비교하고, Amazon Neptune이 다단계 관계 탐색에 적합한 이유를 정리합니다.
 - [[AWS/Security] EC2 패치 자동화는 어디까지 자동화해야 할까? - Maintenance Window, Compliance, Staged Rollout](https://andrewkimswe.github.io/posts/aws-security-ec2-patch-rollout-compliance.html): EC2 패치 자동화를 Maintenance Window, staged rollout, compliance, health check 관점에서 설계하는 AWS 보안 운영 노트입니다.
 - [[AWS/Security] 취약점은 찾았는데 패치는 누가 하지? - Amazon Inspector와 Systems Manager로 EC2 패치 관리하기](https://andrewkimswe.github.io/posts/aws-security-inspector-systems-manager-patch-management.html): Amazon Inspector와 AWS Systems Manager Patch Manager를 분리해 EC2 취약점 탐지, 패치 기준, Scan/Install 흐름을 설계하는 보안 운영 노트입니다.

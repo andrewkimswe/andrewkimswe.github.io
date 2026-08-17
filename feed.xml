@@ -5,7 +5,14 @@
     <link>https://andrewkimswe.github.io/</link>
     <description>백엔드, 클라우드, 아키텍처, 운영, 트러블슈팅을 기록하는 기술 블로그입니다.</description>
     <language>ko-KR</language>
-    <lastBuildDate>Mon, 17 Aug 2026 00:00:00 +0900</lastBuildDate>
+    <lastBuildDate>Tue, 18 Aug 2026 00:00:00 +0900</lastBuildDate>
+    <item>
+      <title>[RAG] 튜토리얼 RAG를 운영 가능한 CloudOps RAG로 확장하기 - 평가, Fallback, Serving, Observability</title>
+      <link>https://andrewkimswe.github.io/posts/rag-cloudops-productionish-evaluation-fallback-serving-observability.html</link>
+      <guid>https://andrewkimswe.github.io/posts/rag-cloudops-productionish-evaluation-fallback-serving-observability.html</guid>
+      <pubDate>Tue, 18 Aug 2026 00:00:00 +0900</pubDate>
+      <description>RAG가 답을 생성한다는 것과 신뢰할 수 있게 동작한다는 것은 다르다. CloudOps RAG를 평가 가능하고 관찰 가능한 서비스로 확장한 lifecycle을 정리합니다.</description>
+    </item>
     <item>
       <title>[AWS/Database] JOIN이 깊어질수록 왜 Graph DB가 유리할까? - Amazon Neptune으로 다단계 관계 탐색하기</title>
       <link>https://andrewkimswe.github.io/posts/aws-database-neptune-graph-multi-hop-traversal.html</link>
