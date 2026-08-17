@@ -92,23 +92,18 @@
         <div class="article-body">
           <p>RAG(Retrieval-Augmented Generation)를 처음 구현하는 것은 생각보다 어렵지 않다.</p>
           <p>문서를 나누고, 임베딩하고, Vector DB에 저장한 뒤, 질문과 유사한 문서를 검색해 LLM에 전달하면 된다.</p>
-          <pre><code>Document
-   ↓
-Chunk
-   ↓
-Embedding
-   ↓
-Vector DB
+          <div class="mermaid diagram">
+flowchart TB
+    doc[Document] --> chunk[Chunk]
+    chunk --> docEmbed[Document Embedding]
+    docEmbed --> vector[Vector DB]
 
-User Query
-   ↓
-Embedding
-   ↓
-Retrieve
-   ↓
-LLM
-   ↓
-Answer</code></pre>
+    query[User Query] --> queryEmbed[Query Embedding]
+    queryEmbed --> retrieve[Retrieve]
+    vector --> retrieve
+    retrieve --> llm[LLM]
+    llm --> answer[Answer]
+          </div>
           <p>몇십 줄의 코드만으로도 &quot;문서에 질문하면 답하는 RAG&quot;를 만들 수 있다.</p>
           <p>하지만 CloudOps troubleshooting처럼 운영 판단에 영향을 주는 도메인에서는 질문이 달라진다.</p>
           <blockquote>
@@ -127,47 +122,37 @@ Answer</code></pre>
             <p>실제 요청의 검색, 생성 지연 시간과 fallback 비율은 어떻게 확인할까?</p>
           </blockquote>
           <p>CloudOps RAG 프로젝트에서는 AWS와 Kubernetes 공식 트러블슈팅 문서를 대상으로 RAG를 구현한 뒤, 단순한 데모에서 끝내지 않고 다음 lifecycle로 확장했다.</p>
-          <pre><code>Baseline RAG
-      ↓
-Retrieval Evaluation
-      ↓
-Threshold Fallback
-      ↓
-Answer Evaluation
-      ↓
-Failure Analysis
-      ↓
-FastAPI Serving
-      ↓
-Timeout / Retry
-      ↓
-Observability</code></pre>
+          <div class="mermaid diagram compact-diagram">
+flowchart TB
+    baseline[Baseline RAG] --> retrievalEval[Retrieval Evaluation]
+    retrievalEval --> fallback[Threshold Fallback]
+    fallback --> answerEval[Answer Evaluation]
+    answerEval --> failure[Failure Analysis]
+    failure --> serving[FastAPI Serving]
+    serving --> reliability[Timeout / Retry]
+    reliability --> observability[Observability]
+          </div>
           <p>이 글은 각 실험을 깊게 반복하기보다, 프로젝트 전체가 어떻게 &quot;동작하는 RAG&quot;에서 &quot;평가하고 관찰할 수 있는 RAG&quot;로 확장되었는지를 정리한다.</p>
           <h2>1. Baseline RAG - 답이 나온다고 시스템이 검증된 것은 아니다</h2>
           <p>CloudOps RAG의 기본 구조는 일반적인 RAG와 크게 다르지 않다.</p>
           <p>공식 AWS/Kubernetes 문서를 가져와 파싱하고 일정 크기로 나눈 뒤, 각 chunk를 embedding하여 Chroma에 저장한다.</p>
           <p>질문이 들어오면 동일한 embedding model로 query vector를 생성하고 유사한 chunk를 검색한다.</p>
-          <pre><code>Official AWS / Kubernetes Docs
-              ↓
-            Parse
-              ↓
-            Chunk
-              ↓
-           Embedding
-              ↓
-            Chroma</code></pre>
+          <div class="mermaid diagram compact-diagram">
+flowchart TB
+    docs[Official AWS / Kubernetes Docs] --> parse[Parse]
+    parse --> chunk[Chunk]
+    chunk --> embedding[Embedding]
+    embedding --> chroma[Chroma]
+          </div>
           <p>Runtime query는 다음과 같다.</p>
-          <pre><code>User Query
-    ↓
-Query Embedding
-    ↓
-Chroma Retrieval
-    ↓
-Retrieved Context
-    ↓
-gpt-4o-mini
-    ↓
-Answer + Sources</code></pre>
+          <div class="mermaid diagram compact-diagram">
+flowchart TB
+    query[User Query] --> embedding[Query Embedding]
+    embedding --> retrieval[Chroma Retrieval]
+    retrieval --> context[Retrieved Context]
+    context --> llm[gpt-4o-mini]
+    llm --> answer[Answer + Sources]
+          </div>
           <p>최종 frozen configuration은 다음과 같았다.</p>
           <pre><code>chunk_size       = 1024
 chunk_overlap    = 128
@@ -188,15 +173,15 @@ Expected document
 eks-iam-roles-for-service-accounts</code></pre>
           <p>Ground truth를 chunk가 아니라 document ID 기준으로 정의했다. Chunk 경계는 chunk size나 overlap을 변경할 때 달라질 수 있기 때문이다.</p>
           <p>평가 데이터는 총 50개 질문으로 구성했다.</p>
-          <pre><code>50 Questions
-│
-├── Dev: 40
-│   ├── In-scope: 36
-│   └── Out-of-scope: 4
-│
-└── Held-out: 10
-    ├── In-scope: 8
-    └── Out-of-scope: 2</code></pre>
+          <div class="mermaid diagram compact-diagram">
+flowchart TB
+    total[50 Questions] --> dev[Dev: 40]
+    total --> heldout[Held-out: 10]
+    dev --> devIn[In-scope: 36]
+    dev --> devOut[Out-of-scope: 4]
+    heldout --> heldIn[In-scope: 8]
+    heldout --> heldOut[Out-of-scope: 2]
+          </div>
           <p>Dev set으로 retrieval 설정을 비교한 뒤 configuration을 freeze하고, 이후 held-out set으로 확인했다.</p>
           <p>주요 metric은 Hit@k와 MRR이었다.</p>
           <pre><code>Hit@k = expected document가 Top-k 안에 있는가
@@ -207,33 +192,28 @@ MRR   = 첫 번째 expected document가 얼마나 높은 rank에 있는가</code
           <h2>3. Threshold Fallback - 모르면 LLM을 호출하지 않는다</h2>
           <p>Retrieval 평가 다음으로 해결하고 싶었던 문제는 관련 문서가 없는 질문이었다.</p>
           <p>일반적인 RAG에서는 검색 결과가 좋지 않더라도 top-k 결과를 그대로 LLM에 전달할 수 있다.</p>
-          <pre><code>Unsupported Query
-       ↓
-Vector Search
-       ↓
-Irrelevant Context
-       ↓
-LLM
-       ↓
-Plausible-looking Answer</code></pre>
+          <div class="mermaid diagram compact-diagram">
+flowchart TB
+    query[Unsupported Query] --> search[Vector Search]
+    search --> context[Irrelevant Context]
+    context --> llm[LLM]
+    llm --> answer[Plausible-looking Answer]
+          </div>
           <p>CloudOps troubleshooting 도구에서는 이것이 위험하다고 판단했다. 관련 근거가 없다면 억지로 답을 생성하기보다 답변 생성을 거부하는 편이 낫다.</p>
           <p>그래서 top-1 retrieval distance에 threshold를 적용했다.</p>
           <pre><code>top_1_l2_distance &lt;= 1.042478 -&gt; accept, call LLM
 top_1_l2_distance &gt;  1.042478 -&gt; reject, return fallback, skip LLM</code></pre>
           <p>동작은 다음과 같다.</p>
-          <pre><code>                 Query
-                   ↓
-              Retrieval
-                   ↓
-          Top-1 L2 distance
-             /           \
-      &lt;= threshold     &gt; threshold
-           ↓                ↓
-         Accept           Reject
-           ↓                ↓
-       Call LLM          Fallback
-                           ↓
-                      Skip LLM</code></pre>
+          <div class="mermaid diagram compact-diagram">
+flowchart TB
+    query[Query] --> retrieval[Retrieval]
+    retrieval --> distance{Top-1 L2 distance}
+    distance -->|&lt;= threshold| accept[Accept]
+    distance -->|&gt; threshold| reject[Reject]
+    accept --> llm[Call LLM]
+    reject --> fallback[Fallback]
+    fallback --> skip[Skip LLM]
+          </div>
           <p>Dev와 held-out의 작은 out-of-scope sample에서는 threshold가 의도대로 동작했다.</p>
           <p>하지만 threshold는 high-confidence semantic misretrieval을 막지 못한다. 높은 confidence로 잘못된 문서를 검색하면 threshold는 통과할 수 있다.</p>
           <p>따라서 threshold fallback은 hallucination을 해결하는 만능 장치가 아니라 low-confidence generation을 통제하는 하나의 gate다.</p>
@@ -241,18 +221,19 @@ top_1_l2_distance &gt;  1.042478 -&gt; reject, return fallback, skip LLM</code><
           <p>구현하면서 구분한 또 하나의 개념은 fallback과 시스템 오류다.</p>
           <p>둘 다 사용자에게 원하는 답이 나오지 않는다는 점에서는 비슷해 보이지만 원인이 완전히 다르다.</p>
           <h3>Fallback</h3>
-          <pre><code>Retrieval 정상
-        ↓
-Confidence 부족
-        ↓
-의도적으로 LLM 호출 생략</code></pre>
+          <div class="mermaid diagram compact-diagram">
+flowchart TB
+    retrieval[Retrieval succeeds] --> confidence[Confidence too low]
+    confidence --> fallback[Return fallback]
+    fallback --> skip[Skip LLM]
+          </div>
           <p>Fallback은 시스템이 설계대로 동작한 결과다.</p>
           <h3>Dependency Error</h3>
-          <pre><code>Query
- ↓
-OpenAI API
- ↓
-Timeout / Failure</code></pre>
+          <div class="mermaid diagram compact-diagram">
+flowchart TB
+    query[Query] --> openai[OpenAI API]
+    openai --> failure[Timeout / Failure]
+          </div>
           <p>Dependency error는 외부 서비스나 네트워크 문제다.</p>
           <p>따라서 두 상황을 동일한 error로 처리하지 않았다.</p>
           <pre><code>Fallback
@@ -277,15 +258,13 @@ Source Support</code></pre>
           </blockquote>
           <p>대표적인 실패 사례에서는 ConfigMap 관련 질문에 대해 Secrets 중심의 context가 검색됐다.</p>
           <p>LLM은 검색된 context를 충실하게 사용했지만, 처음부터 context가 질문에 맞지 않았기 때문에 답변의 correctness는 낮아졌다.</p>
-          <pre><code>Question
-   ↓
-Wrong Retrieval
-   ↓
-Wrong Context
-   ↓
-Faithful Generation
-   ↓
-Wrong Answer</code></pre>
+          <div class="mermaid diagram compact-diagram">
+flowchart TB
+    question[Question] --> retrieval[Wrong Retrieval]
+    retrieval --> context[Wrong Context]
+    context --> generation[Faithful Generation]
+    generation --> answer[Wrong Answer]
+          </div>
           <p>이 사례는 RAG 평가에서 retrieval quality와 answer quality를 분리해야 하는 이유를 보여준다.</p>
           <h2>6. Failure Analysis - 점수보다 실패 원인을 찾는다</h2>
           <p>평가 metric을 계산하는 것만으로는 시스템을 개선하기 어렵다.</p>
@@ -295,27 +274,21 @@ Retrieval + Generation failure
 Retrieval failure
 No material failure</code></pre>
           <p>중요한 것은 정답/오답보다 어느 단계에서 실패했는가였다.</p>
-          <pre><code>Query
-  ↓
-Retrieval
-  ↓
-Context
-  ↓
-Generation
-  ↓
-Answer</code></pre>
+          <div class="mermaid diagram compact-diagram">
+flowchart TB
+    query[Query] --> retrieval[Retrieval]
+    retrieval --> context[Context]
+    context --> generation[Generation]
+    generation --> answer[Answer]
+          </div>
           <p>각 단계는 서로 다른 failure mode를 가진다.</p>
-          <pre><code>Relevant document 자체를 검색하지 못함
-→ Retrieval failure
-
-Relevant context는 있었지만 LLM이 핵심 내용을 누락
-→ Generation failure
-
-일부 문서는 찾았지만 필요한 여러 문서를 모두 찾지 못함
-→ Multi-document incompleteness
-
-잘못된 문서를 높은 confidence로 검색
-→ High-confidence semantic misretrieval</code></pre>
+          <div class="mermaid diagram">
+flowchart TB
+    miss[Relevant document not retrieved] --> retrievalFailure[Retrieval failure]
+    omission[Relevant context present, key point omitted] --> generationFailure[Generation failure]
+    partial[Some evidence found, not all required documents] --> multiDoc[Multi-document incompleteness]
+    wrong[Wrong document retrieved with high confidence] --> misretrieval[High-confidence semantic misretrieval]
+          </div>
           <p>이렇게 원인을 분리해야 다음 실험도 구체적으로 설계할 수 있다.</p>
           <h2>7. Multi-document Retrieval은 별도의 문제다</h2>
           <p>Failure analysis에서 특히 크게 드러난 약점은 여러 문서가 동시에 필요한 질문이었다.</p>
@@ -338,98 +311,84 @@ POST /query
 POST /documents
 GET  /documents/{id}/status</code></pre>
           <p>전체 runtime 흐름은 다음과 같다.</p>
-          <pre><code>Client
-  ↓
-FastAPI
-  ↓
-Query Embedding
-  ↓
-Runtime Chroma
-  ↓
-Threshold Gate
-  ├───────────────┐
-  ↓               ↓
-Accept           Reject
-  ↓               ↓
-LLM            Fallback
-  ↓
-Answer + Sources</code></pre>
+          <div class="mermaid diagram">
+flowchart TB
+    client[Client] --> api[FastAPI]
+    api --> embedding[Query Embedding]
+    embedding --> chroma[Runtime Chroma]
+    chroma --> gate{Threshold Gate}
+    gate -->|Accept| llm[LLM]
+    gate -->|Reject| fallback[Fallback]
+    llm --> answer[Answer + Sources]
+          </div>
           <p>문서 ingestion은 다음 흐름으로 처리한다.</p>
-          <pre><code>URL
- ↓
-Fetch
- ↓
-Parse
- ↓
-Character Chunk
- ↓
-Embedding
- ↓
-Runtime Chroma</code></pre>
+          <div class="mermaid diagram compact-diagram">
+flowchart TB
+    url[URL] --> fetch[Fetch]
+    fetch --> parse[Parse]
+    parse --> chunk[Character Chunk]
+    chunk --> embedding[Embedding]
+    embedding --> chroma[Runtime Chroma]
+          </div>
           <p>현재 portfolio-scale에서는 ingestion을 synchronous하게 처리한다. 대규모 ingestion pipeline까지 구현한 것은 아니다.</p>
           <h2>9. Evaluation Chroma와 Runtime Chroma를 분리한 이유</h2>
           <p>평가용 collection과 실제 runtime collection도 분리했다.</p>
-          <pre><code>Evaluation Corpus
-      ↓
-Evaluation Chroma
-      ↓
-Offline Evaluation</code></pre>
-          <pre><code>Runtime Documents
-      ↓
-Runtime Chroma
-      ↓
-User Query</code></pre>
+          <div class="mermaid diagram compact-diagram">
+flowchart TB
+    corpus[Evaluation Corpus] --> chroma[Evaluation Chroma]
+    chroma --> eval[Offline Evaluation]
+          </div>
+          <div class="mermaid diagram compact-diagram">
+flowchart TB
+    docs[Runtime Documents] --> chroma[Runtime Chroma]
+    chroma --> query[User Query]
+          </div>
           <p>평가 데이터가 실제 runtime state와 섞이면 document ingestion이나 삭제 같은 runtime 변화가 evaluation reproducibility에 영향을 줄 수 있다.</p>
           <p>따라서 evaluation state와 runtime state의 lifecycle을 분리했다.</p>
           <p>필요한 경우 evaluation collection을 runtime 초기 데이터로 사용할 수 있지만, 두 collection이 같은 역할을 하는 것은 아니다.</p>
           <h2>10. Production-ish Reliability - 외부 API 실패를 제한한다</h2>
           <p>RAG에 <code>/query</code> endpoint를 추가했다고 바로 운영 가능한 시스템이 되는 것은 아니다.</p>
           <p>CloudOps RAG는 OpenAI API라는 외부 dependency를 가진다.</p>
-          <pre><code>FastAPI
-   ↓
-OpenAI Embedding API
-   ↓
-Retrieval
-   ↓
-OpenAI Generation API</code></pre>
+          <div class="mermaid diagram compact-diagram">
+flowchart TB
+    api[FastAPI] --> embedding[OpenAI Embedding API]
+    embedding --> retrieval[Retrieval]
+    retrieval --> generation[OpenAI Generation API]
+          </div>
           <p>외부 API에는 timeout, rate limit, temporary server error, network failure, permanent client error가 발생할 수 있다.</p>
           <p>그래서 호출을 무한정 기다리거나 모든 오류를 무조건 retry하는 대신 bounded timeout과 bounded retry를 적용했다.</p>
           <pre><code>Embedding timeout  : 30 seconds
 Generation timeout : 45 seconds
 Retry attempts     : max 3 total attempts</code></pre>
           <p>Timeout은 504로 구분한다.</p>
-          <pre><code>Request
-  ↓
-OpenAI
-  ↓
-Timeout
-  ↓
-504 external_dependency_timeout</code></pre>
+          <div class="mermaid diagram compact-diagram">
+flowchart TB
+    request[Request] --> openai[OpenAI]
+    openai --> timeout[Timeout]
+    timeout --> response[504 external_dependency_timeout]
+          </div>
           <p>Timeout이 아닌 외부 dependency failure는 503으로 구분한다.</p>
           <pre><code>503 external_dependency_unavailable</code></pre>
           <p>Retry도 무조건 수행하지 않는다.</p>
-          <pre><code>Retryable failure
-→ bounded retry + backoff
-
-Timeout
-→ fail fast according to timeout policy
-
-Permanent 4xx
-→ fail fast</code></pre>
+          <div class="mermaid diagram compact-diagram">
+flowchart TB
+    retryable[Retryable failure] --> retry[Bounded retry + backoff]
+    timeout[Timeout] --> timeoutFail[Fail fast by timeout policy]
+    permanent[Permanent 4xx] --> failFast[Fail fast]
+          </div>
           <p>무제한 retry는 dependency 장애 상황에서 트래픽 증폭을 만들 수 있기 때문이다.</p>
           <h2>11. Observability - RAG 내부 단계를 나눠서 본다</h2>
           <p>서비스가 실행되기 시작하면 최종 API latency 하나만 보는 것으로는 부족하다.</p>
           <p>RAG 요청은 내부적으로 여러 단계로 구성된다.</p>
-          <pre><code>Query
- │
- ├─ Embedding
- │
- ├─ Retrieval
- │
- └─ Generation
- │
- ↓
-Response</code></pre>
+          <div class="mermaid diagram compact-diagram">
+flowchart TB
+    query[Query] --> embedding[Embedding]
+    query --> retrieval[Retrieval]
+    query --> generation[Generation]
+    embedding --> response[Response]
+    retrieval --> response
+    generation --> response
+          </div>
           <p>전체 latency가 증가했을 때 원인은 여러 가지일 수 있다.</p>
           <pre><code>Embedding API가 느려짐
 Chroma retrieval이 느려짐
@@ -466,31 +425,24 @@ Diversification candidate는 untouched held-out으로 검증하지 않았다.</c
           <p>오히려 현재 구현된 것과 아직 해결하지 않은 것을 구분하는 것이 중요했다.</p>
           <h2>13. 튜토리얼 RAG에서 무엇이 달라졌는가</h2>
           <p>처음에는 다음 구조였다.</p>
-          <pre><code>Chunk
- ↓
-Embed
- ↓
-Retrieve
- ↓
-Generate</code></pre>
+          <div class="mermaid diagram compact-diagram">
+flowchart LR
+    chunk[Chunk] --> embed[Embed]
+    embed --> retrieve[Retrieve]
+    retrieve --> generate[Generate]
+          </div>
           <p>하지만 프로젝트를 진행하면서 구조는 다음처럼 확장됐다.</p>
-          <pre><code>Build
-  ↓
-Measure
-  ↓
-Compare
-  ↓
-Freeze
-  ↓
-Held-out Validate
-  ↓
-Answer Evaluate
-  ↓
-Analyze Failures
-  ↓
-Serve
-  ↓
-Observe</code></pre>
+          <div class="mermaid diagram compact-diagram">
+flowchart TB
+    build[Build] --> measure[Measure]
+    measure --> compare[Compare]
+    compare --> freeze[Freeze]
+    freeze --> heldout[Held-out Validate]
+    heldout --> answerEval[Answer Evaluate]
+    answerEval --> failures[Analyze Failures]
+    failures --> serve[Serve]
+    serve --> observe[Observe]
+          </div>
           <p>가장 큰 변화는 기술 스택 자체가 아니었다.</p>
           <p>시스템을 바라보는 질문이 달라졌다.</p>
           <pre><code>검색은 실제로 맞았는가?
@@ -502,7 +454,12 @@ Observe</code></pre>
           <p>CloudOps RAG에서 가장 중요했던 것은 새로운 프레임워크를 하나 더 추가하는 것이 아니라 이 질문들에 답할 수 있는 구조를 만드는 것이었다.</p>
           <h2>14. 정리</h2>
           <p>RAG를 구현하는 가장 단순한 구조는 여전히 유효하다.</p>
-          <pre><code>Chunk → Embed → Retrieve → Generate</code></pre>
+          <div class="mermaid diagram compact-diagram">
+flowchart LR
+    chunk[Chunk] --> embed[Embed]
+    embed --> retrieve[Retrieve]
+    retrieve --> generate[Generate]
+          </div>
           <p>하지만 이것만으로는 retrieval이 맞았는지, unsupported query인지, answer가 올바른지, 어디에서 실패했는지, dependency가 정상인지, latency가 어디서 발생하는지 알 수 없다.</p>
           <p>CloudOps RAG에서는 이를 평가, fallback, answer evaluation, failure analysis, serving, reliability, observability로 확장했다.</p>
           <p>그리고 이 과정에서 얻은 가장 중요한 결론은 다음과 같다.</p>
