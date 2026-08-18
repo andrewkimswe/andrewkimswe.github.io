@@ -26,6 +26,7 @@
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:image" content="https://andrewkimswe.github.io/assets/social-card.svg" />
     <meta property="article:published_time" content="2026-08-18T00:00:00+09:00" />
+    <meta property="article:modified_time" content="2026-08-19T00:00:00+09:00" />
     <meta property="article:author" content="Jiwon Kim" />
     <meta property="article:tag" content="RAG" />
     <meta property="article:tag" content="CloudOps" />
@@ -40,7 +41,7 @@
       "headline": "[RAG] 튜토리얼 RAG를 운영 가능한 CloudOps RAG로 확장하기 - 평가, Fallback, Serving, Observability",
       "description": "CloudOps RAG를 단순 데모에서 검색 평가, threshold fallback, 답변 평가, FastAPI serving, timeout/retry, observability를 갖춘 서비스로 확장한 과정입니다.",
       "datePublished": "2026-08-18T00:00:00+09:00",
-      "dateModified": "2026-08-18T00:00:00+09:00",
+      "dateModified": "2026-08-19T00:00:00+09:00",
       "author": {
             "@type": "Person",
             "name": "Jiwon Kim",
@@ -423,7 +424,90 @@ Async retry queue가 없다.
 Diversification candidate는 untouched held-out으로 검증하지 않았다.</code></pre>
           <p>이 글에서 중요한 것은 production의 모든 문제를 해결했다는 주장이 아니다.</p>
           <p>오히려 현재 구현된 것과 아직 해결하지 않은 것을 구분하는 것이 중요했다.</p>
-          <h2>13. 튜토리얼 RAG에서 무엇이 달라졌는가</h2>
+          <h2>13. 8월 19일 업데이트 - 회귀 방지와 운영 경계</h2>
+          <p>평가, fallback, serving, observability를 추가한 뒤에도 한 가지 문제가 남았다. 한 번 좋은 retrieval configuration을 찾았다고 해서 이후 변경에서도 그 품질이 유지된다는 보장은 없다는 점이다.</p>
+          <p>일반적인 소프트웨어에서는 unit test가 기능 회귀를 잡는다. RAG에서는 코드가 정상 실행되어도 retrieval quality가 떨어질 수 있다.</p>
+          <div class="mermaid diagram compact-diagram">
+flowchart TB
+    change[Code / Retrieval / Corpus Change] --> tests[Unit Tests]
+    tests --> pass[Tests Pass]
+    pass --> question{Retrieval Quality?}
+    question --> gate[Evaluation Regression Gate]
+          </div>
+          <h3>Evaluation Regression Gate</h3>
+          <p>그래서 기존 evaluation 결과를 baseline으로 저장하고, 현재 retrieval 결과와 비교하는 regression gate를 CI에 연결했다.</p>
+          <div class="mermaid diagram compact-diagram">
+flowchart TB
+    baseline[results/eval_regression_baseline.json] --> checker[scripts/check_eval_regression.py]
+    current[Current Evaluation Result] --> checker
+    checker --> decision{Regression Check}
+    decision -->|PASS| pass[CI Pass]
+    decision -->|FAIL| fail[CI Fail]
+          </div>
+          <p>Hard gate로 보는 항목은 baseline이 비교적 명확한 metric에 한정했다.</p>
+          <pre><code>Dev Hit@3             : 33 / 36
+Held-out Hit@3        :  8 / 8
+Dev OOS Reject        :  4 / 4
+Held-out OOS Reject   :  2 / 2</code></pre>
+          <p>Multi-document All-Hit처럼 아직 표본이 작고 추가 검증이 필요한 metric은 warning gate로 시작했다. 모든 수치를 처음부터 hard failure로 만들면 작은 evaluation set에 과하게 최적화된 개발 흐름이 될 수 있기 때문이다.</p>
+          <div class="mermaid diagram compact-diagram">
+flowchart TB
+    stable[Stable baseline metric] --> hard[Hard Gate]
+    exploratory[Promising but insufficiently validated metric] --> warning[Warning Gate]
+          </div>
+          <h3>Production Readiness Boundary</h3>
+          <p>Regression gate까지 추가했다고 해서 이 프로젝트를 실제 대규모 production system이라고 부르지는 않았다. 대신 현재 상태를 구현된 것, 정책으로 정의한 것, 아직 검증하지 않았거나 의도적으로 범위 밖에 둔 것으로 나누었다.</p>
+          <div class="mermaid diagram compact-diagram">
+flowchart TB
+    implemented[Implemented] --> current[Current System]
+    policy[Readiness / Policy] --> current
+    out[Not Yet Validated / Out of Scope] --> current
+          </div>
+          <p>실제로 구현한 영역은 retrieval evaluation, threshold fallback, answer evaluation, failure analysis, FastAPI serving, timeout/retry/backoff, Prometheus metrics, evaluation regression gate, CI test와 Docker build다.</p>
+          <p>반면 SLO, latency/cost budget, large-scale load test 같은 영역은 실제 production traffic 없이는 달성 여부를 주장하기 어렵다. 그래서 현재는 관찰해야 할 지표와 판단 기준을 정의하는 수준으로 제한했다.</p>
+          <h3>Corpus Governance</h3>
+          <p>RAG에서 corpus는 단순한 초기 데이터가 아니다. 문서가 추가되거나 변경되면 chunk, embedding, candidate ranking이 바뀌고 retrieval behavior도 달라질 수 있다.</p>
+          <div class="mermaid diagram compact-diagram">
+flowchart TB
+    corpus[Corpus Change] --> chunk[Chunk Change]
+    chunk --> embedding[Embedding Change]
+    embedding --> ranking[Candidate Ranking Change]
+    ranking --> quality[Retrieval Quality Change]
+          </div>
+          <p>그래서 corpus 변경은 콘텐츠 업데이트가 아니라 system behavior를 바꿀 수 있는 변경으로 취급한다. CloudOps RAG에서는 공식 AWS/Kubernetes troubleshooting documentation을 source로 삼고, evaluation ground truth는 안정적인 <code>doc_id</code> 기준으로 관리한다.</p>
+          <h3>Rollout Policy</h3>
+          <p>Dev metric이 좋아졌다고 바로 새로운 retriever나 configuration을 채택하지 않는다. Dev set을 반복해서 보며 설정을 바꾸면 그 데이터에 맞춰진 결과일 수 있기 때문이다.</p>
+          <div class="mermaid diagram compact-diagram">
+flowchart TB
+    dev[Dev Evaluation] --> heldout[Held-out Validation]
+    heldout --> answer[Diagnostic Answer Evaluation]
+    answer --> canary[Canary]
+    canary --> rollout[Full Rollout]
+          </div>
+          <p>현재 프로젝트에서 실제 production traffic canary를 수행한 것은 아니다. 여기서 중요한 점은 좋은 Dev 결과와 검증된 rollout을 구분하고, 향후 변경을 적용할 때 볼 guardrail을 명시했다는 것이다.</p>
+          <pre><code>Retrieval Quality
+Fallback Rate
+Query Latency
+OpenAI Failure Rate
+Answer Quality
+Source Support</code></pre>
+          <h3>Monitoring Budget</h3>
+          <p>Metric은 많이 수집하는 것보다 어떤 운영 질문에 답하는지가 중요하다.</p>
+          <pre><code>Query latency     -> 사용자가 경험하는 응답 시간이 증가했는가?
+Retrieval latency -> vector retrieval이 병목인가?
+Generation latency -> LLM dependency가 latency를 지배하는가?
+Fallback rate     -> 지원하지 못하는 query가 증가했는가?
+OpenAI failure    -> 외부 dependency 문제가 발생하는가?
+Retry count       -> 일시적 dependency failure가 증가하는가?
+Ingestion metric  -> 문서 처리가 정상적으로 완료되는가?</code></pre>
+          <p>사용자 query, document URL, raw exception message처럼 값이 계속 늘어나는 데이터는 Prometheus label로 사용하지 않는다. Observability를 추가하면서 monitoring system 자체의 cardinality 문제를 만들지 않기 위해서다.</p>
+          <h3>의도적으로 아직 넣지 않은 것</h3>
+          <p>Circuit breaker, async retry queue, async ingestion, large-scale load test는 기술적으로 추가할 수 있다. 하지만 현재 CloudOps RAG는 local portfolio API이고 실제 production traffic이나 장기간 dependency failure distribution이 없다.</p>
+          <p>그래서 현재는 timeout, bounded retry, backoff, dependency error classification을 우선 적용했다. 확장 가능한 구조를 알고 있다는 이유만으로 현재 workload에 필요하지 않은 infrastructure를 추가하지 않는 것도 중요한 판단이라고 봤다.</p>
+          <h3>다음 우선순위</h3>
+          <p>가장 직접적으로 검증할 가치가 있는 개선안은 multi-document retrieval diversification이다. Per-document cap 후보는 Dev에서 promising했지만 새로운 untouched validation set으로 확인하지 않았다.</p>
+          <p>따라서 다음 단계는 더 많은 기능을 붙이는 것이 아니라, 이미 관찰한 failure mode가 새로운 데이터에서도 같은 방식으로 개선되는지 확인하는 것이다.</p>
+          <h2>14. 튜토리얼 RAG에서 무엇이 달라졌는가</h2>
           <p>처음에는 다음 구조였다.</p>
           <div class="mermaid diagram compact-diagram">
 flowchart LR
@@ -452,7 +536,7 @@ flowchart TB
 외부 API가 실패하면 시스템은 어떻게 반응하는가?
 어느 단계에서 latency가 증가했는지 확인할 수 있는가?</code></pre>
           <p>CloudOps RAG에서 가장 중요했던 것은 새로운 프레임워크를 하나 더 추가하는 것이 아니라 이 질문들에 답할 수 있는 구조를 만드는 것이었다.</p>
-          <h2>14. 정리</h2>
+          <h2>15. 정리</h2>
           <p>RAG를 구현하는 가장 단순한 구조는 여전히 유효하다.</p>
           <div class="mermaid diagram compact-diagram">
 flowchart LR

@@ -24,6 +24,7 @@ class Post:
     description: str
     summary: str
     date: datetime
+    modified: datetime
     tags: tuple[str, ...]
     topic: str
     data_tags: str
@@ -43,6 +44,14 @@ class Post:
     @property
     def rss_date(self) -> str:
         return format_datetime(self.date)
+
+    @property
+    def modified_iso_date(self) -> str:
+        return self.modified.strftime("%Y-%m-%d")
+
+    @property
+    def modified_rss_date(self) -> str:
+        return format_datetime(self.modified)
 
 
 def collapse(value: str) -> str:
@@ -70,6 +79,10 @@ def parse_post(path: Path) -> Post:
     if not published:
         published = match_one(r'<time\s+datetime="([^"]+)"', html)
     date = datetime.fromisoformat(published.replace("Z", "+00:00"))
+    modified_raw = match_one(r'<meta\s+property="article:modified_time"\s+content="([^"]+)"', html)
+    if not modified_raw:
+        modified_raw = match_one(r'"dateModified":\s*"([^"]+)"', html, published)
+    modified = datetime.fromisoformat(modified_raw.replace("Z", "+00:00"))
     tags = tuple(re.findall(r'<meta\s+property="article:tag"\s+content="([^"]+)"', html))
     eyebrow = match_one(r'<p class="eyebrow">(.*?)</p>', html)
     data_terms = set(tags)
@@ -85,6 +98,7 @@ def parse_post(path: Path) -> Post:
         description=description,
         summary=summary,
         date=date,
+        modified=modified,
         tags=tags,
         topic=topic,
         data_tags=" ".join(sorted(data_terms, key=str.lower)),
@@ -163,7 +177,7 @@ def update_posts_social_meta(posts: list[Post]) -> None:
 
 
 def write_feed(posts: list[Post]) -> None:
-    latest = posts[0].rss_date if posts else format_datetime(datetime.now().astimezone())
+    latest = max((post.modified for post in posts), default=datetime.now().astimezone())
     items = []
     for post in posts:
         items.append(
@@ -182,7 +196,7 @@ def write_feed(posts: list[Post]) -> None:
     <link>{SITE_URL}/</link>
     <description>백엔드, 클라우드, 아키텍처, 운영, 트러블슈팅을 기록하는 기술 블로그입니다.</description>
     <language>ko-KR</language>
-    <lastBuildDate>{latest}</lastBuildDate>
+    <lastBuildDate>{format_datetime(latest)}</lastBuildDate>
 {chr(10).join(items)}
   </channel>
 </rss>
@@ -191,7 +205,7 @@ def write_feed(posts: list[Post]) -> None:
 
 
 def write_sitemap(posts: list[Post]) -> None:
-    latest = posts[0].iso_date if posts else datetime.now().strftime("%Y-%m-%d")
+    latest = max((post.modified for post in posts), default=datetime.now().astimezone()).strftime("%Y-%m-%d")
     urls = [
         f"""  <url>
     <loc>{SITE_URL}/</loc>
@@ -204,7 +218,7 @@ def write_sitemap(posts: list[Post]) -> None:
         urls.append(
             f"""  <url>
     <loc>{post.url}</loc>
-    <lastmod>{post.iso_date}</lastmod>
+    <lastmod>{post.modified_iso_date}</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>"""
