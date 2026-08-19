@@ -5,7 +5,14 @@
     <link>https://andrewkimswe.github.io/</link>
     <description>백엔드, 클라우드, 아키텍처, 운영, 트러블슈팅을 기록하는 기술 블로그입니다.</description>
     <language>ko-KR</language>
-    <lastBuildDate>Wed, 19 Aug 2026 00:00:00 +0900</lastBuildDate>
+    <lastBuildDate>Thu, 20 Aug 2026 00:00:00 +0900</lastBuildDate>
+    <item>
+      <title>[AWS/Kubernetes] 온프레미스 Kubernetes를 AWS 방식으로 운영하려면? - EKS Hybrid Nodes와 EKS Anywhere 비교</title>
+      <link>https://andrewkimswe.github.io/posts/aws-kubernetes-eks-hybrid-nodes-eks-anywhere.html</link>
+      <guid>https://andrewkimswe.github.io/posts/aws-kubernetes-eks-hybrid-nodes-eks-anywhere.html</guid>
+      <pubDate>Thu, 20 Aug 2026 00:00:00 +0900</pubDate>
+      <description>Control plane을 AWS에 둘 수 있는지, worker node와 network를 어디서 관리할지에 따라 EKS Hybrid Nodes와 EKS Anywhere 선택이 달라집니다.</description>
+    </item>
     <item>
       <title>[RAG] 튜토리얼 RAG를 운영 가능한 CloudOps RAG로 확장하기 - 평가, Fallback, Serving, Observability</title>
       <link>https://andrewkimswe.github.io/posts/rag-cloudops-productionish-evaluation-fallback-serving-observability.html</link>

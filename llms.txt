@@ -22,6 +22,7 @@ Jiwon Kim's Blog is a Korean technical blog about backend engineering, cloud inf
 
 ## Posts
 
+- [[AWS/Kubernetes] 온프레미스 Kubernetes를 AWS 방식으로 운영하려면? - EKS Hybrid Nodes와 EKS Anywhere 비교](https://andrewkimswe.github.io/posts/aws-kubernetes-eks-hybrid-nodes-eks-anywhere.html): 온프레미스 Kubernetes 운영 부담을 줄이기 위해 EKS Hybrid Nodes, EKS Anywhere, EKS on Outposts를 control plane과 책임 경계 관점에서 비교합니다.
 - [[RAG] 튜토리얼 RAG를 운영 가능한 CloudOps RAG로 확장하기 - 평가, Fallback, Serving, Observability](https://andrewkimswe.github.io/posts/rag-cloudops-productionish-evaluation-fallback-serving-observability.html): CloudOps RAG를 단순 데모에서 검색 평가, threshold fallback, 답변 평가, FastAPI serving, timeout/retry, observability를 갖춘 서비스로 확장한 과정입니다.
 - [[AWS/Database] JOIN이 깊어질수록 왜 Graph DB가 유리할까? - Amazon Neptune으로 다단계 관계 탐색하기](https://andrewkimswe.github.io/posts/aws-database-neptune-graph-multi-hop-traversal.html): 관계형 데이터베이스의 JOIN과 Graph Database의 traversal 관점 차이를 비교하고, Amazon Neptune이 다단계 관계 탐색에 적합한 이유를 정리합니다.
 - [[AWS/Security] EC2 패치 자동화는 어디까지 자동화해야 할까? - Maintenance Window, Compliance, Staged Rollout](https://andrewkimswe.github.io/posts/aws-security-ec2-patch-rollout-compliance.html): EC2 패치 자동화를 Maintenance Window, staged rollout, compliance, health check 관점에서 설계하는 AWS 보안 운영 노트입니다.
