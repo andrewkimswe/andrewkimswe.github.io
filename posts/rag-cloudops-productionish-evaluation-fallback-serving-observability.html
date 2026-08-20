@@ -26,7 +26,7 @@
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:image" content="https://andrewkimswe.github.io/assets/social-card.svg" />
     <meta property="article:published_time" content="2026-08-18T00:00:00+09:00" />
-    <meta property="article:modified_time" content="2026-08-19T00:00:00+09:00" />
+    <meta property="article:modified_time" content="2026-08-21T00:00:00+09:00" />
     <meta property="article:author" content="Jiwon Kim" />
     <meta property="article:tag" content="RAG" />
     <meta property="article:tag" content="CloudOps" />
@@ -41,7 +41,7 @@
       "headline": "[RAG] 튜토리얼 RAG를 운영 가능한 CloudOps RAG로 확장하기 - 평가, Fallback, Serving, Observability",
       "description": "CloudOps RAG를 단순 데모에서 검색 평가, threshold fallback, 답변 평가, FastAPI serving, timeout/retry, observability를 갖춘 서비스로 확장한 과정입니다.",
       "datePublished": "2026-08-18T00:00:00+09:00",
-      "dateModified": "2026-08-19T00:00:00+09:00",
+      "dateModified": "2026-08-21T00:00:00+09:00",
       "author": {
             "@type": "Person",
             "name": "Jiwon Kim",
@@ -80,7 +80,7 @@
           <p class="eyebrow">RAG · CloudOps · Observability</p>
           <h1>[RAG] 튜토리얼 RAG를 운영 가능한 CloudOps RAG로 확장하기 - 평가, Fallback, Serving, Observability</h1>
           <p class="article-summary">
-            RAG는 Chunk, Embed, Retrieve, Generate만으로도 동작하지만 그것만으로 신뢰할 수 있는 시스템이 되지는 않는다. CloudOps RAG를 평가, fallback, serving, observability까지 확장한 흐름을 정리한다.
+            RAG는 Chunk, Embed, Retrieve, Generate만으로도 동작하지만 그것만으로 신뢰할 수 있는 시스템이 되지는 않는다. CloudOps RAG를 평가, fallback, serving, observability, regression gate와 untouched validation까지 확장한 흐름을 정리한다.
           </p>
           <div class="article-meta">
             <time datetime="2026-08-18">2026.08.18</time>
@@ -299,9 +299,9 @@ flowchart TB
 All-Hit = 필요한 문서를 모두 검색했는가</code></pre>
           <p>Held-out에서는 Any-Hit@5는 성공했지만 All-Hit@5는 실패했다.</p>
           <p>즉 관련 문서를 하나 찾는 능력과 필요한 evidence를 모두 수집하는 능력은 다르다.</p>
-          <p>Top-5를 살펴보니 동일 문서의 유사한 chunk가 여러 자리를 차지하는 경우가 있었다. 그래서 per-document cap을 post-hoc candidate로 실험했지만, 이 설정은 frozen configuration에 넣지 않았다.</p>
-          <p>새로운 untouched validation set으로 확인하지 않았기 때문이다.</p>
-          <p>이 부분은 기존 diversification 글에서 자세히 다뤘고, 여기서는 운영 가능한 RAG로 가기 위해 failure mode를 명시적으로 분류했다는 점만 남긴다.</p>
+          <p>Top-5를 살펴보니 동일 문서의 유사한 chunk가 여러 자리를 차지하는 경우가 있었다. 그래서 per-document cap을 post-hoc candidate로 실험했고 Dev set에서는 효과가 있었다.</p>
+          <p>하지만 이후 untouched validation에서는 document diversity 개선은 재현됐지만 retrieval quality 개선은 재현되지 않았다. 그래서 이 설정은 frozen configuration에 넣지 않았다.</p>
+          <p>이 부분은 8월 21일 업데이트에서 다시 다룬다. 여기서는 운영 가능한 RAG로 가기 위해 failure mode를 명시적으로 분류했다는 점만 남긴다.</p>
           <h2>8. FastAPI Serving - 평가 코드와 실제 서비스는 분리한다</h2>
           <p>평가가 끝났다고 사용자가 RAG를 사용할 수 있는 것은 아니다.</p>
           <p>그래서 FastAPI 기반 API로 runtime layer를 구성했다.</p>
@@ -421,7 +421,7 @@ Large-scale load test가 없다.
 Ingestion이 synchronous하다.
 Circuit breaker가 없다.
 Async retry queue가 없다.
-Diversification candidate는 untouched held-out으로 검증하지 않았다.</code></pre>
+Diversification candidate는 untouched validation에서 quality 개선이 재현되지 않았다.</code></pre>
           <p>이 글에서 중요한 것은 production의 모든 문제를 해결했다는 주장이 아니다.</p>
           <p>오히려 현재 구현된 것과 아직 해결하지 않은 것을 구분하는 것이 중요했다.</p>
           <h2>13. 8월 19일 업데이트 - 회귀 방지와 운영 경계</h2>
@@ -505,9 +505,197 @@ Ingestion metric  -> 문서 처리가 정상적으로 완료되는가?</code></p
           <p>Circuit breaker, async retry queue, async ingestion, large-scale load test는 기술적으로 추가할 수 있다. 하지만 현재 CloudOps RAG는 local portfolio API이고 실제 production traffic이나 장기간 dependency failure distribution이 없다.</p>
           <p>그래서 현재는 timeout, bounded retry, backoff, dependency error classification을 우선 적용했다. 확장 가능한 구조를 알고 있다는 이유만으로 현재 workload에 필요하지 않은 infrastructure를 추가하지 않는 것도 중요한 판단이라고 봤다.</p>
           <h3>다음 우선순위</h3>
-          <p>가장 직접적으로 검증할 가치가 있는 개선안은 multi-document retrieval diversification이다. Per-document cap 후보는 Dev에서 promising했지만 새로운 untouched validation set으로 확인하지 않았다.</p>
-          <p>따라서 다음 단계는 더 많은 기능을 붙이는 것이 아니라, 이미 관찰한 failure mode가 새로운 데이터에서도 같은 방식으로 개선되는지 확인하는 것이다.</p>
-          <h2>14. 튜토리얼 RAG에서 무엇이 달라졌는가</h2>
+          <p>가장 직접적으로 검증할 가치가 있는 개선안은 multi-document retrieval diversification이었다. Per-document cap 후보는 Dev에서 promising했지만, 이 가설은 Dev failure analysis에서 나온 post-hoc 개선안이었다.</p>
+          <p>따라서 다음 단계는 더 많은 기능을 붙이는 것이 아니라, 이미 관찰한 failure mode가 새로운 데이터에서도 같은 방식으로 개선되는지 확인하는 것이었다.</p>
+          <h2>14. 8월 21일 업데이트 - Dev에서 좋아진 결과를 바로 적용하지 않은 이유</h2>
+          <p>앞선 failure analysis에서는 multi-document 질문에서 필요한 문서를 모두 가져오지 못하는 문제가 확인되었다.</p>
+          <p>특히 Top-5 검색 결과에서 하나의 문서에서 나온 여러 chunk가 상위 결과를 차지하면서 다른 관련 문서가 들어올 공간을 줄이는 현상이 있었다.</p>
+          <div class="mermaid diagram compact-diagram">
+flowchart TB
+    top[Top-5 Retrieval Result] --> s1[Secrets / chunk 3]
+    top --> s2[Secrets / chunk 7]
+    top --> s3[Secrets / chunk 2]
+    top --> c1[ConfigMap / chunk 1]
+    top --> s4[Secrets / chunk 9]
+    s1 --> docs[Only 2 unique documents]
+    s2 --> docs
+    s3 --> docs
+    c1 --> docs
+    s4 --> docs
+          </div>
+          <p>검색 결과 5개를 사용하고 있지만 실제로 포함된 문서는 2개뿐인 셈이다.</p>
+          <p>이 문제를 확인하기 위해 기존 dense similarity 순서는 유지하되, 하나의 문서에서 최대 2개의 chunk만 Top-k에 포함시키는 <code>per-document cap=2</code>를 실험했다.</p>
+          <p>Dev set에서는 baseline 대비 multi-document 질문의 All-Hit@5가 개선되었다.</p>
+          <table>
+            <thead>
+              <tr>
+                <th>Metric</th>
+                <th>Baseline</th>
+                <th>cap=2</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Multi All-Hit@5</td>
+                <td>2/6</td>
+                <td>4/6</td>
+              </tr>
+              <tr>
+                <td>Avg. unique documents</td>
+                <td>1.975</td>
+                <td>2.950</td>
+              </tr>
+              <tr>
+                <td>Duplicate ratio</td>
+                <td>0.605</td>
+                <td>0.365</td>
+              </tr>
+            </tbody>
+          </table>
+          <p>결과만 보면 <code>cap=2</code>를 새로운 retrieval policy로 적용해도 될 것처럼 보였다.</p>
+          <p>하지만 이 가설 자체가 Dev set의 실패 사례를 분석한 뒤 만들어졌다는 문제가 있었다.</p>
+          <div class="mermaid diagram compact-diagram">
+flowchart TB
+    devFailure[Dev failure 확인] --> duplicate[Duplicate occupancy 발견]
+    duplicate --> hypothesis[cap=2 가설 설계]
+    hypothesis --> sameDev[같은 Dev set에서 다시 평가]
+    sameDev --> improved[성능 개선]
+          </div>
+          <p>따라서 이 결과만으로는 실제로 일반화되는 개선인지, Dev set의 실패 패턴에 맞춰진 post-hoc optimization인지 구분하기 어렵다.</p>
+          <p>그래서 <code>cap=2</code>를 frozen configuration에 바로 반영하지 않고, 기존 Dev 질문과 분리된 untouched validation set을 만들었다.</p>
+          <pre><code>diversification_validation.csv
+
+Total        : 12
+In-scope     : 11
+Out-of-scope : 1</code></pre>
+          <p>확인하려는 질문은 단순했다.</p>
+          <blockquote>
+            <p>Dev에서 관찰된 diversification 효과가 새로운 질문에서도 재현되는가?</p>
+          </blockquote>
+          <p>먼저 document diversity 개선은 재현되었다.</p>
+          <table>
+            <thead>
+              <tr>
+                <th>Metric</th>
+                <th>Baseline</th>
+                <th>cap=2</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Avg. unique document count</td>
+                <td>2.0000</td>
+                <td>3.3333</td>
+              </tr>
+              <tr>
+                <td>Avg. duplicate ratio</td>
+                <td>0.6000</td>
+                <td>0.3167</td>
+              </tr>
+            </tbody>
+          </table>
+          <p><code>cap=2</code>를 적용하자 평균 unique document 수가 약 2개에서 3.33개로 증가했고, duplicate ratio는 0.60에서 약 0.32까지 감소했다.</p>
+          <p>하지만 실제 retrieval quality를 측정하자 결과가 달랐다.</p>
+          <table>
+            <thead>
+              <tr>
+                <th>Metric</th>
+                <th>Baseline</th>
+                <th>cap=2</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Hit@3</td>
+                <td>11/11</td>
+                <td>11/11</td>
+              </tr>
+              <tr>
+                <td>Hit@5</td>
+                <td>11/11</td>
+                <td>11/11</td>
+              </tr>
+              <tr>
+                <td>MRR</td>
+                <td>0.8030</td>
+                <td>0.8030</td>
+              </tr>
+              <tr>
+                <td>Multi All-Hit@5</td>
+                <td>1/3</td>
+                <td>1/3</td>
+              </tr>
+            </tbody>
+          </table>
+          <p>Dev에서는 Multi All-Hit@5가 <code>2/6 -&gt; 4/6</code>으로 개선되었지만, untouched validation에서는 <code>1/3 -&gt; 1/3</code>으로 개선이 재현되지 않았다.</p>
+          <div class="mermaid diagram compact-diagram">
+flowchart TB
+    cap[cap=2] --> diversity[Top-k document diversity 증가]
+    cap --> quality[Retrieval completeness 증가]
+    diversity --> yes[재현됨]
+    quality --> no[재현되지 않음]
+          </div>
+          <p>이 차이가 이번 실험에서 가장 중요한 결과였다. 검색 결과가 다양해졌다는 것과 검색 품질이 좋아졌다는 것은 같은 의미가 아니었다.</p>
+          <p>처음 세운 가설은 동일 문서 chunk가 Top-k를 과점하고, 그 때문에 다른 relevant document가 밀려 multi-document retrieval이 실패한다는 것이었다.</p>
+          <p>하지만 <code>cap=2</code>로 빈자리를 만들어도 그 자리에 항상 필요한 문서가 들어오는 것은 아니었다.</p>
+          <div class="mermaid diagram">
+flowchart TB
+    baseline[Baseline Top-5] --> a1[Doc A chunk 1]
+    baseline --> a2[Doc A chunk 2]
+    baseline --> a3[Doc A chunk 3]
+    baseline --> c1[Doc C chunk 1]
+    baseline --> a4[Doc A chunk 4]
+
+    capped[cap=2 Top-5] --> ca1[Doc A chunk 1]
+    capped --> ca2[Doc A chunk 2]
+    capped --> cc1[Doc C chunk 1]
+    capped --> d1[Doc D chunk 1]
+    capped --> e1[Doc E chunk 1]
+
+    expected[Expected: Doc A + Doc B]
+    expected -.-> docb[Doc B is not in top candidates]
+          </div>
+          <p>필요한 Doc B가 dense retrieval의 후보 상위권에 존재하지 않는다면 duplicate를 제거하는 것만으로는 문제를 해결할 수 없다.</p>
+          <blockquote>
+            <p>Diversity는 retrieval completeness의 필요조건이 될 수 있지만, 충분조건은 아니었다.</p>
+          </blockquote>
+          <p>그래서 frozen configuration은 변경하지 않았다.</p>
+          <div class="mermaid diagram compact-diagram">
+flowchart TB
+    dev[Dev Experiment] --> improved[cap=2 improvement observed]
+    improved --> untouched[Untouched Validation]
+    untouched --> diversity2[Diversity improvement reproduced]
+    untouched --> noQuality[Retrieval improvement not reproduced]
+    noQuality --> keep[Keep frozen configuration]
+          </div>
+          <p>처음 목표만 보면 실패한 실험처럼 보일 수 있다. 하지만 이 결과 덕분에 failure model은 더 구체화되었다.</p>
+          <div class="mermaid diagram compact-diagram">
+flowchart TB
+    failure[Multi-document failure]
+    failure --> duplicate2[Duplicate chunk occupancy]
+    failure --> recall[Relevant document candidate recall]
+    failure --> confusion[Semantic confusion]
+    failure --> ranking[Ranking problem]
+          </div>
+          <p>Duplicate occupancy는 실제 현상이지만 전체 failure의 유일한 원인은 아니었다.</p>
+          <p>따라서 다음 분석에서 확인해야 할 질문도 명확해졌다.</p>
+          <blockquote>
+            <p>필요한 문서가 raw candidate pool에는 존재하지만 Top-5 ranking에서 밀린 것인가, 아니면 dense retriever가 처음부터 해당 문서를 후보로 가져오지 못한 것인가?</p>
+          </blockquote>
+          <div class="mermaid diagram">
+flowchart TB
+    query[Query] --> dense[Dense Retrieval]
+    dense --> pool[Top-20 / Top-50 Candidate Pool]
+    pool --> expected{Expected Documents 존재?}
+    expected -->|YES| ranking2[Ranking / Reranking 문제]
+    expected -->|NO| embedding[Embedding / Query Representation 문제]
+          </div>
+          <p>만약 expected document가 Top-20에는 있지만 Top-5에 없다면 diversification이나 reranking을 개선할 여지가 있다.</p>
+          <p>반대로 Top-20이나 Top-50에도 없다면 Top-5 후처리만 바꿔서는 해결할 수 없다. 이 경우에는 embedding, query representation, chunking 또는 retrieval architecture 자체를 다시 살펴봐야 한다.</p>
+          <p>이번 diversification 실험에서 얻은 가장 큰 결과는 새로운 retrieval heuristic 자체보다 평가 과정이었다.</p>
+          <p><strong>가설을 세우고, 이미 본 데이터에서 효과를 확인하고, 보지 않은 데이터에서 다시 검증한 뒤, 개선이 재현되지 않으면 적용하지 않는 것.</strong></p>
+          <p>RAG를 개선하면서 중요한 것은 새로운 기법을 계속 추가하는 것만이 아니었다.</p>
+          <h2>15. 튜토리얼 RAG에서 무엇이 달라졌는가</h2>
           <p>처음에는 다음 구조였다.</p>
           <div class="mermaid diagram compact-diagram">
 flowchart LR
@@ -536,7 +724,7 @@ flowchart TB
 외부 API가 실패하면 시스템은 어떻게 반응하는가?
 어느 단계에서 latency가 증가했는지 확인할 수 있는가?</code></pre>
           <p>CloudOps RAG에서 가장 중요했던 것은 새로운 프레임워크를 하나 더 추가하는 것이 아니라 이 질문들에 답할 수 있는 구조를 만드는 것이었다.</p>
-          <h2>15. 정리</h2>
+          <h2>16. 정리</h2>
           <p>RAG를 구현하는 가장 단순한 구조는 여전히 유효하다.</p>
           <div class="mermaid diagram compact-diagram">
 flowchart LR
@@ -545,7 +733,7 @@ flowchart LR
     retrieve --> generate[Generate]
           </div>
           <p>하지만 이것만으로는 retrieval이 맞았는지, unsupported query인지, answer가 올바른지, 어디에서 실패했는지, dependency가 정상인지, latency가 어디서 발생하는지 알 수 없다.</p>
-          <p>CloudOps RAG에서는 이를 평가, fallback, answer evaluation, failure analysis, serving, reliability, observability로 확장했다.</p>
+          <p>CloudOps RAG에서는 이를 평가, fallback, answer evaluation, failure analysis, serving, reliability, observability, regression gate, untouched validation으로 확장했다.</p>
           <p>그리고 이 과정에서 얻은 가장 중요한 결론은 다음과 같다.</p>
           <blockquote>
             <p>RAG가 답을 생성한다는 것과 RAG 시스템이 신뢰할 수 있게 동작한다는 것은 서로 다른 문제다.</p>

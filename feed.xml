@@ -5,7 +5,7 @@
     <link>https://andrewkimswe.github.io/</link>
     <description>백엔드, 클라우드, 아키텍처, 운영, 트러블슈팅을 기록하는 기술 블로그입니다.</description>
     <language>ko-KR</language>
-    <lastBuildDate>Thu, 20 Aug 2026 00:00:00 +0900</lastBuildDate>
+    <lastBuildDate>Fri, 21 Aug 2026 00:00:00 +0900</lastBuildDate>
     <item>
       <title>[AWS/Kubernetes] 온프레미스 Kubernetes를 AWS 방식으로 운영하려면? - EKS Hybrid Nodes와 EKS Anywhere 비교</title>
       <link>https://andrewkimswe.github.io/posts/aws-kubernetes-eks-hybrid-nodes-eks-anywhere.html</link>
