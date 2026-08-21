@@ -5,7 +5,14 @@
     <link>https://andrewkimswe.github.io/</link>
     <description>백엔드, 클라우드, 아키텍처, 운영, 트러블슈팅을 기록하는 기술 블로그입니다.</description>
     <language>ko-KR</language>
-    <lastBuildDate>Fri, 21 Aug 2026 00:00:00 +0900</lastBuildDate>
+    <lastBuildDate>Sat, 22 Aug 2026 00:00:00 +0900</lastBuildDate>
+    <item>
+      <title>[AWS/Auto Scaling] CPU가 99%가 된 뒤 Scale-out하면 왜 늦을까? - Reactive Scaling과 Scheduled Scaling</title>
+      <link>https://andrewkimswe.github.io/posts/aws-auto-scaling-reactive-vs-scheduled-scaling.html</link>
+      <guid>https://andrewkimswe.github.io/posts/aws-auto-scaling-reactive-vs-scheduled-scaling.html</guid>
+      <pubDate>Sat, 22 Aug 2026 00:00:00 +0900</pubDate>
+      <description>Auto Scaling의 핵심은 scale-out 속도만이 아니라 언제 capacity를 준비하느냐다. 반복되는 트래픽 spike에서는 Scheduled Scaling이 더 직접적인 해법이 될 수 있습니다.</description>
+    </item>
     <item>
       <title>[AWS/Kubernetes] 온프레미스 Kubernetes를 AWS 방식으로 운영하려면? - EKS Hybrid Nodes와 EKS Anywhere 비교</title>
       <link>https://andrewkimswe.github.io/posts/aws-kubernetes-eks-hybrid-nodes-eks-anywhere.html</link>
