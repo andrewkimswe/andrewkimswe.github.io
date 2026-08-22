@@ -1,0 +1,341 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>[AWS/Data Security] 데이터 레이크 테이블이 수천 개로 늘어나면 권한은 어떻게 관리할까? | Jiwon Kim's Blog</title>
+    <meta
+      name="description"
+      content="수천 개 테이블과 여러 부서가 공유하는 S3 데이터 레이크에서 Lake Formation LF-Tag 기반 접근 제어로 권한 관리를 확장하는 방법을 정리합니다."
+    />
+    <meta name="author" content="Jiwon Kim" />
+    <meta name="robots" content="index, follow, max-image-preview:large" />
+    <link rel="canonical" href="https://andrewkimswe.github.io/posts/aws-data-security-lake-formation-lf-tag-access-control.html" />
+    <meta property="og:site_name" content="Jiwon Kim's Blog" />
+    <meta
+      property="og:title"
+      content="[AWS/Data Security] 데이터 레이크 테이블이 수천 개로 늘어나면 권한은 어떻게 관리할까? - Lake Formation LF-Tag 기반 접근 제어"
+    />
+    <meta
+      property="og:description"
+      content="테이블 이름을 하나씩 권한 정책에 추가하는 대신 Department, Sensitivity, Domain 같은 LF-Tag로 대규모 데이터 레이크 접근 제어를 관리하는 구조입니다."
+    />
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="https://andrewkimswe.github.io/posts/aws-data-security-lake-formation-lf-tag-access-control.html" />
+    <meta property="og:image" content="https://andrewkimswe.github.io/assets/social-card.svg" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://andrewkimswe.github.io/assets/social-card.svg" />
+    <meta property="article:published_time" content="2026-08-23T00:00:00+09:00" />
+    <meta property="article:modified_time" content="2026-08-23T00:00:00+09:00" />
+    <meta property="article:author" content="Jiwon Kim" />
+    <meta property="article:tag" content="AWS" />
+    <meta property="article:tag" content="Data Security" />
+    <meta property="article:tag" content="Lake Formation" />
+    <meta property="article:tag" content="LF-Tag" />
+    <meta property="article:tag" content="Data Lake" />
+    <meta property="article:tag" content="Athena" />
+    <meta property="article:tag" content="Glue Data Catalog" />
+    <link rel="stylesheet" href="../styles.css" />
+    <script type="application/ld+json">
+{
+      "@context": "https://schema.org",
+      "@type": "BlogPosting",
+      "headline": "[AWS/Data Security] 데이터 레이크 테이블이 수천 개로 늘어나면 권한은 어떻게 관리할까? - Lake Formation LF-Tag 기반 접근 제어",
+      "description": "수천 개 테이블과 여러 부서가 공유하는 S3 데이터 레이크에서 Lake Formation LF-Tag 기반 접근 제어로 권한 관리를 확장하는 방법을 정리합니다.",
+      "datePublished": "2026-08-23T00:00:00+09:00",
+      "dateModified": "2026-08-23T00:00:00+09:00",
+      "author": {
+            "@type": "Person",
+            "name": "Jiwon Kim",
+            "url": "https://github.com/andrewkimswe"
+      },
+      "publisher": {
+            "@type": "Person",
+            "name": "Jiwon Kim"
+      },
+      "mainEntityOfPage": "https://andrewkimswe.github.io/posts/aws-data-security-lake-formation-lf-tag-access-control.html",
+      "inLanguage": "ko-KR"
+}
+    </script>
+  </head>
+  <body>
+    <header class="site-header">
+      <a class="brand" href="../" aria-label="Jiwon Kim's Blog 홈">
+        <span class="brand-mark">JK</span>
+        <span>
+          <strong>Jiwon Kim's Blog</strong>
+          <small>Engineering notes</small>
+        </span>
+      </a>
+      <nav class="nav-links" aria-label="주요 메뉴">
+        <a href="../#writing">Writing</a>
+        <a href="../#topics">Topics</a>
+        <a href="../#about">About</a>
+        <a href="https://github.com/andrewkimswe">GitHub</a>
+      </nav>
+    </header>
+
+    <main>
+      <article class="article-page">
+        <header class="article-hero">
+          <a class="back-link" href="../#writing">Back to writing</a>
+          <p class="eyebrow">AWS · Data Security · Lake Formation</p>
+          <h1>[AWS/Data Security] 데이터 레이크 테이블이 수천 개로 늘어나면 권한은 어떻게 관리할까? - Lake Formation LF-Tag 기반 접근 제어</h1>
+          <p class="article-summary">
+            데이터 레이크가 커지면 테이블과 컬럼마다 권한을 직접 연결하는 방식은 운영 한계에 부딪힌다. Lake Formation LF-Tag는 권한 기준을 개별 리소스 이름에서 Department, Sensitivity, Domain 같은 리소스 속성으로 바꿔 permission model을 확장 가능하게 만든다.
+          </p>
+          <div class="article-meta">
+            <time datetime="2026-08-23">2026.08.23</time>
+            <span>AWS</span>
+            <span>Lake Formation</span>
+            <span>LF-Tag</span>
+          </div>
+        </header>
+
+        <div class="article-body">
+          <p>Amazon S3 기반 데이터 레이크를 운영하다 보면 처음에는 권한 관리가 어렵지 않다.</p>
+          <p>부서별로 접근 가능한 테이블이 몇 개뿐이라면 각 IAM Role에 필요한 리소스 권한을 직접 부여하면 된다.</p>
+          <div class="mermaid diagram compact-diagram">
+flowchart TB
+    finance[Finance Role] --> sales[sales_table]
+    finance --> revenue[revenue_table]
+    finance --> forecast[forecast_table]
+    hr[HR Role] --> employee[employee_table]
+    hr --> payroll[payroll_table]
+          </div>
+          <p>하지만 데이터 레이크가 커지면 이야기가 달라진다.</p>
+          <p>테이블이 수백 개에서 수천 개로 증가하고, 부서가 50개 이상이며, 각 부서에 수백 명의 사용자가 있다면 개별 테이블과 컬럼 단위로 권한을 직접 관리하는 방식은 빠르게 복잡해진다.</p>
+          <p>이때 사용할 수 있는 것이 AWS Lake Formation의 LF-Tag 기반 접근 제어다.</p>
+
+          <h2>1. 왜 단순한 리소스 단위 권한 부여가 문제가 될까?</h2>
+          <p>다음과 같은 환경을 생각해보자.</p>
+          <div class="mermaid diagram">
+flowchart TB
+    lake[Data Lake] --> tables[800+ Tables<br/>향후 수천 개로 증가]
+    lake --> columns[여러 Columns]
+    org[Departments] --> finance2[Finance]
+    org --> hr2[HR]
+    org --> marketing[Marketing]
+    org --> ops[Operations]
+    org --> many[50+ departments]
+          </div>
+          <p>각 부서는 자신에게 필요한 특정 테이블과 컬럼에만 접근해야 한다.</p>
+          <p>작은 환경에서는 직접 권한을 지정하는 방식도 충분하다.</p>
+          <div class="mermaid diagram compact-diagram">
+flowchart TB
+    finance3[Finance Role] --> tableA[table_a]
+    finance3 --> tableB[table_b]
+    finance3 --> tableC[table_c]
+    hr3[HR Role] --> tableD[table_d]
+    hr3 --> tableE[table_e]
+          </div>
+          <p>하지만 리소스가 계속 늘어나면 관리해야 하는 permission mapping 수도 함께 증가한다.</p>
+          <pre><code>Resources x Departments x Permission Rules</code></pre>
+          <p>테이블이 수천 개로 늘어나면 새로운 테이블이 추가될 때마다 기존 권한 정책을 수정해야 할 수도 있다.</p>
+          <p>이 방식은 운영 비용이 크고, 권한 누락이나 과도한 권한 부여 같은 실수도 발생하기 쉽다.</p>
+
+          <h2>2. LF-Tag 기반 접근 제어</h2>
+          <p>Lake Formation은 데이터 카탈로그 리소스에 LF-Tag를 부착할 수 있다.</p>
+          <p>예를 들어 테이블에 다음과 같은 태그를 지정할 수 있다.</p>
+          <pre><code>Table: sales_2026
+
+LF-Tags
+- Department = Finance
+- DataType   = Revenue
+- Sensitivity = Internal</code></pre>
+          <p>사용자나 IAM Role에는 특정 리소스 이름 대신 태그 조건에 대한 권한을 부여할 수 있다.</p>
+          <pre><code>FinanceRole
+
+Allow access when:
+Department = Finance</code></pre>
+          <p>그러면 Finance 태그가 붙은 새로운 테이블이 추가되더라도 개별 테이블 이름을 permission policy에 추가할 필요가 없다.</p>
+          <div class="mermaid diagram compact-diagram">
+flowchart TB
+    table1[Table A<br/>Department=Finance] --> financeRole[Finance Role]
+    table2[Table B<br/>Department=Finance] --> financeRole
+    table3[Table C<br/>Department=Finance] --> financeRole
+    newTable[New Table<br/>Department=Finance] --> financeRole
+          </div>
+          <p>즉 권한 관리 단위가 resource에서 attribute 또는 tag로 바뀐다.</p>
+          <div class="mermaid diagram compact-diagram">
+flowchart LR
+    resource[Resource-based Permission] --> tag[Attribute / Tag-based Permission]
+          </div>
+
+          <h2>3. RBAC에서 ABAC로</h2>
+          <p>이 구조는 ABAC(Attribute-Based Access Control) 관점으로 이해할 수 있다.</p>
+          <p>전통적인 리소스 기반 권한 관리는 role과 resource를 직접 연결한다.</p>
+          <div class="mermaid diagram compact-diagram">
+flowchart TB
+    role[Role] --> ra[Resource A]
+    role --> rb[Resource B]
+    role --> rc[Resource C]
+          </div>
+          <p>반면 태그 기반 접근 제어는 role을 attribute condition에 연결하고, 해당 조건에 맞는 리소스가 접근 대상이 된다.</p>
+          <div class="mermaid diagram compact-diagram">
+flowchart TB
+    role2[Role] --> condition[Attribute Condition]
+    condition --> matched[Matching Resources]
+          </div>
+          <p>예를 들어 다음처럼 tag taxonomy를 설계할 수 있다.</p>
+          <pre><code>Department
+- Finance
+- HR
+- Marketing
+- Operations
+
+Sensitivity
+- Public
+- Internal
+- Restricted
+
+Domain
+- Customer
+- Revenue
+- Employee</code></pre>
+          <p>그리고 Finance 분석가에게 다음 조건을 적용할 수 있다.</p>
+          <pre><code>Department = Finance
+AND
+Sensitivity != Restricted</code></pre>
+          <p>이 방식은 리소스 수가 많아질수록 장점이 커진다.</p>
+
+          <h2>4. Lake Formation과 IAM의 역할은 다르다</h2>
+          <p>주의할 점은 LF-Tag가 IAM을 완전히 대체하는 것은 아니라는 점이다.</p>
+          <p>IAM은 여전히 AWS 서비스와 API 자체에 접근할 수 있는 권한을 제어한다.</p>
+          <pre><code>Can user call Athena?
+Can user access Glue APIs?
+Can user assume this role?</code></pre>
+          <p>반면 Lake Formation은 데이터 레이크 안에서 어떤 database, table, column에 접근할 수 있는지를 세밀하게 제어한다.</p>
+          <div class="mermaid diagram">
+flowchart TB
+    user[User] --> role3[IAM Role]
+    role3 --> athena[Amazon Athena]
+    athena --> permission[Lake Formation Permission]
+    permission --> catalog[Glue Data Catalog]
+    catalog --> s3[S3 Data]
+          </div>
+          <p>즉 IAM과 Lake Formation은 경쟁 관계가 아니라 서로 다른 계층의 권한을 담당한다.</p>
+
+          <h2>5. 왜 Athena와 잘 어울릴까?</h2>
+          <p>S3 기반 데이터 레이크에서는 Amazon Athena를 사용하면 별도의 분석 서버나 클러스터를 운영하지 않고도 SQL로 데이터를 조회할 수 있다.</p>
+          <div class="mermaid diagram compact-diagram">
+flowchart TB
+    user2[User] --> athena2[Athena]
+    athena2 --> catalog2[Glue Data Catalog]
+    catalog2 --> lakeFormation[Lake Formation]
+    lakeFormation --> s32[S3]
+          </div>
+          <p>따라서 다음과 같은 요구사항에는 잘 맞는다.</p>
+          <pre><code>S3 Data Lake
++ 많은 Tables
++ 많은 Departments
++ Fine-grained Permission
++ 낮은 운영 부담</code></pre>
+          <p>별도의 Redshift 클러스터나 EMR 클러스터를 부서마다 생성하는 것보다 운영 구조가 훨씬 단순하다.</p>
+
+          <h2>6. 왜 부서마다 Redshift 클러스터를 만들지 않을까?</h2>
+          <p>부서별로 Redshift cluster를 하나씩 만들면 물리적으로 workload와 데이터를 분리할 수는 있다.</p>
+          <div class="mermaid diagram compact-diagram">
+flowchart TB
+    dept1[Department 1] --> rs1[Redshift Cluster]
+    dept2[Department 2] --> rs2[Redshift Cluster]
+    dept3[Department 3] --> rs3[Redshift Cluster]
+    dept50[Department 50+] --> rs50[Redshift Cluster]
+          </div>
+          <p>하지만 50개 이상의 부서가 있다면 cluster 운영, scaling, patch, cost, data synchronization, permission management가 모두 늘어난다.</p>
+          <p>원래 요구사항은 데이터 레이크의 테이블과 컬럼에 대한 접근 제어인데, 이를 위해 수십 개의 별도 분석 클러스터를 만드는 것은 지나치게 무겁다.</p>
+
+          <h2>7. 왜 일반 Lake Formation 권한보다 LF-Tag가 더 적합할까?</h2>
+          <p>Lake Formation은 태그 없이도 특정 테이블에 직접 권한을 줄 수 있다.</p>
+          <div class="mermaid diagram compact-diagram">
+flowchart TB
+    finance4[FinanceRole] --> table001[table_001]
+    finance4 --> table019[table_019]
+    finance4 --> table083[table_083]
+          </div>
+          <p>이 방식도 동작한다. 하지만 문제는 확장성이다.</p>
+          <p>테이블 수가 적으면 direct permission이 간단할 수 있지만, 수천 개로 증가할 예정이라면 계속해서 리소스별 권한을 관리해야 한다.</p>
+          <p>LF-Tag를 사용하면 다음 구조로 관리할 수 있다.</p>
+          <div class="mermaid diagram compact-diagram">
+flowchart TB
+    create[Table 생성] --> tagTable[Department=Finance 태그 부여]
+    tagTable --> included[기존 Finance Role 정책에 자동 포함]
+          </div>
+          <p>중요한 차이는 다음과 같다.</p>
+          <pre><code>Direct Permission
+= 리소스를 하나씩 관리
+
+LF-Tag Permission
+= 리소스의 속성을 관리</code></pre>
+
+          <h2>8. SAA 문제에서의 판단 기준</h2>
+          <p>시험에서는 다음 키워드가 함께 나오면 LF-Tag를 먼저 생각해볼 수 있다.</p>
+          <div class="mermaid diagram compact-diagram">
+flowchart TB
+    manyTables[많은 Tables] --> lfTag[LF-Tag Access Control]
+    manyUsers[많은 Users / Departments] --> lfTag
+    fine[Fine-grained Access] --> lfTag
+    opsCost[운영 비용 최소화] --> lfTag
+    growth[앞으로 계속 확장] --> lfTag
+          </div>
+          <p>반대로 테이블 수가 적고 권한 구조가 단순하다면 직접적인 Lake Formation permission도 충분할 수 있다.</p>
+          <p>LF-Tag의 핵심은 단순히 더 보안이 좋다는 것이 아니다.</p>
+          <blockquote>
+            <p>대규모 데이터 레이크에서 permission management 자체를 확장 가능하게 만드는 것.</p>
+          </blockquote>
+
+          <h2>9. 구조 정리</h2>
+          <p>전체 구조를 단순화하면 다음과 같다.</p>
+          <div class="mermaid diagram">
+flowchart TB
+    users[Users] --> roles[Department IAM Roles]
+    roles --> athena3[Amazon Athena]
+    athena3 --> lakeFormation2[AWS Lake Formation]
+    lakeFormation2 --> tagPermission[LF-Tag Permission]
+    tagPermission --> glue[AWS Glue Data Catalog]
+    glue --> s3lake[Amazon S3 Data Lake]
+          </div>
+          <p>예를 들어 테이블에 부서 태그가 붙어 있다면 접근 권한은 다음처럼 결정된다.</p>
+          <div class="mermaid diagram compact-diagram">
+flowchart TB
+    tableA2[Table A<br/>Department=Finance] --> financeRole2[Finance Role]
+    tableB2[Table B<br/>Department=Finance] --> financeRole2
+    tableC2[Table C<br/>Department=HR] --> hrRole2[HR Role]
+    tableD2[Table D<br/>Department=Marketing] --> marketingRole[Marketing Role]
+          </div>
+          <p>새로운 Finance 테이블이 생겨도 동일한 LF-Tag만 부여하면 기존 permission model에 포함할 수 있다.</p>
+
+          <h2>10. 마무리</h2>
+          <p>작은 데이터 레이크에서는 리소스마다 직접 권한을 부여하는 방식이 가장 이해하기 쉽다.</p>
+          <p>하지만 데이터 레이크가 성장하면 권한 관리 자체가 새로운 확장성 문제가 된다.</p>
+          <pre><code>수천 개 Tables
+x 수십 개 Departments
+x 다수의 Permission Rules</code></pre>
+          <p>환경에서 리소스 이름을 하나씩 관리하는 것은 지속하기 어렵다.</p>
+          <p>Lake Formation의 LF-Tag 기반 접근 제어는 권한의 기준을 개별 리소스에서 리소스의 속성으로 바꾼다.</p>
+          <div class="mermaid diagram compact-diagram">
+flowchart LR
+    resource2[Resource-based<br/>이 Table에 접근 가능] --> tag2[Tag-based<br/>Department=Finance인 모든 Table에 접근 가능]
+          </div>
+          <p>따라서 대규모 S3 데이터 레이크에서는 단순히 데이터를 어디에 저장할지만큼이나 권한 정책을 어떻게 확장 가능하게 관리할 것인가가 중요한 설계 문제가 된다.</p>
+          <p>이런 상황에서 LF-Tag 기반 접근 제어는 수천 개의 테이블과 여러 조직을 개별 정책으로 연결하는 대신, 태그를 중심으로 permission model을 단순화할 수 있는 방법이다.</p>
+        </div>
+      </article>
+    </main>
+
+    <footer class="site-footer">
+      <p>© 2026 Jiwon Kim. Technical writing, notes, and experiments.</p>
+      <div class="footer-links">
+        <span id="visitStatus">Analytics ready</span>
+        <a href="https://github.com/andrewkimswe">github.com/andrewkimswe</a>
+      </div>
+    </footer>
+
+    <script src="../script.js"></script>
+    <script
+      data-goatcounter="https://jiwonkim-blog.goatcounter.com/count"
+      async
+      src="https://gc.zgo.at/count.js"
+    ></script>
+  </body>
+</html>

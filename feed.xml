@@ -5,7 +5,14 @@
     <link>https://andrewkimswe.github.io/</link>
     <description>백엔드, 클라우드, 아키텍처, 운영, 트러블슈팅을 기록하는 기술 블로그입니다.</description>
     <language>ko-KR</language>
-    <lastBuildDate>Sat, 22 Aug 2026 00:00:00 +0900</lastBuildDate>
+    <lastBuildDate>Sun, 23 Aug 2026 00:00:00 +0900</lastBuildDate>
+    <item>
+      <title>[AWS/Data Security] 데이터 레이크 테이블이 수천 개로 늘어나면 권한은 어떻게 관리할까? - Lake Formation LF-Tag 기반 접근 제어</title>
+      <link>https://andrewkimswe.github.io/posts/aws-data-security-lake-formation-lf-tag-access-control.html</link>
+      <guid>https://andrewkimswe.github.io/posts/aws-data-security-lake-formation-lf-tag-access-control.html</guid>
+      <pubDate>Sun, 23 Aug 2026 00:00:00 +0900</pubDate>
+      <description>테이블 이름을 하나씩 권한 정책에 추가하는 대신 Department, Sensitivity, Domain 같은 LF-Tag로 대규모 데이터 레이크 접근 제어를 관리하는 구조입니다.</description>
+    </item>
     <item>
       <title>[AWS/Auto Scaling] CPU가 99%가 된 뒤 Scale-out하면 왜 늦을까? - Reactive Scaling과 Scheduled Scaling</title>
       <link>https://andrewkimswe.github.io/posts/aws-auto-scaling-reactive-vs-scheduled-scaling.html</link>
