@@ -2,7 +2,7 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://andrewkimswe.github.io/</loc>
-    <lastmod>2026-08-23</lastmod>
+    <lastmod>2026-08-26</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
@@ -129,6 +129,24 @@
   <url>
     <loc>https://andrewkimswe.github.io/posts/aws-data-security-lake-formation-lf-tag-access-control.html</loc>
     <lastmod>2026-08-23</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://andrewkimswe.github.io/posts/aws-networking-s3-gateway-vpc-endpoint-nat-cost.html</loc>
+    <lastmod>2026-08-24</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://andrewkimswe.github.io/posts/aws-api-jwt-routing-http-api-cognito-alb.html</loc>
+    <lastmod>2026-08-25</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://andrewkimswe.github.io/posts/aws-s3-inventory-batch-operations-delete-objects.html</loc>
+    <lastmod>2026-08-26</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>

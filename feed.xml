@@ -5,7 +5,28 @@
     <link>https://andrewkimswe.github.io/</link>
     <description>백엔드, 클라우드, 아키텍처, 운영, 트러블슈팅을 기록하는 기술 블로그입니다.</description>
     <language>ko-KR</language>
-    <lastBuildDate>Sun, 23 Aug 2026 00:00:00 +0900</lastBuildDate>
+    <lastBuildDate>Wed, 26 Aug 2026 00:00:00 +0900</lastBuildDate>
+    <item>
+      <title>[AWS/S3] 수백만 개의 오래된 S3 객체를 서버리스로 삭제하려면? - S3 Inventory와 Batch Operations</title>
+      <link>https://andrewkimswe.github.io/posts/aws-s3-inventory-batch-operations-delete-objects.html</link>
+      <guid>https://andrewkimswe.github.io/posts/aws-s3-inventory-batch-operations-delete-objects.html</guid>
+      <pubDate>Wed, 26 Aug 2026 00:00:00 +0900</pubDate>
+      <description>Inventory는 대상을 찾고, Batch Operations는 대상에 작업합니다. 대규모 S3 객체 삭제를 serverless하게 처리하는 구조입니다.</description>
+    </item>
+    <item>
+      <title>[AWS/API] JWT 인증과 경로 기반 라우팅을 함께 구현하려면? - API Gateway HTTP API, Cognito, ALB</title>
+      <link>https://andrewkimswe.github.io/posts/aws-api-jwt-routing-http-api-cognito-alb.html</link>
+      <guid>https://andrewkimswe.github.io/posts/aws-api-jwt-routing-http-api-cognito-alb.html</guid>
+      <pubDate>Tue, 25 Aug 2026 00:00:00 +0900</pubDate>
+      <description>API Gateway HTTP API는 JWT authorizer를 담당하고, ALB는 private backend service의 Layer 7 path routing을 담당하도록 역할을 나눕니다.</description>
+    </item>
+    <item>
+      <title>[AWS/Networking] Private EC2가 S3에 접근하는데 NAT Gateway가 꼭 필요할까? - Gateway VPC Endpoint로 비용 줄이기</title>
+      <link>https://andrewkimswe.github.io/posts/aws-networking-s3-gateway-vpc-endpoint-nat-cost.html</link>
+      <guid>https://andrewkimswe.github.io/posts/aws-networking-s3-gateway-vpc-endpoint-nat-cost.html</guid>
+      <pubDate>Mon, 24 Aug 2026 00:00:00 +0900</pubDate>
+      <description>S3 트래픽을 NAT Gateway에서 분리하면 비용과 네트워크 경로를 함께 최적화할 수 있습니다. Gateway VPC Endpoint와 NAT Gateway의 역할을 구분합니다.</description>
+    </item>
     <item>
       <title>[AWS/Data Security] 데이터 레이크 테이블이 수천 개로 늘어나면 권한은 어떻게 관리할까? - Lake Formation LF-Tag 기반 접근 제어</title>
       <link>https://andrewkimswe.github.io/posts/aws-data-security-lake-formation-lf-tag-access-control.html</link>

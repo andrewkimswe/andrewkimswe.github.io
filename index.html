@@ -342,6 +342,42 @@
         <div class="post-list" id="postGrid">
           <article
             class="post-row"
+            data-tags="AWS Batch Inventory Lambda Operations S3 S3 Batch Operations S3 Inventory Serverless"
+            data-title="[AWS/S3] 수백만 개의 오래된 S3 객체를 서버리스로 삭제하려면? - S3 Inventory와 Batch Operations"
+          >
+            <a href="./posts/aws-s3-inventory-batch-operations-delete-objects.html">
+              <time datetime="2026-08-26">2026.08.26</time>
+              <span class="post-topic">S3</span>
+              <h3>[AWS/S3] 수백만 개의 오래된 S3 객체를 서버리스로 삭제하려면? - S3 Inventory와 Batch Operations</h3>
+              <p>Inventory는 대상을 찾고, Batch Operations는 대상에 작업합니다. 대규모 S3 객체 삭제를 serverless하게 처리하는 구조입니다.</p>
+            </a>
+          </article>
+          <article
+            class="post-row"
+            data-tags="ALB API API Gateway Architecture AWS Cognito Gateway HTTP JWT Security"
+            data-title="[AWS/API] JWT 인증과 경로 기반 라우팅을 함께 구현하려면? - API Gateway HTTP API, Cognito, ALB"
+          >
+            <a href="./posts/aws-api-jwt-routing-http-api-cognito-alb.html">
+              <time datetime="2026-08-25">2026.08.25</time>
+              <span class="post-topic">API</span>
+              <h3>[AWS/API] JWT 인증과 경로 기반 라우팅을 함께 구현하려면? - API Gateway HTTP API, Cognito, ALB</h3>
+              <p>API Gateway HTTP API는 JWT authorizer를 담당하고, ALB는 private backend service의 Layer 7 path routing을 담당하도록 역할을 나눕니다.</p>
+            </a>
+          </article>
+          <article
+            class="post-row"
+            data-tags="AWS EC2 Endpoint FinOps Gateway NAT NAT Gateway Networking Private S3 VPC VPC Endpoint"
+            data-title="[AWS/Networking] Private EC2가 S3에 접근하는데 NAT Gateway가 꼭 필요할까? - Gateway VPC Endpoint로 비용 줄이기"
+          >
+            <a href="./posts/aws-networking-s3-gateway-vpc-endpoint-nat-cost.html">
+              <time datetime="2026-08-24">2026.08.24</time>
+              <span class="post-topic">Networking</span>
+              <h3>[AWS/Networking] Private EC2가 S3에 접근하는데 NAT Gateway가 꼭 필요할까? - Gateway VPC Endpoint로 비용 줄이기</h3>
+              <p>S3 트래픽을 NAT Gateway에서 분리하면 비용과 네트워크 경로를 함께 최적화할 수 있습니다. Gateway VPC Endpoint와 NAT Gateway의 역할을 구분합니다.</p>
+            </a>
+          </article>
+          <article
+            class="post-row"
             data-tags="Athena AWS Data Data Lake Data Security Formation Glue Data Catalog Lake Lake Formation LF-Tag Operations Security"
             data-title="[AWS/Data Security] 데이터 레이크 테이블이 수천 개로 늘어나면 권한은 어떻게 관리할까? - Lake Formation LF-Tag 기반 접근 제어"
           >
@@ -503,7 +539,7 @@
           >
             <a href="./posts/llm-api-langchain-application-architecture.html">
               <time datetime="2026-08-08">2026.08.08</time>
-              <span class="post-topic">LLM</span>
+              <span class="post-topic">API</span>
               <h3>[LLM] API 호출부터 LangChain까지 - LLM 애플리케이션의 구조 이해하기</h3>
               <p>단순한 model.invoke 호출 뒤에 있는 LLM serving layer와, 앞단의 orchestration layer를 구분해서 정리합니다.</p>
             </a>
@@ -515,7 +551,7 @@
           >
             <a href="./posts/s3-pii-detection-macie-object-lock.html">
               <time datetime="2026-08-07">2026.08.07</time>
-              <span class="post-topic">Data</span>
+              <span class="post-topic">S3</span>
               <h3>[AWS] S3에서 PII를 자동 탐지하고 삭제를 방지하기 - Macie + EventBridge + Object Lock</h3>
               <p>Macie finding을 EventBridge와 Lambda로 처리하고 S3 Object Lock Legal Hold로 검토 대상 객체를 보호하는 구조입니다.</p>
             </a>
@@ -527,7 +563,7 @@
           >
             <a href="./posts/s3-presigned-url-lambda-image-processing.html">
               <time datetime="2026-08-06">2026.08.06</time>
-              <span class="post-topic">RAG</span>
+              <span class="post-topic">S3</span>
               <h3>[AWS] 이미지 업로드 병목 제거하기 - S3 Presigned URL과 Lambda로 Event-Driven Processing 구성</h3>
               <p>대용량 이미지 업로드 경로에서 애플리케이션 서버를 분리하고 S3 이벤트와 Lambda로 후처리하는 구조입니다.</p>
             </a>
@@ -539,7 +575,7 @@
           >
             <a href="./posts/global-s3-mrap-cross-region-replication.html">
               <time datetime="2026-08-05">2026.08.05</time>
-              <span class="post-topic">RAG</span>
+              <span class="post-topic">S3</span>
               <h3>[AWS] 글로벌 S3 아키텍처 구성하기 - Multi-Region Access Point와 Cross-Region Replication</h3>
               <p>MRAP는 글로벌 요청 라우팅을, CRR은 리전 간 데이터 복제를 담당한다는 관점에서 정리한 구조입니다.</p>
             </a>
@@ -575,7 +611,7 @@
           >
             <a href="./posts/s3-data-lake-lake-formation-row-level-access-control.html">
               <time datetime="2026-08-02">2026.08.02</time>
-              <span class="post-topic">Data</span>
+              <span class="post-topic">S3</span>
               <h3>[AWS] Multi-Tenant Data Lake에서 Tenant 데이터 격리하기 - S3와 Lake Formation Row-Level Security</h3>
               <p>B2B SaaS Multi-Tenant 환경에서 하나의 S3 Data Lake를 유지하면서 Tenant별 Row 접근 범위를 제한하는 패턴입니다.</p>
             </a>

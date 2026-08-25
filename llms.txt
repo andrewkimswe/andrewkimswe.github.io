@@ -22,6 +22,9 @@ Jiwon Kim's Blog is a Korean technical blog about backend engineering, cloud inf
 
 ## Posts
 
+- [[AWS/S3] 수백만 개의 오래된 S3 객체를 서버리스로 삭제하려면? - S3 Inventory와 Batch Operations](https://andrewkimswe.github.io/posts/aws-s3-inventory-batch-operations-delete-objects.html): 수백만 개 S3 객체를 직접 순회하지 않고 S3 Inventory와 S3 Batch Operations, Lambda로 대규모 삭제 작업을 관리하는 방법을 정리합니다.
+- [[AWS/API] JWT 인증과 경로 기반 라우팅을 함께 구현하려면? - API Gateway HTTP API, Cognito, ALB](https://andrewkimswe.github.io/posts/aws-api-jwt-routing-http-api-cognito-alb.html): JWT 인증과 path-based routing 요구사항을 API Gateway HTTP API, Cognito, VPC Link, ALB로 계층별로 분리해 구성하는 방법을 정리합니다.
+- [[AWS/Networking] Private EC2가 S3에 접근하는데 NAT Gateway가 꼭 필요할까? - Gateway VPC Endpoint로 비용 줄이기](https://andrewkimswe.github.io/posts/aws-networking-s3-gateway-vpc-endpoint-nat-cost.html): Private Subnet의 EC2가 S3에 접근할 때 NAT Gateway 대신 Gateway VPC Endpoint로 트래픽 경로와 비용을 분리하는 방법을 정리합니다.
 - [[AWS/Data Security] 데이터 레이크 테이블이 수천 개로 늘어나면 권한은 어떻게 관리할까? - Lake Formation LF-Tag 기반 접근 제어](https://andrewkimswe.github.io/posts/aws-data-security-lake-formation-lf-tag-access-control.html): 수천 개 테이블과 여러 부서가 공유하는 S3 데이터 레이크에서 Lake Formation LF-Tag 기반 접근 제어로 권한 관리를 확장하는 방법을 정리합니다.
 - [[AWS/Auto Scaling] CPU가 99%가 된 뒤 Scale-out하면 왜 늦을까? - Reactive Scaling과 Scheduled Scaling](https://andrewkimswe.github.io/posts/aws-auto-scaling-reactive-vs-scheduled-scaling.html): 반복되는 트래픽 급증에서 CPU 99% 이후 reactive scale-out이 늦는 이유와 Scheduled Scaling, Target Tracking, Predictive Scaling의 선택 기준을 정리합니다.
 - [[AWS/Kubernetes] 온프레미스 Kubernetes를 AWS 방식으로 운영하려면? - EKS Hybrid Nodes와 EKS Anywhere 비교](https://andrewkimswe.github.io/posts/aws-kubernetes-eks-hybrid-nodes-eks-anywhere.html): 온프레미스 Kubernetes 운영 부담을 줄이기 위해 EKS Hybrid Nodes, EKS Anywhere, EKS on Outposts를 control plane과 책임 경계 관점에서 비교합니다.
