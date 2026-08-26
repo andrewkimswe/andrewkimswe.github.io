@@ -1,0 +1,234 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>[AWS/Security] 외부 엔지니어에게 SSH 키 없이 Private EC2 접근을 제공하기 | Jiwon Kim's Blog</title>
+    <meta
+      name="description"
+      content="외부 엔지니어에게 AWS Console 접근과 Private EC2 OS 접근을 제공할 때 IAM Identity Center와 Systems Manager Session Manager로 장기 자격 증명과 Bastion 운영을 줄이는 구조를 정리합니다."
+    />
+    <meta name="author" content="Jiwon Kim" />
+    <meta name="robots" content="index, follow, max-image-preview:large" />
+    <link rel="canonical" href="https://andrewkimswe.github.io/posts/aws-security-identity-center-session-manager-private-ec2-access.html" />
+    <meta property="og:site_name" content="Jiwon Kim's Blog" />
+    <meta property="og:title" content="[AWS/Security] 외부 엔지니어에게 SSH 키 없이 Private EC2 접근을 제공하기 - IAM Identity Center와 Session Manager" />
+    <meta
+      property="og:description"
+      content="사람의 AWS 계정 접근은 IAM Identity Center로, EC2 OS 접근은 Session Manager로 분리해 외부 운영 인력의 접근 경계를 관리합니다."
+    />
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="https://andrewkimswe.github.io/posts/aws-security-identity-center-session-manager-private-ec2-access.html" />
+    <meta property="og:image" content="https://andrewkimswe.github.io/assets/social-card.svg" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://andrewkimswe.github.io/assets/social-card.svg" />
+    <meta property="article:published_time" content="2026-08-27T00:00:00+09:00" />
+    <meta property="article:modified_time" content="2026-08-27T00:00:00+09:00" />
+    <meta property="article:author" content="Jiwon Kim" />
+    <meta property="article:tag" content="AWS" />
+    <meta property="article:tag" content="Security" />
+    <meta property="article:tag" content="IAM Identity Center" />
+    <meta property="article:tag" content="Systems Manager" />
+    <meta property="article:tag" content="Session Manager" />
+    <meta property="article:tag" content="EC2" />
+    <link rel="stylesheet" href="../styles.css" />
+    <script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","headline":"[AWS/Security] 외부 엔지니어에게 SSH 키 없이 Private EC2 접근을 제공하기 - IAM Identity Center와 Session Manager","description":"외부 엔지니어에게 AWS Console 접근과 Private EC2 OS 접근을 제공할 때 IAM Identity Center와 Systems Manager Session Manager로 장기 자격 증명과 Bastion 운영을 줄이는 구조를 정리합니다.","datePublished":"2026-08-27T00:00:00+09:00","dateModified":"2026-08-27T00:00:00+09:00","author":{"@type":"Person","name":"Jiwon Kim","url":"https://github.com/andrewkimswe"},"publisher":{"@type":"Person","name":"Jiwon Kim"},"mainEntityOfPage":"https://andrewkimswe.github.io/posts/aws-security-identity-center-session-manager-private-ec2-access.html","inLanguage":"ko-KR"}
+    </script>
+  </head>
+  <body>
+    <header class="site-header">
+      <a class="brand" href="../" aria-label="Jiwon Kim's Blog 홈"><span class="brand-mark">JK</span><span><strong>Jiwon Kim's Blog</strong><small>Engineering notes</small></span></a>
+      <nav class="nav-links" aria-label="주요 메뉴"><a href="../#portfolio">Portfolio</a><a href="../#writing">Writing</a><a href="../#topics">Topics</a><a href="../#about">About</a><a href="https://github.com/andrewkimswe">GitHub</a></nav>
+    </header>
+
+    <main>
+      <article class="article-page">
+        <header class="article-hero">
+          <a class="back-link" href="../#writing">Back to writing</a>
+          <p class="eyebrow">AWS · Security · Operations</p>
+          <h1>[AWS/Security] 외부 엔지니어에게 SSH 키 없이 Private EC2 접근을 제공하기 - IAM Identity Center와 Session Manager</h1>
+          <p class="article-summary">외부 운영 인력에게 AWS Console 접근과 Private EC2 shell 접근을 제공해야 한다면, 사람의 접근과 서버 OS 접근을 분리해서 봐야 한다. IAM Identity Center와 Session Manager를 조합하면 장기 credential과 Bastion 운영 부담을 줄일 수 있다.</p>
+          <div class="article-meta"><time datetime="2026-08-27">2026.08.27</time><span>AWS</span><span>Security</span><span>Session Manager</span></div>
+        </header>
+
+        <div class="article-body">
+          <p>외부 운영 업체나 협력사 엔지니어에게 AWS 환경의 운영을 맡겨야 하는 상황을 생각해보자. 엔지니어에게는 보통 두 종류의 접근이 필요하다.</p>
+          <pre><code>1. AWS Management Console 접근
+2. Private Subnet의 EC2 운영체제 접근</code></pre>
+          <p>전통적으로는 IAM User를 발급하고, Bastion Host와 SSH key를 통해 Private EC2에 접근하도록 구성할 수 있다. 기술적으로 가능하지만 외부 인력과 AWS 계정 수가 늘어날수록 관리해야 할 항목도 늘어난다.</p>
+          <div class="mermaid diagram">
+flowchart TB
+    engineer[External Engineer] --> user[IAM User]
+    engineer --> key[SSH Key]
+    key --> bastion[Bastion Host]
+    bastion --> ec2[Private EC2]
+    user --> account[AWS Account]
+          </div>
+          <p>이 글의 핵심은 접근 문제를 두 계층으로 나누는 것이다.</p>
+          <div class="mermaid diagram compact-diagram">
+flowchart TB
+    human[사람의 AWS 접근] --> identity[IAM Identity Center]
+    server[서버 OS 접근] --> session[Systems Manager Session Manager]
+          </div>
+
+          <h2>1. 먼저 두 종류의 접근을 분리하자</h2>
+          <p>외부 엔지니어에게 "AWS 접근 권한"이 필요하다고 하면 하나의 문제처럼 보인다. 하지만 실제로는 AWS control plane 접근과 EC2 operating system 접근이 다르다.</p>
+          <table>
+            <thead><tr><th>접근 범위</th><th>질문</th><th>주요 도구</th></tr></thead>
+            <tbody>
+              <tr><td>AWS Control Plane</td><td>누가 어떤 AWS 계정과 서비스에 접근할 수 있는가?</td><td>IAM Identity Center</td></tr>
+              <tr><td>EC2 Operating System</td><td>권한을 가진 사람이 서버 내부에 어떻게 접속하는가?</td><td>Session Manager</td></tr>
+            </tbody>
+          </table>
+
+          <h2>2. 기존 방식의 관리 비용</h2>
+          <p>외부 엔지니어마다 IAM User를 만들고 SSH key를 배포하는 방식은 처음에는 단순해 보인다. 하지만 여러 AWS 계정과 여러 외부 인력이 섞이면 identity lifecycle 관리가 빠르게 복잡해진다.</p>
+          <div class="mermaid diagram">
+flowchart TB
+    subgraph accountA[Account A]
+        userA1[IAM User A]
+        userA2[IAM User B]
+    end
+    subgraph accountB[Account B]
+        userB1[IAM User A]
+        userB2[IAM User B]
+    end
+    subgraph accountC[Account C]
+        userC1[IAM User A]
+        userC2[IAM User B]
+    end
+          </div>
+          <p>계약 종료나 담당자 변경이 발생하면 IAM User, access key, console password, SSH public key, Bastion 접근 경로를 모두 확인해야 한다.</p>
+
+          <h2>3. IAM Identity Center로 사람의 접근을 중앙화하기</h2>
+          <p>AWS Organizations 환경에서는 IAM Identity Center를 사용해 여러 AWS 계정에 대한 workforce access를 중앙에서 관리할 수 있다.</p>
+          <div class="mermaid diagram compact-diagram">
+flowchart TB
+    engineer2[External Engineer] --> idc[IAM Identity Center]
+    idc --> accA[AWS Account A]
+    idc --> accB[AWS Account B]
+    idc --> accC[AWS Account C]
+          </div>
+          <p>각 계정마다 별도의 IAM User를 만드는 대신 사용자를 중앙에서 관리하고, 필요한 AWS 계정에 접근 권한을 할당할 수 있다.</p>
+
+          <h2>4. Permission Set으로 최소 권한 적용하기</h2>
+          <p>IAM Identity Center에서는 Permission Set을 통해 사용자가 AWS 계정에서 어떤 권한을 가질지 정의할 수 있다.</p>
+          <pre><code>ExternalSupport
+
+Allowed:
+- EC2 Read
+- CloudWatch Read
+- Systems Manager Session Access
+
+Not Allowed:
+- IAM Administration
+- Billing Administration
+- Organization Management</code></pre>
+          <div class="mermaid diagram compact-diagram">
+flowchart TB
+    group[ExternalSupport Group] --> permission[ExternalSupport Permission Set]
+    permission --> production[Production Account]
+          </div>
+          <p>즉 외부 엔지니어라는 이유로 AdministratorAccess를 주는 것이 아니라, 필요한 업무 범위만 제공하는 최소 권한 원칙을 적용할 수 있다.</p>
+
+          <h2>5. Private EC2 접근 문제</h2>
+          <p>다음은 Private Subnet의 Linux EC2에 어떻게 접속할 것인가의 문제다. 전통적인 방법은 Bastion Host와 SSH다.</p>
+          <div class="mermaid diagram">
+flowchart TB
+    engineer3[Engineer] --> internet[Internet]
+    internet --> bastion2[Bastion Host]
+    bastion2 -->|SSH :22| privateEc2[Private EC2]
+          </div>
+          <p>하지만 이 구조는 서버에 접속하기 위해 또 다른 서버를 운영하는 구조다. Bastion EC2, SSH key, inbound 22, security group, OS patching, availability, key rotation까지 관리 대상이 된다.</p>
+
+          <h2>6. Session Manager로 SSH 노출 줄이기</h2>
+          <p>Systems Manager Session Manager를 사용하면 SSH를 직접 노출하지 않고 관리형 EC2 인스턴스에 shell access를 제공할 수 있다.</p>
+          <div class="mermaid diagram compact-diagram">
+flowchart TB
+    engineer4[Engineer] --> ssm[Systems Manager]
+    ssm --> sessionManager[Session Manager]
+    sessionManager --> privateEc22[Private EC2]
+          </div>
+          <p>일반적인 Session Manager 기반 접근에서는 Public IP, inbound SSH 22, Bastion Host, SSH key 배포가 필요하지 않다.</p>
+
+          <h2>7. EC2가 Systems Manager와 통신하려면</h2>
+          <p>Session Manager를 사용하려면 EC2가 Systems Manager의 managed instance가 될 수 있어야 한다. 대표적으로 SSM Agent, IAM instance profile, Systems Manager endpoint에 대한 network connectivity가 필요하다.</p>
+          <div class="mermaid diagram compact-diagram">
+flowchart TB
+    ec23[EC2] --> agent[SSM Agent]
+    ec23 --> role[IAM Instance Profile]
+    ec23 --> network[SSM Endpoint Connectivity]
+    role --> policy[AmazonSSMManagedInstanceCore]
+          </div>
+          <p>Amazon Linux 계열의 많은 AWS 제공 AMI에는 SSM Agent가 기본 설치되어 있는 경우가 있지만, 실제 환경에서는 설치와 실행 상태를 확인해야 한다.</p>
+
+          <h2>8. Private Subnet인데 인터넷이 없어도 될까?</h2>
+          <p>가능하다. Private EC2가 Systems Manager 관련 endpoint에 도달할 수 있어야 하지만 반드시 public internet을 이용해야 하는 것은 아니다. 환경에 따라 Interface VPC Endpoint를 구성할 수 있다.</p>
+          <div class="mermaid diagram compact-diagram">
+flowchart TB
+    privateEc23[Private EC2] --> vpce[Interface VPC Endpoint]
+    vpce --> systemsManager[Systems Manager]
+          </div>
+          <p>이렇게 하면 public IP 없는 EC2, inbound SSH 없는 security group, Systems Manager connectivity를 조합한 운영 구조를 만들 수 있다.</p>
+
+          <h2>9. 전체 인증 흐름</h2>
+          <p>외부 엔지니어가 서버에 접근하는 과정을 단순화하면 다음과 같다.</p>
+          <div class="mermaid diagram">
+flowchart TB
+    external[External Engineer] --> idc2[IAM Identity Center]
+    idc2 --> permission2[Permission Set]
+    permission2 --> account2[AWS Account]
+    account2 --> ssm2[Systems Manager]
+    ssm2 --> session2[Session Manager]
+    session2 --> ec24[Private EC2]
+          </div>
+          <p>사람의 인증과 계정 접근은 IAM Identity Center가 담당하고, EC2 OS 접근은 Session Manager 세션으로 이어진다.</p>
+
+          <h2>10. 왜 외부 인력 관리에 유리할까?</h2>
+          <p>SSH key와 개별 IAM User를 사용하면 계약 종료 시 확인해야 할 것이 많다. IAM User 삭제, access key 폐기, console password 차단, SSH public key 제거, 다른 계정과 Bastion에 남은 key 확인까지 이어진다.</p>
+          <p>중앙화된 identity 관리에서는 사람 또는 그룹에 대한 account assignment를 회수하는 방식으로 AWS 접근 lifecycle을 관리하기 쉽다. Session Manager를 사용하면 장기 SSH private key를 사용자에게 배포하는 구조도 줄일 수 있다.</p>
+
+          <h2>11. Bastion Host가 무조건 나쁜 것은 아니다</h2>
+          <p>Bastion은 특정 네트워크 환경이나 기존 SSH workflow가 필요한 시스템에서는 여전히 사용할 수 있다. 하지만 AWS 관리형 EC2에 대한 운영 접근이 목적이고 Session Manager를 사용할 수 있다면 Bastion 운영, SSH key 관리, inbound SSH 관리를 줄일 수 있다.</p>
+          <blockquote><p>선택 기준은 "SSH가 오래된 기술인가"가 아니라, 운영 접근을 위해 별도의 네트워크 진입점과 장기 credential을 계속 관리해야 하는가다.</p></blockquote>
+
+          <h2>12. 보안 그룹과 감사 관점</h2>
+          <p>SSH 방식에서는 일반적으로 Bastion security group에서 들어오는 TCP 22 inbound rule이 필요하다. Session Manager를 사용하면 shell access를 위해 inbound TCP 22를 열 필요가 없다.</p>
+          <div class="mermaid diagram compact-diagram">
+flowchart LR
+    internet2[Internet] -. blocked .-> port22[Port 22]
+    port22 -. blocked .-> privateEc25[Private EC2]
+    operator[Authorized User] --> session3[Session Manager]
+    session3 --> privateEc25
+          </div>
+          <p>운영 접근에서는 누가, 언제, 어떤 권한으로 접근했는지도 중요하다. Session Manager는 IAM과 Systems Manager 체계 안에서 session access를 관리하고, 환경 설정에 따라 세션 로깅과 감사 체계를 구축할 수 있다.</p>
+
+          <h2>13. SAA에서 선택지를 제거하는 방법</h2>
+          <table>
+            <thead><tr><th>선택지</th><th>제거 이유</th></tr></thead>
+            <tbody>
+              <tr><td>각 계정에 IAM User 생성</td><td>Organizations와 여러 계정 환경에서 중앙화되지 않고 장기 credential 관리가 늘어난다.</td></tr>
+              <tr><td>SSH Key 직접 접근</td><td>key 배포와 inbound 22 관리가 필요하고 Private EC2 접근 문제를 남긴다.</td></tr>
+              <tr><td>Bastion + SSH</td><td>가능하지만 Bastion 운영과 key rotation, 추가 공격 표면을 감수해야 한다.</td></tr>
+              <tr><td>Identity Center + Session Manager</td><td>중앙화된 workforce access, temporary session, no direct SSH 요구사항에 직접 맞는다.</td></tr>
+            </tbody>
+          </table>
+
+          <h2>14. 마무리</h2>
+          <p>외부 엔지니어에게 AWS 운영 권한을 제공할 때 중요한 것은 단순히 접속이 가능하게 만드는 것이 아니다. 접근 방법 자체도 운영해야 한다.</p>
+          <div class="mermaid diagram compact-diagram">
+flowchart TB
+    old[IAM User + Bastion + SSH Key + Port 22] --> new[Centralized Identity + Temporary AWS Access + Managed EC2 Session]
+          </div>
+          <p>IAM Identity Center와 Systems Manager Session Manager를 조합하면 사람의 AWS 계정 접근과 서버 OS 접근을 서로 다른 보안 문제로 분리하고, 각 계층에서 장기 자격 증명과 불필요한 네트워크 노출을 줄일 수 있다.</p>
+        </div>
+      </article>
+    </main>
+
+    <footer class="site-footer"><p>© 2026 Jiwon Kim. Technical writing, notes, and experiments.</p><div class="footer-links"><span id="visitStatus">Analytics ready</span><a href="https://github.com/andrewkimswe">github.com/andrewkimswe</a></div></footer>
+    <script src="../script.js"></script>
+    <script data-goatcounter="https://jiwonkim-blog.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
+    <noscript><img src="https://jiwonkim-blog.goatcounter.com/count?p=/posts/aws-security-identity-center-session-manager-private-ec2-access.html" alt="" /></noscript>
+  </body>
+</html>
