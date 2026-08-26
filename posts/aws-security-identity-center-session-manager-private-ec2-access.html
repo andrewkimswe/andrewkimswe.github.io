@@ -127,8 +127,8 @@ Not Allowed:
 - Organization Management</code></pre>
           <div class="mermaid diagram compact-diagram">
 flowchart TB
-    group[ExternalSupport Group] --> permission[ExternalSupport Permission Set]
-    permission --> production[Production Account]
+    supportGroup[Support Group] --> supportSet[Permission Set]
+    supportSet --> prodAccount[Production Account]
           </div>
           <p>즉 외부 엔지니어라는 이유로 AdministratorAccess를 주는 것이 아니라, 필요한 업무 범위만 제공하는 최소 권한 원칙을 적용할 수 있다.</p>
 
@@ -138,51 +138,25 @@ flowchart TB
 flowchart TB
     engineer3[Engineer] --> internet[Internet]
     internet --> bastion2[Bastion Host]
-    bastion2 -->|SSH :22| privateEc2[Private EC2]
+    bastion2 --> ssh[SSH Access]
+    ssh --> privateEc2[Private EC2]
           </div>
           <p>하지만 이 구조는 서버에 접속하기 위해 또 다른 서버를 운영하는 구조다. Bastion EC2, SSH key, inbound 22, security group, OS patching, availability, key rotation까지 관리 대상이 된다.</p>
 
           <h2>6. Session Manager로 SSH 노출 줄이기</h2>
           <p>Systems Manager Session Manager를 사용하면 SSH를 직접 노출하지 않고 관리형 EC2 인스턴스에 shell access를 제공할 수 있다.</p>
-          <div class="mermaid diagram compact-diagram">
-flowchart TB
-    engineer4[Engineer] --> ssm[Systems Manager]
-    ssm --> sessionManager[Session Manager]
-    sessionManager --> privateEc22[Private EC2]
-          </div>
           <p>일반적인 Session Manager 기반 접근에서는 Public IP, inbound SSH 22, Bastion Host, SSH key 배포가 필요하지 않다.</p>
 
           <h2>7. EC2가 Systems Manager와 통신하려면</h2>
           <p>Session Manager를 사용하려면 EC2가 Systems Manager의 managed instance가 될 수 있어야 한다. 대표적으로 SSM Agent, IAM instance profile, Systems Manager endpoint에 대한 network connectivity가 필요하다.</p>
-          <div class="mermaid diagram compact-diagram">
-flowchart TB
-    ec23[EC2] --> agent[SSM Agent]
-    ec23 --> role[IAM Instance Profile]
-    ec23 --> network[SSM Endpoint Connectivity]
-    role --> policy[AmazonSSMManagedInstanceCore]
-          </div>
           <p>Amazon Linux 계열의 많은 AWS 제공 AMI에는 SSM Agent가 기본 설치되어 있는 경우가 있지만, 실제 환경에서는 설치와 실행 상태를 확인해야 한다.</p>
 
           <h2>8. Private Subnet인데 인터넷이 없어도 될까?</h2>
           <p>가능하다. Private EC2가 Systems Manager 관련 endpoint에 도달할 수 있어야 하지만 반드시 public internet을 이용해야 하는 것은 아니다. 환경에 따라 Interface VPC Endpoint를 구성할 수 있다.</p>
-          <div class="mermaid diagram compact-diagram">
-flowchart TB
-    privateEc23[Private EC2] --> vpce[Interface VPC Endpoint]
-    vpce --> systemsManager[Systems Manager]
-          </div>
           <p>이렇게 하면 public IP 없는 EC2, inbound SSH 없는 security group, Systems Manager connectivity를 조합한 운영 구조를 만들 수 있다.</p>
 
           <h2>9. 전체 인증 흐름</h2>
           <p>외부 엔지니어가 서버에 접근하는 과정을 단순화하면 다음과 같다.</p>
-          <div class="mermaid diagram">
-flowchart TB
-    external[External Engineer] --> idc2[IAM Identity Center]
-    idc2 --> permission2[Permission Set]
-    permission2 --> account2[AWS Account]
-    account2 --> ssm2[Systems Manager]
-    ssm2 --> session2[Session Manager]
-    session2 --> ec24[Private EC2]
-          </div>
           <p>사람의 인증과 계정 접근은 IAM Identity Center가 담당하고, EC2 OS 접근은 Session Manager 세션으로 이어진다.</p>
 
           <h2>10. 왜 외부 인력 관리에 유리할까?</h2>
@@ -195,13 +169,6 @@ flowchart TB
 
           <h2>12. 보안 그룹과 감사 관점</h2>
           <p>SSH 방식에서는 일반적으로 Bastion security group에서 들어오는 TCP 22 inbound rule이 필요하다. Session Manager를 사용하면 shell access를 위해 inbound TCP 22를 열 필요가 없다.</p>
-          <div class="mermaid diagram compact-diagram">
-flowchart LR
-    internet2[Internet] -. blocked .-> port22[Port 22]
-    port22 -. blocked .-> privateEc25[Private EC2]
-    operator[Authorized User] --> session3[Session Manager]
-    session3 --> privateEc25
-          </div>
           <p>운영 접근에서는 누가, 언제, 어떤 권한으로 접근했는지도 중요하다. Session Manager는 IAM과 Systems Manager 체계 안에서 session access를 관리하고, 환경 설정에 따라 세션 로깅과 감사 체계를 구축할 수 있다.</p>
 
           <h2>13. SAA에서 선택지를 제거하는 방법</h2>
@@ -217,10 +184,6 @@ flowchart LR
 
           <h2>14. 마무리</h2>
           <p>외부 엔지니어에게 AWS 운영 권한을 제공할 때 중요한 것은 단순히 접속이 가능하게 만드는 것이 아니다. 접근 방법 자체도 운영해야 한다.</p>
-          <div class="mermaid diagram compact-diagram">
-flowchart TB
-    old[IAM User + Bastion + SSH Key + Port 22] --> new[Centralized Identity + Temporary AWS Access + Managed EC2 Session]
-          </div>
           <p>IAM Identity Center와 Systems Manager Session Manager를 조합하면 사람의 AWS 계정 접근과 서버 OS 접근을 서로 다른 보안 문제로 분리하고, 각 계층에서 장기 자격 증명과 불필요한 네트워크 노출을 줄일 수 있다.</p>
         </div>
       </article>
