@@ -5,7 +5,14 @@
     <link>https://andrewkimswe.github.io/</link>
     <description>백엔드, 클라우드, 아키텍처, 운영, 트러블슈팅을 기록하는 기술 블로그입니다.</description>
     <language>ko-KR</language>
-    <lastBuildDate>Wed, 26 Aug 2026 00:00:00 +0900</lastBuildDate>
+    <lastBuildDate>Thu, 27 Aug 2026 00:00:00 +0900</lastBuildDate>
+    <item>
+      <title>[AWS/Security] 외부 엔지니어에게 SSH 키 없이 Private EC2 접근을 제공하기 - IAM Identity Center와 Session Manager</title>
+      <link>https://andrewkimswe.github.io/posts/aws-security-identity-center-session-manager-private-ec2-access.html</link>
+      <guid>https://andrewkimswe.github.io/posts/aws-security-identity-center-session-manager-private-ec2-access.html</guid>
+      <pubDate>Thu, 27 Aug 2026 00:00:00 +0900</pubDate>
+      <description>사람의 AWS 계정 접근은 IAM Identity Center로, EC2 OS 접근은 Session Manager로 분리해 외부 운영 인력의 접근 경계를 관리합니다.</description>
+    </item>
     <item>
       <title>[AWS/S3] 수백만 개의 오래된 S3 객체를 서버리스로 삭제하려면? - S3 Inventory와 Batch Operations</title>
       <link>https://andrewkimswe.github.io/posts/aws-s3-inventory-batch-operations-delete-objects.html</link>

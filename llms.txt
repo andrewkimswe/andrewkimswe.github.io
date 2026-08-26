@@ -22,6 +22,7 @@ Jiwon Kim's Blog is a Korean technical blog about backend engineering, cloud inf
 
 ## Posts
 
+- [[AWS/Security] 외부 엔지니어에게 SSH 키 없이 Private EC2 접근을 제공하기 - IAM Identity Center와 Session Manager](https://andrewkimswe.github.io/posts/aws-security-identity-center-session-manager-private-ec2-access.html): 외부 엔지니어에게 AWS Console 접근과 Private EC2 OS 접근을 제공할 때 IAM Identity Center와 Systems Manager Session Manager로 장기 자격 증명과 Bastion 운영을 줄이는 구조를 정리합니다.
 - [[AWS/S3] 수백만 개의 오래된 S3 객체를 서버리스로 삭제하려면? - S3 Inventory와 Batch Operations](https://andrewkimswe.github.io/posts/aws-s3-inventory-batch-operations-delete-objects.html): 수백만 개 S3 객체를 직접 순회하지 않고 S3 Inventory와 S3 Batch Operations, Lambda로 대규모 삭제 작업을 관리하는 방법을 정리합니다.
 - [[AWS/API] JWT 인증과 경로 기반 라우팅을 함께 구현하려면? - API Gateway HTTP API, Cognito, ALB](https://andrewkimswe.github.io/posts/aws-api-jwt-routing-http-api-cognito-alb.html): JWT 인증과 path-based routing 요구사항을 API Gateway HTTP API, Cognito, VPC Link, ALB로 계층별로 분리해 구성하는 방법을 정리합니다.
 - [[AWS/Networking] Private EC2가 S3에 접근하는데 NAT Gateway가 꼭 필요할까? - Gateway VPC Endpoint로 비용 줄이기](https://andrewkimswe.github.io/posts/aws-networking-s3-gateway-vpc-endpoint-nat-cost.html): Private Subnet의 EC2가 S3에 접근할 때 NAT Gateway 대신 Gateway VPC Endpoint로 트래픽 경로와 비용을 분리하는 방법을 정리합니다.
