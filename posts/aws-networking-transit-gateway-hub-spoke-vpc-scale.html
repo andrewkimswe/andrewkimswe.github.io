@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>[AWS/Networking] VPC가 1,000개라면 Peering은 왜 무너질까? | Jiwon Kim's Blog</title>
+    <meta name="description" content="VPC Peering의 full mesh 복잡도, non-transitive routing 한계, Transit Gateway 기반 hub-and-spoke 설계와 route table segmentation 기준을 정리합니다." />
+    <meta name="author" content="Jiwon Kim" />
+    <meta name="robots" content="index, follow, max-image-preview:large" />
+    <link rel="canonical" href="https://andrewkimswe.github.io/posts/aws-networking-transit-gateway-hub-spoke-vpc-scale.html" />
+    <meta property="og:site_name" content="Jiwon Kim's Blog" />
+    <meta property="og:title" content="[AWS/Networking] VPC가 1,000개라면 Peering은 왜 무너질까? - Transit Gateway와 Hub-and-Spoke 설계" />
+    <meta property="og:description" content="VPC 수가 늘어나면 peering connection과 route 관리가 N²에 가깝게 복잡해집니다. Transit Gateway로 중앙 routing layer와 segmentation을 설계합니다." />
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="https://andrewkimswe.github.io/posts/aws-networking-transit-gateway-hub-spoke-vpc-scale.html" />
+    <meta property="og:image" content="https://andrewkimswe.github.io/assets/social-card.svg" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://andrewkimswe.github.io/assets/social-card.svg" />
+    <meta property="article:published_time" content="2026-08-29T00:00:00+09:00" />
+    <meta property="article:modified_time" content="2026-08-29T00:00:00+09:00" />
+    <meta property="article:author" content="Jiwon Kim" />
+    <meta property="article:tag" content="AWS" />
+    <meta property="article:tag" content="Networking" />
+    <meta property="article:tag" content="VPC" />
+    <meta property="article:tag" content="Transit Gateway" />
+    <meta property="article:tag" content="Hub-and-Spoke" />
+    <meta property="article:tag" content="Architecture" />
+    <link rel="stylesheet" href="../styles.css" />
+    <script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","headline":"[AWS/Networking] VPC가 1,000개라면 Peering은 왜 무너질까? - Transit Gateway와 Hub-and-Spoke 설계","description":"VPC Peering의 full mesh 복잡도, non-transitive routing 한계, Transit Gateway 기반 hub-and-spoke 설계와 route table segmentation 기준을 정리합니다.","datePublished":"2026-08-29T00:00:00+09:00","dateModified":"2026-08-29T00:00:00+09:00","author":{"@type":"Person","name":"Jiwon Kim","url":"https://github.com/andrewkimswe"},"publisher":{"@type":"Person","name":"Jiwon Kim"},"mainEntityOfPage":"https://andrewkimswe.github.io/posts/aws-networking-transit-gateway-hub-spoke-vpc-scale.html","inLanguage":"ko-KR"}
+    </script>
+  </head>
+  <body>
+    <header class="site-header">
+      <a class="brand" href="../" aria-label="Jiwon Kim's Blog 홈"><span class="brand-mark">JK</span><span><strong>Jiwon Kim's Blog</strong><small>Engineering notes</small></span></a>
+      <nav class="nav-links" aria-label="주요 메뉴"><a href="../#portfolio">Portfolio</a><a href="../#profile">Profile</a><a href="../#writing">Writing</a><a href="../#topics">Topics</a><a href="../#about">About</a><a href="https://github.com/andrewkimswe">GitHub</a><a href="https://www.linkedin.com/in/jiwon-kim-867334285/">LinkedIn</a></nav>
+    </header>
+
+    <main>
+      <article class="article-page">
+        <header class="article-hero">
+          <a class="back-link" href="../#writing">Back to writing</a>
+          <p class="eyebrow">AWS · Networking · Architecture</p>
+          <h1>[AWS/Networking] VPC가 1,000개라면 Peering은 왜 무너질까? - Transit Gateway와 Hub-and-Spoke 설계</h1>
+          <p class="article-summary">VPC 수가 늘어나면 peering connection과 route 관리가 N²에 가깝게 복잡해집니다. Transit Gateway로 중앙 routing layer와 segmentation을 설계합니다.</p>
+          <div class="article-meta"><time datetime="2026-08-29">2026.08.29</time><span>AWS</span><span>Networking</span><span>TGW</span><span>VPC</span></div>
+        </header>
+
+        <div class="article-body">
+          <p>VPC 두 개를 연결할 때 VPC Peering은 단순하고 좋은 선택입니다. 문제는 VPC가 수백 개, 수천 개로 늘고 서로 통신해야 하는 순간입니다.</p>
+          <div class="mermaid diagram">
+flowchart LR
+    a[VPC A] --- b[VPC B]
+    a --- c[VPC C]
+    b --- c
+    a --- d[VPC D]
+    b --- d
+    c --- d
+          </div>
+          <h2>1. VPC Peering은 point-to-point 연결이다</h2>
+          <p>VPC Peering은 두 VPC 사이의 private connectivity를 제공합니다. 작은 환경에서는 이해하기 쉽지만, 연결 대상이 늘어날수록 connection과 route table 관리가 함께 증가합니다.</p>
+          <h2>2. Full Mesh의 N² 문제</h2>
+          <p>모든 VPC가 서로 직접 통신해야 한다면 필요한 pairwise connection 수는 N × (N - 1) / 2입니다.</p>
+          <table><thead><tr><th>VPC 수</th><th>Full Mesh 관계 수</th></tr></thead><tbody><tr><td>10</td><td>45</td></tr><tr><td>100</td><td>4,950</td></tr><tr><td>1,000</td><td>499,500</td></tr></tbody></table>
+          <h2>3. 연결만 늘어나는 것이 아니다</h2>
+          <p>Peering이 많아지면 connection object뿐 아니라 각 VPC route table, CIDR 충돌, 변경 영향 분석까지 함께 관리해야 합니다.</p>
+          <h2>4. VPC Peering은 transitive하지 않다</h2>
+          <p>A와 B, B와 C가 peering되어 있어도 A가 B를 경유해 C와 자동으로 통신할 수 없습니다. 이 특성 때문에 단순한 chaining으로 대규모 mesh를 줄이기 어렵습니다.</p>
+          <div class="mermaid diagram compact-diagram">
+flowchart LR
+    a[VPC A] <--> b[VPC B]
+    b <--> c[VPC C]
+    a -. no transitive routing .- c
+          </div>
+          <h2>5. Transit Gateway와 Hub-and-Spoke</h2>
+          <p>Transit Gateway는 여러 VPC와 네트워크를 중앙 hub에 연결할 수 있도록 설계된 서비스입니다. 각 VPC가 서로 직접 peering하지 않고 TGW attachment를 통해 중앙 routing layer에 붙습니다.</p>
+          <div class="mermaid diagram">
+flowchart TB
+    tgw[Transit Gateway]
+    a[VPC A] --> tgw
+    b[VPC B] --> tgw
+    c[VPC C] --> tgw
+    d[VPC D] --> tgw
+    e[VPC E] --> tgw
+          </div>
+          <h2>6. Full Mesh와 Hub-and-Spoke의 차이</h2>
+          <table><thead><tr><th>구조</th><th>VPC 추가 시 변화</th><th>운영 특성</th></tr></thead><tbody><tr><td>Full Mesh</td><td>기존 여러 VPC와 새 연결 필요</td><td>연결과 route가 분산됨</td></tr><tr><td>Hub-and-Spoke</td><td>중앙 TGW attachment 추가</td><td>routing policy를 중앙에서 설계</td></tr></tbody></table>
+          <h2>7. Transit Gateway Route Table로 segmentation하기</h2>
+          <p>Transit Gateway에도 route table 개념이 있습니다. 이를 통해 prod, dev, shared services, security VPC의 통신 범위를 분리할 수 있습니다.</p>
+          <div class="mermaid diagram">
+flowchart TB
+    tgw[Transit Gateway]
+    prod[Prod Route Table] --> prodVpc[Prod VPCs]
+    prod --> shared[Shared Services]
+    dev[Dev Route Table] --> devVpc[Dev VPCs]
+    dev --> shared
+    tgw --> prod
+    tgw --> dev
+    prodVpc -. blocked .- devVpc
+          </div>
+          <h2>8. Shared Services와 Hybrid 연결</h2>
+          <p>대규모 AWS 환경에서는 DNS, logging, directory, security tooling 같은 공통 서비스를 별도 VPC에서 운영합니다. Transit Gateway를 사용하면 application VPC마다 shared services와 개별 peering을 맺을 필요가 줄어듭니다.</p>
+          <div class="mermaid diagram">
+flowchart LR
+    onprem[On-Premises] --- dx[VPN or Direct Connect]
+    dx --- tgw[Transit Gateway]
+    tgw --- appA[Application VPC A]
+    tgw --- appB[Application VPC B]
+    tgw --- shared[Shared Services VPC]
+    tgw --- security[Security VPC]
+          </div>
+          <h2>9. VPN Mesh나 Direct Connect Gateway가 답이 아닌 이유</h2>
+          <p>모든 VPC 사이에 VPN tunnel을 만드는 것은 VPC peering full mesh보다도 복잡합니다. Direct Connect Gateway는 on-premises 연결 확장을 위한 구성 요소이지, 동일 Region의 수많은 VPC 간 private routing hub 자체를 대체하는 답은 아닙니다.</p>
+          <h2>10. Peering이 여전히 좋은 경우</h2>
+          <p>몇 개의 VPC만 단순히 직접 연결한다면 VPC Peering이 더 단순하고 비용 면에서도 낫습니다. 선택 기준은 무조건 TGW가 아니라 network scale, operational complexity, routing requirements, segmentation, cost입니다.</p>
+          <pre><code>Few VPCs + Simple Point-to-Point -&gt; VPC Peering
+Many VPCs + Centralized Routing + Segmentation -&gt; Transit Gateway</code></pre>
+          <h2>마무리</h2>
+          <p>Transit Gateway의 핵심 가치는 connection 수를 줄이는 것에만 있지 않습니다. 네트워크의 제어 지점을 중앙화해 routing, segmentation, shared services, hybrid connectivity를 확장 가능한 형태로 바꾸는 데 있습니다.</p>
+        </div>
+      </article>
+    </main>
+
+    <footer class="site-footer"><p>© 2026 Jiwon Kim. Technical writing, notes, and experiments.</p><div class="footer-links"><span id="visitStatus">Analytics ready</span><a href="https://github.com/andrewkimswe">github.com/andrewkimswe</a><a href="https://www.linkedin.com/in/jiwon-kim-867334285/">LinkedIn</a></div></footer>
+    <script src="../script.js"></script>
+    <script data-goatcounter="https://jiwonkim-blog.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
+    <noscript><img src="https://jiwonkim-blog.goatcounter.com/count?p=/posts/aws-networking-transit-gateway-hub-spoke-vpc-scale.html" alt="" /></noscript>
+  </body>
+</html>

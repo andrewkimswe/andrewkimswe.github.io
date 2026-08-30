@@ -110,6 +110,7 @@ def choose_topic(tags: tuple[str, ...], eyebrow: str, title: str) -> str:
     for label in (
         "Networking",
         "API",
+        "DR",
         "S3",
         "FinOps",
         "RAG",

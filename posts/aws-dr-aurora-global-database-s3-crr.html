@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>[AWS/DR] 글로벌 전자상거래의 데이터 복원력 설계 | Jiwon Kim's Blog</title>
+    <meta name="description" content="글로벌 전자상거래에서 관계형 트랜잭션 데이터는 Aurora Global Database로, 이미지 객체는 S3 Cross-Region Replication으로 분리해 복원력을 설계하는 기준을 정리합니다." />
+    <meta name="author" content="Jiwon Kim" />
+    <meta name="robots" content="index, follow, max-image-preview:large" />
+    <link rel="canonical" href="https://andrewkimswe.github.io/posts/aws-dr-aurora-global-database-s3-crr.html" />
+    <meta property="og:site_name" content="Jiwon Kim's Blog" />
+    <meta property="og:title" content="[AWS/DR] 글로벌 전자상거래의 데이터 복원력 설계 - Aurora Global Database와 S3 CRR" />
+    <meta property="og:description" content="주문·결제 데이터와 상품 이미지는 같은 복제 전략을 쓰기 어렵습니다. Aurora Global Database와 S3 CRR로 데이터 유형별 DR 경계를 나눕니다." />
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="https://andrewkimswe.github.io/posts/aws-dr-aurora-global-database-s3-crr.html" />
+    <meta property="og:image" content="https://andrewkimswe.github.io/assets/social-card.svg" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://andrewkimswe.github.io/assets/social-card.svg" />
+    <meta property="article:published_time" content="2026-08-27T00:00:00+09:00" />
+    <meta property="article:modified_time" content="2026-08-27T00:00:00+09:00" />
+    <meta property="article:author" content="Jiwon Kim" />
+    <meta property="article:tag" content="AWS" />
+    <meta property="article:tag" content="DR" />
+    <meta property="article:tag" content="Aurora" />
+    <meta property="article:tag" content="S3" />
+    <meta property="article:tag" content="Cross-Region Replication" />
+    <meta property="article:tag" content="Architecture" />
+    <link rel="stylesheet" href="../styles.css" />
+    <script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","headline":"[AWS/DR] 글로벌 전자상거래의 데이터 복원력 설계 - Aurora Global Database와 S3 CRR","description":"글로벌 전자상거래에서 관계형 트랜잭션 데이터는 Aurora Global Database로, 이미지 객체는 S3 Cross-Region Replication으로 분리해 복원력을 설계하는 기준을 정리합니다.","datePublished":"2026-08-27T00:00:00+09:00","dateModified":"2026-08-27T00:00:00+09:00","author":{"@type":"Person","name":"Jiwon Kim","url":"https://github.com/andrewkimswe"},"publisher":{"@type":"Person","name":"Jiwon Kim"},"mainEntityOfPage":"https://andrewkimswe.github.io/posts/aws-dr-aurora-global-database-s3-crr.html","inLanguage":"ko-KR"}
+    </script>
+  </head>
+  <body>
+    <header class="site-header">
+      <a class="brand" href="../" aria-label="Jiwon Kim's Blog 홈"><span class="brand-mark">JK</span><span><strong>Jiwon Kim's Blog</strong><small>Engineering notes</small></span></a>
+      <nav class="nav-links" aria-label="주요 메뉴"><a href="../#portfolio">Portfolio</a><a href="../#profile">Profile</a><a href="../#writing">Writing</a><a href="../#topics">Topics</a><a href="../#about">About</a><a href="https://github.com/andrewkimswe">GitHub</a><a href="https://www.linkedin.com/in/jiwon-kim-867334285/">LinkedIn</a></nav>
+    </header>
+
+    <main>
+      <article class="article-page">
+        <header class="article-hero">
+          <a class="back-link" href="../#writing">Back to writing</a>
+          <p class="eyebrow">AWS · DR · Architecture</p>
+          <h1>[AWS/DR] 글로벌 전자상거래의 데이터 복원력 설계 - Aurora Global Database와 S3 CRR</h1>
+          <p class="article-summary">주문·결제 데이터와 상품 이미지는 같은 복제 전략을 쓰기 어렵습니다. Aurora Global Database와 S3 CRR로 데이터 유형별 DR 경계를 나눕니다.</p>
+          <div class="article-meta"><time datetime="2026-08-27">2026.08.27</time><span>AWS</span><span>DR</span><span>Aurora</span><span>S3</span></div>
+        </header>
+
+        <div class="article-body">
+          <p>글로벌 전자상거래 시스템에서는 주문, 결제, 고객 정보와 상품 이미지가 같은 장애 모델을 갖지 않습니다. 트랜잭션 데이터는 정합성과 관계형 모델이 중요하고, 이미지는 대량 객체 저장과 배포 경로가 중요합니다.</p>
+          <div class="mermaid diagram">
+flowchart LR
+    tx[주문 결제 고객 정보] --> aurora[Aurora Global Database]
+    obj[상품 이미지 객체] --> s3[S3 Bucket]
+    s3 --> crr[Cross-Region Replication]
+    aurora --> secondary[Aurora Secondary Region]
+    crr --> replica[S3 Replica Bucket]
+          </div>
+          <h2>1. 먼저 데이터 성격을 분리한다</h2>
+          <p>주문과 결제 데이터는 transaction, consistency, join, relational model이 핵심입니다. 반면 상품 이미지는 binary object이고, object 단위 저장과 대량 복제, CDN 연동이 더 중요합니다.</p>
+          <table><thead><tr><th>데이터</th><th>요구사항</th><th>더 자연스러운 저장소</th></tr></thead><tbody><tr><td>주문·결제·고객 정보</td><td>정합성, 트랜잭션, 관계형 조회</td><td>Aurora</td></tr><tr><td>상품 이미지</td><td>대량 객체, 복제, lifecycle, CDN 연동</td><td>S3</td></tr></tbody></table>
+          <h2>2. Multi-AZ와 Cross-Region DR은 장애 범위가 다르다</h2>
+          <p>RDS Multi-AZ는 같은 Region 안의 AZ 장애를 다루는 고가용성 기능입니다. 하지만 요구사항이 여러 지리적 위치에서 지속적인 운영이라면 Region 단위 장애와 failover를 별도로 설계해야 합니다.</p>
+          <div class="mermaid diagram compact-diagram">
+flowchart TB
+    subgraph regionA[Region A]
+      az1[AZ A Primary]
+      az2[AZ B Standby]
+    end
+    subgraph regionB[Region B]
+      dr[DR Environment]
+    end
+    az1 --> az2
+    regionA -. Region 장애 고려 .-> regionB
+          </div>
+          <h2>3. Aurora Global Database의 역할</h2>
+          <p>Aurora Global Database는 하나의 primary region과 하나 이상의 secondary region으로 Aurora cluster를 구성합니다. 주된 쓰기는 primary에서 수행하고, secondary는 global read와 cross-region disaster recovery 기반으로 사용됩니다.</p>
+          <div class="mermaid diagram">
+flowchart LR
+    app[Global Application] --> primary[Aurora Primary Cluster]
+    primary -->|Cross-Region Replication| secondary[Aurora Secondary Cluster]
+    secondary --> read[Regional Read or DR Promotion]
+          </div>
+          <h2>4. 이미지 데이터는 S3 CRR로 분리한다</h2>
+          <p>상품 이미지 같은 대량 객체를 DB blob에 넣으면 database size, backup, replication, I/O 부담이 커집니다. DB에는 image_key만 저장하고 실제 binary object는 S3에 두는 편이 자연스럽습니다.</p>
+          <div class="mermaid diagram compact-diagram">
+flowchart LR
+    product[Product Table] --> key[image_key]
+    key --> bucket[S3 Primary Bucket]
+    bucket -->|CRR| replica[S3 Replica Bucket]
+          </div>
+          <h2>5. DynamoDB Global Tables가 항상 답은 아니다</h2>
+          <p>DynamoDB Global Tables는 강력한 글로벌 NoSQL 기능이지만, 핵심 데이터가 관계형 트랜잭션 중심이라면 데이터 모델 자체를 바꿔야 합니다. 4MB가 넘는 이미지를 DynamoDB item으로 직접 저장하는 것도 적합하지 않습니다.</p>
+          <pre><code>Relational Transaction -&gt; Aurora Global Database
+Large Object -&gt; S3 + Cross-Region Replication</code></pre>
+          <h2>6. EFS가 아니라 S3를 선택하는 이유</h2>
+          <p>EFS는 Linux workload에서 공유 POSIX filesystem이 필요할 때 좋은 선택입니다. 하지만 상품 이미지처럼 대량의 durable object를 저장하고 replication, lifecycle, CDN 연동까지 고려한다면 S3가 더 직접적인 선택입니다.</p>
+          <h2>7. RPO와 RTO까지 같이 봐야 한다</h2>
+          <p>Aurora Global Database와 S3 CRR은 장애 시점에 처음 데이터를 복사하는 구조가 아니라, cross-region copy를 미리 유지하는 구조입니다. 이 덕분에 더 낮은 RPO와 RTO를 목표로 설계하기 쉽습니다.</p>
+          <blockquote><p>데이터 replication은 DR의 핵심 구성 요소지만, compute, networking, DNS, secrets, deployment, monitoring, failover procedure까지 있어야 전체 DR 전략이 됩니다.</p></blockquote>
+          <h2>8. 전체 구조</h2>
+          <div class="mermaid diagram">
+flowchart TB
+    user[Global Users] --> dns[Route 53 or Global Routing]
+    dns --> appA[Application Region A]
+    dns -. failover .-> appB[Application Region B]
+    appA --> auroraA[Aurora Primary]
+    appA --> s3A[S3 Primary]
+    auroraA --> auroraB[Aurora Secondary]
+    s3A --> s3B[S3 Replica]
+    appB --> auroraB
+    appB --> s3B
+          </div>
+          <h2>9. SAA에서 빠르게 판단하는 기준</h2>
+          <p>문제에 relational transaction과 global 또는 multi-region 요구사항이 함께 나오면 Aurora Global Database를 먼저 떠올릴 수 있습니다. large image나 object와 cross-region 복제가 함께 나오면 S3 CRR이 자연스럽습니다.</p>
+          <h2>마무리</h2>
+          <p>글로벌 복원력 설계의 핵심은 모든 데이터를 한 서비스에 몰아넣는 것이 아닙니다. 데이터 모델을 분리하고, 각 계층에 맞는 replication mechanism을 선택하는 것입니다.</p>
+        </div>
+      </article>
+    </main>
+
+    <footer class="site-footer"><p>© 2026 Jiwon Kim. Technical writing, notes, and experiments.</p><div class="footer-links"><span id="visitStatus">Analytics ready</span><a href="https://github.com/andrewkimswe">github.com/andrewkimswe</a><a href="https://www.linkedin.com/in/jiwon-kim-867334285/">LinkedIn</a></div></footer>
+    <script src="../script.js"></script>
+    <script data-goatcounter="https://jiwonkim-blog.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
+    <noscript><img src="https://jiwonkim-blog.goatcounter.com/count?p=/posts/aws-dr-aurora-global-database-s3-crr.html" alt="" /></noscript>
+  </body>
+</html>
