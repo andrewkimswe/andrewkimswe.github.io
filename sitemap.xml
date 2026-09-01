@@ -193,6 +193,12 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://andrewkimswe.github.io/posts/aws-iam-roles-anywhere-x509-workload-credentials.html</loc>
+    <lastmod>2026-09-01</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://andrewkimswe.github.io/posts/aws-networking-privatelink-multi-account-service-governance.html</loc>
     <lastmod>2026-09-03</lastmod>
     <changefreq>monthly</changefreq>
