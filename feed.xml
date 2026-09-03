@@ -29,6 +29,13 @@
       <description>TTL을 자동 삭제 옵션이 아니라 논리적 만료, 물리 삭제, 후처리와 검증이 이어지는 데이터 lifecycle 계약으로 설계합니다.</description>
     </item>
     <item>
+      <title>[AWS/Networking] VPC를 연결하지 않고 내부 API를 공유하려면? - AWS PrivateLink, Endpoint Service, 운영 경계</title>
+      <link>https://andrewkimswe.github.io/posts/aws-networking-privatelink-multi-account-service-governance.html</link>
+      <guid isPermaLink="true">https://andrewkimswe.github.io/posts/aws-networking-privatelink-multi-account-service-governance.html</guid>
+      <pubDate>Thu, 03 Sep 2026 00:00:00 +0900</pubDate>
+      <description>PrivateLink를 연결 기능이 아니라 서비스 제공자와 소비자 사이의 온보딩, 가용성, 보안과 비용 계약으로 설계합니다.</description>
+    </item>
+    <item>
       <title>[AWS/IAM] 외부 업체에 Access Key를 주지 않고 AWS 계정 접근을 허용하기 - Cross-Account AssumeRole과 STS</title>
       <link>https://andrewkimswe.github.io/posts/aws-iam-cross-account-assumerole-sts-vendor-access.html</link>
       <guid isPermaLink="true">https://andrewkimswe.github.io/posts/aws-iam-cross-account-assumerole-sts-vendor-access.html</guid>

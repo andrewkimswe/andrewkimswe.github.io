@@ -1,0 +1,540 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>[AWS/Networking] VPC를 연결하지 않고 내부 API를 공유하려면? - AWS PrivateLink, Endpoint Service, 운영 경계 | Jiwon Kim Engineering Notes</title>
+    <meta name="description" content="멀티 계정 내부 API를 AWS PrivateLink로 공유할 때 Endpoint Service, NLB, AZ ID, Private DNS, TLS, 소비자 온보딩, SLO와 비용 책임을 설계합니다." />
+    <meta name="author" content="Jiwon Kim" />
+    <meta name="robots" content="index, follow, max-image-preview:large" />
+    <link rel="canonical" href="https://andrewkimswe.github.io/posts/aws-networking-privatelink-multi-account-service-governance.html" />
+    <meta property="og:site_name" content="Jiwon Kim | Engineering Notes" />
+    <meta property="og:title" content="[AWS/Networking] VPC를 연결하지 않고 내부 API를 공유하려면? - AWS PrivateLink, Endpoint Service, 운영 경계" />
+    <meta property="og:description" content="PrivateLink를 연결 기능이 아니라 서비스 제공자와 소비자 사이의 온보딩, 가용성, 보안과 비용 계약으로 설계합니다." />
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="https://andrewkimswe.github.io/posts/aws-networking-privatelink-multi-account-service-governance.html" />
+    <meta property="og:image" content="https://andrewkimswe.github.io/assets/social-card.png" />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Jiwon Kim Engineering Notes" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://andrewkimswe.github.io/assets/social-card.png" />
+    <meta name="twitter:title" content="[AWS/Networking] VPC를 연결하지 않고 내부 API를 공유하려면? - AWS PrivateLink, Endpoint Service, 운영 경계" />
+    <meta name="twitter:description" content="PrivateLink를 연결 기능이 아니라 서비스 제공자와 소비자 사이의 온보딩, 가용성, 보안과 비용 계약으로 설계합니다." />
+    <meta property="article:modified_time" content="2026-09-03T00:00:00+09:00" />
+    <meta name="twitter:image:alt" content="Jiwon Kim Engineering Notes" />
+    <meta property="article:published_time" content="2026-09-03T00:00:00+09:00" />
+    <meta property="article:author" content="Jiwon Kim" />
+    <meta property="article:tag" content="AWS" />
+    <meta property="article:tag" content="Networking" />
+    <meta property="article:tag" content="PrivateLink" />
+    <meta property="article:tag" content="VPC Endpoint Service" />
+    <meta property="article:tag" content="NLB" />
+    <meta property="article:tag" content="Multi-Account" />
+    <meta property="article:tag" content="Private DNS" />
+    <meta property="article:tag" content="Reliability" />
+    <meta property="article:tag" content="Governance" />
+    <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="../styles.css?v=20260905-4" />
+    <script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","headline":"[AWS/Networking] VPC를 연결하지 않고 내부 API를 공유하려면? - AWS PrivateLink, Endpoint Service, 운영 경계","description":"멀티 계정 내부 API를 AWS PrivateLink로 공유할 때 Endpoint Service, NLB, AZ ID, Private DNS, TLS, 소비자 온보딩, SLO와 비용 책임을 설계합니다.","datePublished":"2026-09-03T00:00:00+09:00","dateModified":"2026-09-03T00:00:00+09:00","author":{"@type":"Person","name":"Jiwon Kim","url":"https://github.com/andrewkimswe"},"publisher":{"@type":"Person","name":"Jiwon Kim"},"mainEntityOfPage":"https://andrewkimswe.github.io/posts/aws-networking-privatelink-multi-account-service-governance.html","inLanguage":"ko-KR"}
+    </script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main-content">본문으로 바로가기</a>
+    <header class="site-header">
+      <a class="brand" href="../" aria-label="Jiwon Kim Engineering Notes 홈">
+        <span class="brand-mark" aria-hidden="true">JK</span>
+        <span class="brand-copy"><strong>Jiwon Kim</strong><small>Engineering Notes</small></span>
+      </a>
+      <nav class="nav-links" aria-label="주요 메뉴">
+        <a href="../articles.html">Articles</a>
+        <a href="../projects.html">Projects</a>
+        <a href="../#about">About</a>
+        <span class="nav-divider" aria-hidden="true"></span>
+        <a href="https://github.com/andrewkimswe">GitHub</a>
+        <a href="https://www.linkedin.com/in/jiwon-kim-867334285/">LinkedIn</a>
+      </nav>
+    </header>
+
+    <main id="main-content">
+      <article class="article-page">
+        <header class="article-hero">
+          <a class="back-link" href="../articles.html">All articles</a>
+          <p class="eyebrow">AWS · Networking · Reliability</p>
+          <h1>[AWS/Networking] VPC를 연결하지 않고 내부 API를 공유하려면? - AWS PrivateLink, Endpoint Service, 운영 경계</h1>
+          <p class="article-summary">PrivateLink를 연결 기능이 아니라 서비스 제공자와 소비자 사이의 온보딩, 가용성, 보안과 비용 계약으로 설계합니다.</p>
+          <div class="article-meta"><time datetime="2026-09-03">2026.09.03</time><span>AWS</span><span>Networking</span><span>PrivateLink</span><span>Reliability</span><span class="reading-time" data-generated="true">약 32분</span></div>
+        </header>
+
+        <!-- GENERATED:ARTICLE_TOC:START -->
+        <aside class="article-toc" aria-label="이 글의 목차">
+          <details open>
+            <summary>On this page</summary>
+            <ol>
+              <li><a href="#section-01">1. 문제를 VPC 연결이 아니라 서비스 소비 계약으로 정의한다</a></li>
+              <li><a href="#section-02">2. 먼저 요구사항과 비요구사항을 고정한다</a></li>
+              <li><a href="#section-03">3. Peering, Transit Gateway, Private API와 PrivateLink를 비교한다</a></li>
+              <li><a href="#section-04">4. Control plane과 data plane을 분리해서 본다</a></li>
+              <li><a href="#section-05">5. Provider는 NLB 뒤에 좁은 서비스 경계를 만든다</a></li>
+              <li><a href="#section-06">6. AZ 이름 대신 AZ ID로 provider와 consumer를 맞춘다</a></li>
+              <li><a href="#section-07">7. Allowed principal과 acceptance는 서로 다른 통제다</a></li>
+              <li><a href="#section-08">8. 온보딩 요청을 수동 메시지가 아니라 상태 기계로 만든다</a></li>
+              <li><a href="#section-09">9. Private DNS와 TLS certificate를 하나의 계약으로 관리한다</a></li>
+              <li><a href="#section-10">10. 네트워크 허용은 애플리케이션 권한이 아니다</a></li>
+              <li><a href="#section-11">11. Provider와 consumer 구성을 IaC로 분리한다</a></li>
+              <li><a href="#section-12">12. Source IP와 consumer identity를 혼동하지 않는다</a></li>
+              <li><a href="#section-13">13. 처음 실패하기 쉬운 접근을 배포 전에 제거한다</a></li>
+              <li><a href="#section-14">14. 검증은 연결 성공보다 격리 실패를 더 많이 포함한다</a></li>
+              <li><a href="#section-15">15. SLO는 API, network와 onboarding을 따로 둔다</a></li>
+              <li><a href="#section-16">16. Provider와 consumer가 같은 시간축을 보게 한다</a></li>
+              <li><a href="#section-17">17. 장애 유형마다 첫 확인 위치가 달라야 한다</a></li>
+              <li><a href="#section-18">18. Rollout과 rollback은 DNS 전환으로 통제한다</a></li>
+              <li><a href="#section-19">19. 비용은 provider와 consumer의 서로 다른 청구서에 나타난다</a></li>
+              <li><a href="#section-20">20. 연결과 정책 변경도 regression gate를 통과해야 한다</a></li>
+              <li><a href="#section-21">21. 운영 책임은 account 경계에 맞춰 나눈다</a></li>
+              <li><a href="#section-22">22. 아직 production-grade라고 주장하지 않는 범위</a></li>
+              <li><a href="#section-23">23. 마무리</a></li>
+            </ol>
+          </details>
+        </aside>
+        <!-- GENERATED:ARTICLE_TOC:END -->
+
+        <div class="article-body">
+          <p>플랫폼 계정의 결제 API를 여러 workload 계정에서 호출해야 한다고 가정해보겠습니다. 각 VPC를 Peering으로 연결하면 처음 두세 개는 간단하지만, 소비자가 늘수록 route, CIDR 충돌, 보안 그룹과 장애 범위가 함께 커집니다. 반대로 API를 public하게 열고 IP allowlist로 제한하면 인터넷 경로와 공개 진입점을 운영해야 합니다.</p>
+          <p>이 글은 실제 프로덕션 장애 회고가 아니라, 같은 Region의 멀티 계정 환경에서 내부 API를 AWS PrivateLink로 제공하기 위한 설계와 검증 계획입니다. 아래 숫자는 실측값이나 AWS SLA가 아닌 <strong>초기 acceptance target</strong>입니다. 실제 트래픽과 AZ 장애 훈련을 수행하기 전에는 운영 결과로 주장하지 않습니다.</p>
+
+          <h2 id="section-01">1. 문제를 VPC 연결이 아니라 서비스 소비 계약으로 정의한다</h2>
+          <p>소비자가 필요한 것은 provider VPC 전체의 네트워크 접근 권한이 아닙니다. 승인된 API의 TCP listener에 private하게 도달하고, provider가 소비자를 식별해 수명 주기를 관리하며, 한 소비자의 route 변경이 다른 소비자에게 번지지 않는 경계가 필요합니다.</p>
+          <div class="mermaid diagram">
+flowchart LR
+    subgraph consumerA[Consumer Account A]
+      appA[Workload A] --> endpointA[Interface Endpoint]
+    end
+    subgraph consumerB[Consumer Account B]
+      appB[Workload B] --> endpointB[Interface Endpoint]
+    end
+    subgraph provider[Provider Account]
+      service[Endpoint Service] --> nlb[Internal NLB]
+      nlb --> api[Payment API]
+    end
+    endpointA -->|PrivateLink| service
+    endpointB -->|PrivateLink| service
+          </div>
+          <p>PrivateLink는 consumer VPC에 endpoint ENI를 만들고 provider의 Endpoint Service로 consumer가 연결을 시작하게 합니다. VPC 사이에 route를 교환하거나 양방향 network trust를 만들지 않아도 되고, CIDR이 겹치는 소비자도 같은 서비스를 사용할 수 있습니다.</p>
+
+          <h2 id="section-02">2. 먼저 요구사항과 비요구사항을 고정한다</h2>
+          <p>이 설계의 요구사항은 다음과 같습니다.</p>
+          <ul>
+            <li>Provider VPC의 다른 subnet과 resource는 소비자에게 노출하지 않습니다.</li>
+            <li>소비자 workload만 interface endpoint의 listener port에 접근합니다.</li>
+            <li>최소 두 개 AZ에서 endpoint와 provider target을 운영합니다.</li>
+            <li>연결 허용, endpoint 승인, 애플리케이션 인증을 서로 다른 통제로 관리합니다.</li>
+            <li>신규 연결과 해지는 ticket, owner, 만료일과 비용 attribution을 가져야 합니다.</li>
+            <li>DNS, endpoint, NLB와 application을 같은 요청 ID와 시간축으로 진단할 수 있어야 합니다.</li>
+          </ul>
+          <p>반면 consumer에서 provider로만 호출하는 단일 API가 대상이므로 VPC 간 양방향 통신, transitive routing, service discovery 전체와 Cross-Region 접근은 비요구사항입니다. 이런 요구가 생기면 PrivateLink 하나에 억지로 넣지 않고 Transit Gateway, VPC Lattice 또는 별도 Regional service를 다시 비교합니다.</p>
+
+          <h2 id="section-03">3. Peering, Transit Gateway, Private API와 PrivateLink를 비교한다</h2>
+          <table>
+            <thead><tr><th>선택지</th><th>강점</th><th>운영 비용</th><th>선택 조건</th></tr></thead>
+            <tbody>
+              <tr><td>VPC Peering</td><td>단순한 두 VPC의 L3 연결</td><td>route 증가, CIDR 중복 불가, non-transitive</td><td>소수 VPC가 서로 넓게 통신</td></tr>
+              <tr><td>Transit Gateway</td><td>많은 VPC와 온프레미스의 hub routing</td><td>route table segmentation과 넓은 blast radius</td><td>조직 network fabric이 필요</td></tr>
+              <tr><td>Private API Gateway</td><td>HTTP API 정책, 인증, throttling</td><td>API Gateway 모델과 endpoint 정책 운영</td><td>API management가 핵심</td></tr>
+              <tr><td>VPC Lattice</td><td>L7 service network, auth와 discovery</td><td>새 service network와 정책 모델</td><td>다수 service-to-service 관계를 통합</td></tr>
+              <tr><td>AWS PrivateLink</td><td>한 방향의 좁은 service exposure, overlapping CIDR 허용</td><td>소비자 AZ별 endpoint와 provider NLB</td><td>여러 계정에 안정된 TCP service 제공</td></tr>
+            </tbody>
+          </table>
+          <p>여기서는 consumer 수는 늘어나지만 노출할 대상은 하나의 내부 API이고 provider network 자체를 공유할 이유가 없으므로 PrivateLink를 선택합니다. PrivateLink는 L7 path routing이나 사용자 인증을 제공하지 않습니다. 그런 요구는 endpoint 뒤 애플리케이션 또는 다른 서비스가 담당합니다.</p>
+
+          <h2 id="section-04">4. Control plane과 data plane을 분리해서 본다</h2>
+          <p>Endpoint를 만들 수 있다는 사실과 실제 요청이 성공한다는 사실은 서로 다른 경로에서 결정됩니다.</p>
+          <div class="mermaid diagram">
+flowchart TB
+    subgraph control[Control plane]
+      permission[Allowed principal] --> request[Endpoint request]
+      request --> acceptance[Provider acceptance]
+      acceptance --> state[Endpoint available]
+    end
+    subgraph data[Data plane]
+      dns[Private DNS] --> eni[Endpoint ENI]
+      eni --> listener[NLB listener]
+      listener --> target[Healthy target]
+      target --> auth[Application authorization]
+    end
+    state --> dns
+          </div>
+          <p><code>PendingAcceptance</code>가 오래된 문제를 target health로 해결할 수 없고, endpoint가 <code>Available</code>이어도 TLS certificate나 application credential이 틀리면 요청은 실패합니다. Runbook과 dashboard도 이 계층을 섞지 않아야 합니다.</p>
+
+          <h2 id="section-05">5. Provider는 NLB 뒤에 좁은 서비스 경계를 만든다</h2>
+          <p>직접 제공하는 Endpoint Service에는 Network Load Balancer 또는 Gateway Load Balancer가 필요합니다. 일반 API를 TCP 또는 TLS로 제공하는 이 사례에서는 두 AZ의 internal NLB와 같은 AZ의 healthy target을 사용합니다.</p>
+          <div class="mermaid diagram compact-diagram">
+flowchart LR
+    endpoint[Consumer endpoint ENI] --> nlb[NLB node]
+    nlb --> target[API target]
+    target --> dependency[(Database)]
+    health[NLB health check] --> target
+          </div>
+          <ul>
+            <li>NLB에는 생성 시 security group을 연결합니다. 생성할 때 생략하면 나중에 추가할 수 없습니다.</li>
+            <li>Target security group은 NLB security group에서 오는 listener와 health-check port만 허용합니다.</li>
+            <li>PrivateLink traffic에 NLB inbound rule을 적용할지 명시적으로 선택하고 IaC drift를 검사합니다.</li>
+            <li>모든 enabled AZ에 target을 두거나, cross-zone load balancing을 선택한 이유와 inter-AZ 비용을 기록합니다.</li>
+            <li>Health endpoint는 process 생존뿐 아니라 요청을 처리할 필수 dependency 상태를 적절한 범위에서 반영합니다.</li>
+          </ul>
+          <p>이 설계에서는 CIDR이 겹치는 여러 consumer를 provider NLB security group에서 IP allowlist로 구분하지 않습니다. PrivateLink traffic에 대한 NLB inbound rule 평가는 끄고, consumer endpoint security group, allowed principal, manual acceptance와 application auth를 조합합니다. Target은 여전히 NLB security group만 신뢰합니다.</p>
+
+          <h2 id="section-06">6. AZ 이름 대신 AZ ID로 provider와 consumer를 맞춘다</h2>
+          <p>서로 다른 AWS 계정의 <code>ap-northeast-2a</code>는 같은 물리 AZ를 가리킨다고 보장할 수 없습니다. Provider가 NLB를 켠 AZ와 consumer가 endpoint subnet을 고를 때 <code>apne2-az1</code> 같은 AZ ID를 계약에 사용합니다.</p>
+          <div class="mermaid diagram">
+flowchart TB
+    catalog[Provider service catalog] --> az1[Supported AZ ID 1]
+    catalog --> az2[Supported AZ ID 2]
+    az1 --> mapA[Consumer A account-specific AZ name]
+    az1 --> mapB[Consumer B account-specific AZ name]
+    az2 --> mapC[Consumer subnet selection]
+    mapA --> endpoint[Endpoint ENIs]
+    mapB --> endpoint
+    mapC --> endpoint
+          </div>
+          <pre><code class="language-bash">aws ec2 describe-availability-zones \
+  --all-availability-zones \
+  --query 'AvailabilityZones[].{Name:ZoneName,Id:ZoneId,State:State}'</code></pre>
+          <p>Consumer는 provider와 공통으로 지원되는 AZ만 볼 수 있습니다. Regional endpoint DNS는 healthy endpoint ENI를 선택하지만, endpoint ENI가 한 AZ에만 있으면 그 AZ 장애가 곧 consumer 단절이 됩니다. 비용을 줄이려고 production endpoint를 한 AZ에만 두는 결정은 가용성 예산과 함께 승인해야 합니다.</p>
+
+          <h2 id="section-07">7. Allowed principal과 acceptance는 서로 다른 통제다</h2>
+          <p>Allowed principal은 누가 endpoint 생성 요청을 보낼 수 있는지 제한합니다. Acceptance는 생성된 개별 endpoint connection을 provider가 승인할지 결정합니다. 애플리케이션 인증은 그 연결을 통해 들어온 요청이 어떤 작업을 수행할 수 있는지 판단합니다.</p>
+          <div class="mermaid diagram compact-diagram">
+sequenceDiagram
+    participant O as Consumer owner
+    participant P as Provider platform
+    participant V as PrivateLink control plane
+    participant A as Application
+    O->>P: Request access with owner and expiry
+    P->>V: Add exact principal permission
+    O->>V: Create interface endpoint
+    V->>P: Pending acceptance
+    P->>P: Match account, endpoint and ticket
+    P->>V: Accept connection
+    V-->>O: Endpoint available
+    O->>A: TLS request with app credential
+          </div>
+          <p><code>*</code> principal과 automatic acceptance를 함께 사용하면 private IP만 있을 뿐 사실상 모든 AWS account가 연결을 요청하고 사용할 수 있는 서비스가 됩니다. 내부 플랫폼에서는 정확한 account 또는 provisioning role ARN을 허용하고 manual acceptance를 기본값으로 둡니다.</p>
+          <p>반대로 allowed principal을 제거해도 이미 승인된 endpoint connection은 영향을 받지 않습니다. 해지 workflow는 기존 connection을 reject하거나 consumer endpoint 삭제를 확인하고, application credential과 DNS entry도 함께 폐기해야 합니다.</p>
+
+          <h2 id="section-08">8. 온보딩 요청을 수동 메시지가 아니라 상태 기계로 만든다</h2>
+          <table>
+            <thead><tr><th>상태</th><th>자동 검증</th><th>Owner 행동</th></tr></thead>
+            <tbody>
+              <tr><td>Requested</td><td>Account, role ARN, service tier, AZ ID, 예상 GB</td><td>사용 목적과 만료일 승인</td></tr>
+              <tr><td>PermissionGranted</td><td>정확한 principal만 allowlist에 존재</td><td>Consumer endpoint 생성</td></tr>
+              <tr><td>PendingAcceptance</td><td>Endpoint ID와 ticket metadata 대조</td><td>Provider 승인 또는 거절</td></tr>
+              <tr><td>Available</td><td>각 AZ DNS, TCP, TLS와 synthetic API 성공</td><td>Production traffic 전환</td></tr>
+              <tr><td>Expiring</td><td>Owner 응답과 최근 traffic 확인</td><td>연장 또는 종료 결정</td></tr>
+              <tr><td>Revoked</td><td>Connection, credential, DNS와 비용 resource 제거</td><td>종료 증거 승인</td></tr>
+            </tbody>
+          </table>
+          <p>Provider는 connect, accept, reject, delete event를 SNS notification으로 받아 catalog 상태와 대조합니다. Owner가 없는 endpoint, 만료일이 지난 endpoint와 승인 ticket이 없는 connection은 drift로 처리합니다.</p>
+
+          <h2 id="section-09">9. Private DNS와 TLS certificate를 하나의 계약으로 관리한다</h2>
+          <p>Consumer는 AWS가 생성한 Regional 또는 zonal endpoint DNS를 바로 사용할 수 있습니다. 서비스 친화적인 <code>payments.internal.example.com</code>을 제공하려면 provider가 Endpoint Service에 private DNS name을 연결하고 public DNS의 TXT record로 domain ownership을 검증해야 합니다.</p>
+          <div class="mermaid diagram">
+flowchart LR
+    client[Consumer client] --> resolver[VPC Resolver]
+    resolver --> zone[AWS-managed private hosted zone]
+    zone --> eni[Endpoint ENI IPs]
+    eni --> nlb[NLB TLS or TCP listener]
+    nlb --> cert{Certificate and SNI valid?}
+    cert -->|no| fail[TLS failure]
+    cert -->|yes| api[Internal API]
+          </div>
+          <ul>
+            <li>Provider가 검증할 수 있는 domain과 certificate 발급 책임자를 정합니다.</li>
+            <li>Consumer VPC에서 DNS resolution과 DNS hostnames를 활성화합니다.</li>
+            <li>같은 이름의 Private Hosted Zone이 이미 연결되어 있는지 확인합니다.</li>
+            <li>Private DNS 활성화 전 endpoint-specific DNS로 연결과 TLS를 먼저 검증합니다.</li>
+            <li>Certificate rotation은 old/new certificate overlap과 canary handshake를 포함합니다.</li>
+          </ul>
+          <p>Private DNS verification 상태가 실패하면 새로운 connection request가 거부될 수 있지만 기존 연결은 그대로일 수 있습니다. 따라서 DNS verification 상태와 certificate expiry를 별도 alert로 관리합니다.</p>
+
+          <h2 id="section-10">10. 네트워크 허용은 애플리케이션 권한이 아니다</h2>
+          <p>Endpoint가 <code>Available</code>이고 TCP 연결이 된다는 것은 consumer account가 business API를 호출할 권한이 있다는 뜻이 아닙니다. PrivateLink는 network path를 제공하며 tenant, operation과 데이터 범위는 application layer가 검증해야 합니다.</p>
+          <table>
+            <thead><tr><th>통제</th><th>보호 대상</th><th>대체할 수 없는 것</th></tr></thead>
+            <tbody>
+              <tr><td>Allowed principal</td><td>Endpoint 생성 자격</td><td>개별 endpoint 승인</td></tr>
+              <tr><td>Endpoint acceptance</td><td>Connection lifecycle</td><td>API operation 권한</td></tr>
+              <tr><td>Endpoint security group</td><td>Consumer VPC 내부 source와 port</td><td>사용자 identity</td></tr>
+              <tr><td>TLS</td><td>서버 identity와 전송 암호화</td><td>Business authorization</td></tr>
+              <tr><td>mTLS 또는 signed token</td><td>Consumer workload identity</td><td>Network segmentation</td></tr>
+              <tr><td>Application policy</td><td>Tenant와 operation 권한</td><td>Endpoint provisioning</td></tr>
+            </tbody>
+          </table>
+          <p>Mutual TLS가 필요하다면 NLB TCP listener로 TLS를 target까지 pass-through해 application에서 client certificate를 검증하는 방식을 검토합니다. NLB에서 TLS를 종료한다면 signed service token이나 별도 workload identity를 사용하고, certificate와 key rotation 실패를 runbook에 포함합니다.</p>
+
+          <h2 id="section-11">11. Provider와 consumer 구성을 IaC로 분리한다</h2>
+          <p>Provider stack은 NLB와 Endpoint Service를 소유하고, consumer stack은 자신의 subnet, endpoint ENI와 security group을 소유합니다. Account 경계를 넘어 stack output을 직접 참조하지 않고 승인된 service catalog를 통해 service name, AZ ID와 DNS 정보를 전달합니다.</p>
+          <pre><code class="language-yaml"># Provider account
+Resources:
+  ServiceNlb:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Type: network
+      Scheme: internal
+      Subnets: !Ref ProviderSubnetIds
+      SecurityGroups:
+        - !Ref NlbSecurityGroup
+      EnforceSecurityGroupInboundRulesOnPrivateLinkTraffic: "off"
+
+  EndpointService:
+    Type: AWS::EC2::VPCEndpointService
+    Properties:
+      NetworkLoadBalancerArns:
+        - !Ref ServiceNlb
+      AcceptanceRequired: true
+      PrivateDnsName: payments.internal.example.com
+
+  EndpointPermissions:
+    Type: AWS::EC2::VPCEndpointServicePermissions
+    Properties:
+      ServiceId: !Ref EndpointService
+      AllowedPrincipals:
+        - arn:aws:iam::222222222222:role/PrivateLinkProvisioner</code></pre>
+          <pre><code class="language-yaml"># Consumer account
+Parameters:
+  ProviderServiceName:
+    Type: String
+
+Resources:
+  PaymentEndpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      VpcEndpointType: Interface
+      VpcId: !Ref ConsumerVpc
+      ServiceName: !Ref ProviderServiceName
+      PrivateDnsEnabled: true
+      SubnetIds: !Ref ConsumerEndpointSubnetIds
+      SecurityGroupIds:
+        - !Ref EndpointSecurityGroup</code></pre>
+          <p>실제 provider stack에는 listener, target group, health check, target security group과 alarms가 더 필요합니다. Consumer에서 <code>PrivateDnsEnabled: true</code>를 적용하기 전에는 provider의 <code>PrivateDnsNameConfiguration.State</code>가 <code>verified</code>인지 배포 gate에서 확인합니다. Consumer endpoint security group inbound는 workload security group에서 listener port로 오는 traffic만 허용합니다. 이 예시는 조직의 naming, KMS, logging과 tagging baseline을 생략한 최소 골격입니다.</p>
+
+          <h2 id="section-12">12. Source IP와 consumer identity를 혼동하지 않는다</h2>
+          <p>PrivateLink 경유 요청에서 application이 기본적으로 보는 source IP는 service consumer의 원래 주소가 아니라 NLB node의 private IP입니다. IP 기반 tenant 식별이나 rate limit을 그대로 사용하면 모든 consumer가 같은 source처럼 보일 수 있습니다.</p>
+          <div class="mermaid diagram compact-diagram">
+flowchart LR
+    client[Consumer workload IP] --> eni[Endpoint ENI]
+    eni --> nlb[NLB node]
+    nlb -->|default source seen| app[Provider application]
+    pp[Proxy Protocol v2] -. consumer IP and endpoint ID .-> app
+    token[Signed workload identity] --> app
+          </div>
+          <p>원래 주소나 endpoint ID가 운영상 필요하면 NLB target group에서 Proxy Protocol v2를 활성화하고 애플리케이션 또는 proxy가 header를 안전하게 파싱해야 합니다. 이를 켜면 protocol 앞에 binary header가 추가되므로 지원하지 않는 server에는 장애가 됩니다. Authorization은 source IP 대신 검증된 application identity를 기본으로 사용합니다.</p>
+
+          <h2 id="section-13">13. 처음 실패하기 쉬운 접근을 배포 전에 제거한다</h2>
+          <p>첫 번째 실패는 <code>*</code> principal과 automatic acceptance로 개발 속도를 높이는 것입니다. Endpoint Service를 찾은 외부 account까지 연결할 수 있어 service exposure 경계가 사라집니다.</p>
+          <p>두 번째 실패는 provider와 consumer의 AZ 이름을 그대로 맞추는 것입니다. 계정별 AZ name mapping 차이 때문에 의도한 물리 AZ에 endpoint가 생기지 않거나 공통 AZ가 누락될 수 있습니다.</p>
+          <p>세 번째 실패는 endpoint <code>Available</code>만 보고 전환하는 것입니다. DNS, TLS, target health와 application auth는 여전히 실패할 수 있습니다.</p>
+          <p>네 번째 실패는 allowlist에서 principal만 지우면 해지가 끝난다고 생각하는 것입니다. 기존 승인 연결은 남을 수 있으므로 endpoint connection과 credential을 별도로 폐기해야 합니다.</p>
+          <p>다섯 번째 실패는 client IP 기반 권한 정책을 그대로 옮기는 것입니다. PrivateLink의 source identity 변화를 반영하지 않으면 consumer 구분과 audit이 무너집니다.</p>
+
+          <h2 id="section-14">14. 검증은 연결 성공보다 격리 실패를 더 많이 포함한다</h2>
+          <table>
+            <thead><tr><th>실험</th><th>주입 조건</th><th>성공 기준</th></tr></thead>
+            <tbody>
+              <tr><td>Same-AZ baseline</td><td>각 consumer AZ에서 같은 API 호출</td><td>TCP, TLS, API latency 기록</td></tr>
+              <tr><td>Provider AZ failure</td><td>한 AZ target을 모두 unhealthy로 전환</td><td>다른 AZ로 회복, error budget 이내</td></tr>
+              <tr><td>Unauthorized principal</td><td>허용되지 않은 account에서 endpoint 생성</td><td>Control plane에서 거부</td></tr>
+              <tr><td>Unapproved endpoint</td><td>Permission은 있지만 ticket 없는 요청</td><td>Pending 상태 유지 후 자동 만료·거절</td></tr>
+              <tr><td>Endpoint SG deny</td><td>Workload SG 허용 제거</td><td>해당 consumer만 실패</td></tr>
+              <tr><td>DNS conflict</td><td>같은 private zone 연결</td><td>배포 gate에서 감지</td></tr>
+              <tr><td>Certificate rotation</td><td>새 certificate canary 후 교체</td><td>SNI handshake와 기존 연결 정상</td></tr>
+              <tr><td>Revocation</td><td>승인된 endpoint 해지</td><td>연결·credential·DNS·과금 resource 제거</td></tr>
+              <tr><td>Load burst</td><td>예상 peak의 두 배 connection 생성</td><td>RST, packet drop과 target saturation 예산 이내</td></tr>
+            </tbody>
+          </table>
+          <p>Latency 비교는 같은 payload와 target을 사용해 direct provider-VPC baseline, PrivateLink same-AZ, Regional DNS 경로를 나눕니다. TLS session reuse와 connection pool 조건도 고정해야 PrivateLink hop의 영향과 애플리케이션 변화를 섞지 않습니다.</p>
+
+          <h2 id="section-15">15. SLO는 API, network와 onboarding을 따로 둔다</h2>
+          <table>
+            <thead><tr><th>Signal</th><th>초기 acceptance target</th><th>실패 의미</th></tr></thead>
+            <tbody>
+              <tr><td>API success rate</td><td>월 99.95% 이상</td><td>사용자 영향 또는 application failure</td></tr>
+              <tr><td>PrivateLink latency delta</td><td>Direct baseline 대비 p95 20ms 이하 증가</td><td>AZ 경로, connection churn 또는 saturation</td></tr>
+              <tr><td>Endpoint packet drops</td><td>정상 traffic에서 0</td><td>Endpoint 또는 service unhealthy 가능성</td></tr>
+              <tr><td>RST rate</td><td>전체 connection의 0.1% 미만</td><td>Target, listener 또는 timeout 문제</td></tr>
+              <tr><td>Healthy target coverage</td><td>Enabled AZ마다 1개 이상</td><td>AZ 장애 시 traffic 수용 불가</td></tr>
+              <tr><td>Endpoint onboarding</td><td>승인된 요청 p95 30분 이내</td><td>Control plane 운영 병목</td></tr>
+              <tr><td>Unowned endpoint</td><td>0개</td><td>비용·접근권한 lifecycle 누락</td></tr>
+              <tr><td>Revocation completion</td><td>승인 후 15분 이내</td><td>기존 connection 또는 credential 잔존</td></tr>
+            </tbody>
+          </table>
+          <p>이 수치는 서비스 특성을 모르는 보편적 기준이 아닙니다. 기존 direct path의 latency와 error budget, peak connection 수를 측정한 뒤 owner와 합의해 조정합니다. Network SLO를 지켜도 application 5xx가 증가하면 전체 서비스는 실패입니다.</p>
+
+          <h2 id="section-16">16. Provider와 consumer가 같은 시간축을 보게 한다</h2>
+          <p>AWS PrivateLink는 endpoint용 <code>AWS/PrivateLinkEndpoints</code>와 service용 <code>AWS/PrivateLinkServices</code> CloudWatch namespace를 제공합니다. Consumer와 provider dashboard를 연결하면 어느 쪽 경계에서 손실이 시작됐는지 좁힐 수 있습니다.</p>
+          <table>
+            <thead><tr><th>계층</th><th>지표·상태</th><th>판단</th></tr></thead>
+            <tbody>
+              <tr><td>Consumer endpoint</td><td><code>ActiveConnections</code>, <code>NewConnections</code>, <code>BytesProcessed</code></td><td>사용량과 비용 attribution</td></tr>
+              <tr><td>Consumer endpoint</td><td><code>PacketsDropped</code>, <code>RstPacketsReceived</code></td><td>Network 또는 provider 이상</td></tr>
+              <tr><td>Provider service</td><td><code>EndpointsCount</code>, connection·byte metrics by endpoint ID</td><td>온보딩 수와 top consumer</td></tr>
+              <tr><td>Provider service</td><td><code>RstPacketsSent</code></td><td>Unhealthy target 가능성</td></tr>
+              <tr><td>NLB</td><td>HealthyHostCount, UnHealthyHostCount, target reset</td><td>AZ별 target 상태</td></tr>
+              <tr><td>Security group</td><td>Blocked flow count와 VPC Flow Logs</td><td>정책 거부와 route 문제</td></tr>
+              <tr><td>DNS·TLS</td><td>Synthetic resolve, connect, handshake, certificate expiry</td><td>이름과 암호화 경계</td></tr>
+              <tr><td>Application</td><td>Request rate, p95·p99 latency, 4xx·5xx</td><td>Business API 품질</td></tr>
+            </tbody>
+          </table>
+          <p>Provider는 PrivateLink Contributor Insights의 endpoint ID별 connection과 byte 순위를 사용해 noisy consumer를 찾을 수 있습니다. Application metric에는 account, service tier와 operation처럼 제한된 dimension만 쓰고 request ID를 label로 넣지 않습니다.</p>
+
+          <h2 id="section-17">17. 장애 유형마다 첫 확인 위치가 달라야 한다</h2>
+          <table>
+            <thead><tr><th>증상</th><th>우선 확인</th><th>첫 대응</th></tr></thead>
+            <tbody>
+              <tr><td><code>PendingAcceptance</code> 지속</td><td>Permission, ticket와 provider queue</td><td>자동 대조 후 승인 또는 거절</td></tr>
+              <tr><td>DNS NXDOMAIN</td><td>Private DNS verification, VPC DNS, zone conflict</td><td>Endpoint-specific DNS로 경계 분리</td></tr>
+              <tr><td>TCP timeout</td><td>Endpoint SG, NLB SG 설정, target health</td><td>Flow Logs와 AZ별 synthetic 확인</td></tr>
+              <tr><td>TLS handshake 실패</td><td>SNI, certificate chain·expiry, listener mode</td><td>검증된 certificate로 rollback</td></tr>
+              <tr><td>한 AZ만 실패</td><td>Endpoint ENI, NLB node, local target</td><td>Healthy AZ로 traffic 이동 후 target 복구</td></tr>
+              <tr><td>RST 급증</td><td>Idle timeout, deployment, target reset</td><td>최근 release와 connection policy rollback</td></tr>
+              <tr><td>특정 consumer만 403</td><td>Application identity와 policy</td><td>Network 변경 없이 auth rule 복구</td></tr>
+              <tr><td>해지 후 접근 가능</td><td>기존 endpoint connection과 credential</td><td>Connection reject와 credential revoke</td></tr>
+            </tbody>
+          </table>
+
+          <h2 id="section-18">18. Rollout과 rollback은 DNS 전환으로 통제한다</h2>
+          <div class="mermaid diagram">
+flowchart LR
+    baseline[1. Record direct baseline] --> provider[2. Deploy NLB and service]
+    provider --> canary[3. Internal canary endpoint]
+    canary --> first[4. First consumer and AZ tests]
+    first --> dns[5. Enable private DNS]
+    dns --> ramp[6. Migrate consumers in batches]
+    ramp --> gate{SLO and isolation pass?}
+    gate -->|no| rollback[Return client config to old path]
+    gate -->|yes| retire[7. Retire broad network path]
+          </div>
+          <p>Endpoint를 승인하는 행위와 production traffic을 전환하는 행위를 분리합니다. 첫 consumer는 endpoint-specific DNS로 검증하고, private DNS 또는 client configuration은 별도 change로 전환합니다. 각 batch에서 한 번의 peak와 AZ failure test를 통과한 뒤 다음 consumer로 확장합니다.</p>
+          <p>Rollback은 Endpoint Service를 삭제하는 작업이 아닙니다. DNS 또는 client configuration을 검증된 이전 경로로 되돌리고 provider target을 안정화하는 작업입니다. 기존 Peering이나 public private-access path는 관찰 기간 동안 제한된 rollback 경로로 유지한 뒤 제거합니다.</p>
+
+          <h2 id="section-19">19. 비용은 provider와 consumer의 서로 다른 청구서에 나타난다</h2>
+          <pre><code class="language-text">Consumer monthly cost
+  = interface endpoint hours x enabled AZ count
+  + PrivateLink data processing GB
+  + optional cross-AZ data transfer
+
+Provider monthly cost
+  = NLB hours and capacity usage
+  + targets and application dependencies
+  + optional cross-zone data transfer
+  + monitoring, logs and synthetic tests</code></pre>
+          <p>Interface endpoint owner는 endpoint가 각 AZ에 provision된 시간과 처리된 데이터에 대해 비용을 부담합니다. Traffic이 없어도 endpoint가 남아 있으면 시간 비용은 계속되므로 owner, last-used, expiration과 cost center tag가 필요합니다.</p>
+          <p>가용성을 위해 AZ를 늘리면 endpoint-hour가 증가하고, target을 모든 AZ에 두지 않은 채 cross-zone을 켜면 Regional data transfer가 생길 수 있습니다. 월 비용만 최소화하지 않고 장애 시 유지할 AZ 수와 예상 데이터량을 함께 budget으로 승인합니다.</p>
+
+          <h2 id="section-20">20. 연결과 정책 변경도 regression gate를 통과해야 한다</h2>
+          <pre><code class="language-yaml"># privatelink-gate.yml - 도구에 종속되지 않은 운영 계약 예시
+endpoint_service_gate:
+  require:
+    acceptance_required: true
+    wildcard_principal_count: 0
+    supported_az_ids_min: 2
+    healthy_targets_per_az_min: 1
+    private_dns_verified: true
+    tls_canary: pass
+    unauthorized_account_test: denied
+    endpoint_sg_negative_test: denied
+    az_failure_test: pass
+    revocation_test: pass
+  budgets:
+    p95_latency_delta_ms: "<= 20"
+    rst_rate_percent: "< 0.1"
+    packet_drops: 0
+  block_on:
+    - automatic_acceptance_without_exception
+    - unowned_endpoint
+    - certificate_rotation_without_overlap
+    - az_name_used_in_cross_account_contract</code></pre>
+          <p>NLB listener, target group attribute, Proxy Protocol, cross-zone 설정, allowed principal, private DNS와 certificate 변경은 모두 canary 대상입니다. 실험 결과에는 provider commit, Endpoint Service ID, consumer Endpoint ID, AZ ID, DNS mode와 test timestamp를 함께 저장합니다.</p>
+
+          <h2 id="section-21">21. 운영 책임은 account 경계에 맞춰 나눈다</h2>
+          <table>
+            <thead><tr><th>영역</th><th>Primary owner</th><th>책임</th></tr></thead>
+            <tbody>
+              <tr><td>Endpoint Service와 NLB</td><td>Provider platform</td><td>AZ, listener, target, principal과 acceptance</td></tr>
+              <tr><td>Interface endpoint</td><td>Consumer platform</td><td>Subnet, security group, DNS와 비용</td></tr>
+              <tr><td>Application identity</td><td>Service owner</td><td>Credential, tenant, operation policy와 rotation</td></tr>
+              <tr><td>Service catalog</td><td>Cloud governance</td><td>Owner, purpose, tier, 만료와 deprovision</td></tr>
+              <tr><td>SLO와 incident</td><td>Provider SRE</td><td>통합 dashboard, alert, communication과 복구 훈련</td></tr>
+              <tr><td>비용</td><td>양쪽 service owner</td><td>Endpoint-hour, data processing, NLB와 transfer</td></tr>
+            </tbody>
+          </table>
+          <p>Provider가 service availability를 소유하더라도 consumer endpoint SG나 DNS 오류까지 직접 수정할 수는 없습니다. 양쪽 runbook에 상대 팀 escalation 정보와 공유할 최소 진단 항목을 넣고, endpoint ID와 request ID로 같은 incident timeline을 구성합니다.</p>
+
+          <h2 id="section-22">22. 아직 production-grade라고 주장하지 않는 범위</h2>
+          <ul>
+            <li>이 글의 latency, error와 onboarding 목표는 실제 멀티 계정 환경에서 측정한 값이 아닙니다.</li>
+            <li>Peak connection 수와 장기 idle connection이 NLB 및 target에 미치는 영향을 부하 테스트하지 않았습니다.</li>
+            <li>한 AZ 전체 장애와 provider deployment가 겹치는 복합 실패를 검증하지 않았습니다.</li>
+            <li>Proxy Protocol v2 parser와 application credential rotation을 실제 구현하지 않았습니다.</li>
+            <li>Cross-Region PrivateLink의 supported Region, 데이터 전송 비용과 failover를 다루지 않았습니다.</li>
+            <li>IPv6 consumer, dualstack NLB와 address-family 변환 조건을 검증하지 않았습니다.</li>
+            <li>Organization account vending과 endpoint onboarding을 완전히 자동화하지 않았습니다.</li>
+          </ul>
+          <p>이 범위가 남아 있다면 "PrivateLink로 연결했다"고 말할 수는 있지만 "내부 API product를 운영한다"고 말하기는 어렵습니다. 실제 consumer onboarding 기록, 실패한 canary, AZ 훈련 결과와 비용 데이터를 채워야 운영 주장이 완성됩니다.</p>
+
+          <h2 id="section-23">23. 마무리</h2>
+          <p>AWS PrivateLink의 가치는 VPC 사이에 또 다른 연결을 만드는 데 있지 않습니다. Provider가 노출할 service를 좁게 정의하고 consumer가 자신의 VPC 안에서 endpoint를 소유하게 하며, route와 CIDR을 공유하지 않은 채 수명 주기를 독립적으로 관리하는 데 있습니다.</p>
+          <blockquote><p>Endpoint가 Available인 것은 시작일 뿐입니다. 어떤 account를 왜 승인했고, 어느 AZ에서 어느 이름과 identity로 호출하며, 장애와 해지 때 누가 무엇을 확인하는지가 운영 가능한 PrivateLink의 핵심입니다.</p></blockquote>
+          <p><strong>참고 문서:</strong>
+            <a href="https://docs.aws.amazon.com/vpc/latest/privatelink/create-endpoint-service.html">Create a service powered by AWS PrivateLink</a>,
+            <a href="https://docs.aws.amazon.com/vpc/latest/privatelink/configure-endpoint-service.html">Configure an endpoint service</a>,
+            <a href="https://docs.aws.amazon.com/vpc/latest/privatelink/manage-dns-names.html">Manage DNS names for endpoint services</a>,
+            <a href="https://docs.aws.amazon.com/vpc/latest/privatelink/privatelink-share-your-services.html">Share services through AWS PrivateLink</a>,
+            <a href="https://docs.aws.amazon.com/vpc/latest/privatelink/privatelink-cloudwatch-metrics.html">CloudWatch metrics for AWS PrivateLink</a>,
+            <a href="https://docs.aws.amazon.com/vpc/latest/privatelink/create-notification-endpoint-service.html">Endpoint service event notifications</a>,
+            <a href="https://docs.aws.amazon.com/elasticloadbalancing/latest/network/load-balancer-security-groups.html">Network Load Balancer security groups</a>,
+            <a href="https://aws.amazon.com/privatelink/pricing/">AWS PrivateLink pricing</a>
+          </p>
+        </div>
+
+        <!-- GENERATED:ARTICLE_TAIL:START -->
+        <nav class="article-pagination" aria-label="발행 순서로 읽기">
+          <a href="./aws-database-dynamodb-ttl-deletion-slo.html"><span>Newer</span><strong>[AWS/Database] TTL이 지났는데 왜 데이터가 계속 보일까? - DynamoDB TTL, Streams, 삭제 SLO</strong></a>
+          <a href="./aws-iam-cross-account-assumerole-sts-vendor-access.html"><span>Older</span><strong>[AWS/IAM] 외부 업체에 Access Key를 주지 않고 AWS 계정 접근을 허용하기 - Cross-Account AssumeRole과 STS</strong></a>
+        </nav>
+        <aside class="related-notes" aria-labelledby="related-heading">
+          <h2 id="related-heading">Related notes</h2>
+          <div class="related-note-list">
+          <a href="./aws-networking-transit-gateway-hub-spoke-vpc-scale.html">
+            <span>Networking · 2026.08.29</span>
+            <strong>[AWS/Networking] VPC가 1,000개라면 Peering은 왜 무너질까? - Transit Gateway와 Hub-and-Spoke 설계</strong>
+          </a>
+          <a href="./aws-networking-s3-gateway-vpc-endpoint-nat-cost.html">
+            <span>Networking · 2026.08.24</span>
+            <strong>[AWS/Networking] Private EC2가 S3에 접근하는데 NAT Gateway가 꼭 필요할까? - Gateway VPC Endpoint로 비용 줄이기</strong>
+          </a>
+          <a href="./aws-cloudtrail-organization-central-s3-governance.html">
+            <span>S3 · 2026.09.05</span>
+            <strong>[AWS/Security] 여러 계정의 CloudTrail 로그를 중앙화해도 감사 공백이 생기는 이유 - Organization Trail, S3 Policy, KMS, Delivery SLO</strong>
+          </a>
+          </div>
+        </aside>
+        <!-- GENERATED:ARTICLE_TAIL:END -->
+      </article>
+    </main>
+
+    <footer class="site-footer">
+      <p>© 2026 Jiwon Kim</p>
+      <div class="footer-links">
+        <span id="visitStatus">집계 중</span>
+        <a href="../articles.html">Articles</a>
+        <a href="../feed.xml">RSS</a>
+      </div>
+    </footer>
+    <script src="../script.js?v=20260905-4"></script>
+    <script data-goatcounter="https://jiwonkim-blog.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
+    <noscript><img class="tracking-pixel" src="https://jiwonkim-blog.goatcounter.com/count?p=/posts/aws-networking-privatelink-multi-account-service-governance.html" alt="" /></noscript>
+  </body>
+</html>
