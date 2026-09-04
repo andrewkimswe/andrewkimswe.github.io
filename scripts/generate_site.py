@@ -107,7 +107,21 @@ def parse_post(path: Path) -> Post:
 
 def choose_topic(tags: tuple[str, ...], eyebrow: str, title: str) -> str:
     haystack = " ".join((*tags, eyebrow, title))
-    for label in ("FinOps", "RAG", "LLM", "Serverless", "Kubernetes", "Auto Scaling", "Database", "Data", "Security", "Storage"):
+    for label in (
+        "Networking",
+        "API",
+        "S3",
+        "FinOps",
+        "RAG",
+        "LLM",
+        "Serverless",
+        "Kubernetes",
+        "Auto Scaling",
+        "Database",
+        "Data",
+        "Security",
+        "Storage",
+    ):
         if label.lower() in haystack.lower():
             return label
     return "Cloud" if "AWS" in tags or "Cloud" in haystack else "Architecture"
