@@ -22,6 +22,13 @@
       <description>로그를 한 버킷에 모으는 구성에서 더 나아가 계정 온보딩, 최소 권한, 무결성, 수집 지연, 비용과 운영 책임까지 설계합니다.</description>
     </item>
     <item>
+      <title>[AWS/Database] TTL이 지났는데 왜 데이터가 계속 보일까? - DynamoDB TTL, Streams, 삭제 SLO</title>
+      <link>https://andrewkimswe.github.io/posts/aws-database-dynamodb-ttl-deletion-slo.html</link>
+      <guid isPermaLink="true">https://andrewkimswe.github.io/posts/aws-database-dynamodb-ttl-deletion-slo.html</guid>
+      <pubDate>Fri, 04 Sep 2026 00:00:00 +0900</pubDate>
+      <description>TTL을 자동 삭제 옵션이 아니라 논리적 만료, 물리 삭제, 후처리와 검증이 이어지는 데이터 lifecycle 계약으로 설계합니다.</description>
+    </item>
+    <item>
       <title>[AWS/IAM] 외부 업체에 Access Key를 주지 않고 AWS 계정 접근을 허용하기 - Cross-Account AssumeRole과 STS</title>
       <link>https://andrewkimswe.github.io/posts/aws-iam-cross-account-assumerole-sts-vendor-access.html</link>
       <guid isPermaLink="true">https://andrewkimswe.github.io/posts/aws-iam-cross-account-assumerole-sts-vendor-access.html</guid>
