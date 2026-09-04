@@ -107,10 +107,11 @@ def parse_post(path: Path) -> Post:
 
 def choose_topic(tags: tuple[str, ...], eyebrow: str, title: str) -> str:
     haystack = " ".join((*tags, eyebrow, title))
+    if re.search(r"(?<![A-Za-z0-9])DR(?![A-Za-z0-9])", haystack):
+        return "DR"
     for label in (
         "Networking",
         "API",
-        "DR",
         "S3",
         "FinOps",
         "RAG",
@@ -158,7 +159,7 @@ def update_index(posts: list[Post]) -> None:
     html = ensure_social_meta(html, is_home=True)
     replacement = r'\1' + render_post_rows(posts).replace("\\", r"\\") + r'\3'
     html = re.sub(
-        r'(<div class="post-list" id="postGrid">\n)(.*?)(\n        </div>\n      </section>\n\n      <section class="section topic-section")',
+        r'(<div class="post-list" id="postGrid">\n)(.*?)(\n        </div>\n      </section>\n\n      <section class="section portfolio-section")',
         replacement,
         html,
         flags=re.S,

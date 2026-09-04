@@ -18,7 +18,9 @@ function updatePosts() {
   posts.forEach((post) => {
     const title = post.dataset.title.toLowerCase();
     const tags = post.dataset.tags;
-    const matchesFilter = activeFilter === "all" || tags.includes(activeFilter);
+    const normalizedTags = ` ${tags.toLowerCase()} `;
+    const normalizedFilter = ` ${activeFilter.toLowerCase()} `;
+    const matchesFilter = activeFilter === "all" || normalizedTags.includes(normalizedFilter);
     const matchesSearch = !query || title.includes(query) || tags.toLowerCase().includes(query);
 
     post.classList.toggle("is-hidden", !matchesFilter || !matchesSearch);

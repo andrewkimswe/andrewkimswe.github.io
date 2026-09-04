@@ -56,9 +56,9 @@
         </span>
       </a>
       <nav class="nav-links" aria-label="주요 메뉴">
+        <a href="#writing">Writing</a>
         <a href="#portfolio">Portfolio</a>
         <a href="#profile">Profile</a>
-        <a href="#writing">Writing</a>
         <a href="#topics">Topics</a>
         <a href="#about">About</a>
         <a href="https://github.com/andrewkimswe">GitHub</a>
@@ -105,293 +105,10 @@
         </div>
       </section>
 
-      <section class="section portfolio-section" id="portfolio">
-        <div class="section-heading">
-          <div>
-            <p class="eyebrow">Portfolio</p>
-            <h2>프로젝트</h2>
-          </div>
-          <p>
-            실제 사용자, 기업 검증, 수상 경험이 있었던 작업을 중심으로 문제 정의, 설계 선택, 운영 경계, 결과를 분리해 보여줍니다.
-          </p>
-        </div>
 
-        <div class="portfolio-grid">
-          <article class="portfolio-item portfolio-featured">
-            <figure class="portfolio-visual">
-              <img class="portfolio-screenshot" src="./assets/portfolio/joycrew.png" alt="JoyCrew 서비스 화면" loading="lazy" />
-            </figure>
-            <div class="portfolio-heading">
-              <span class="portfolio-type">B2B HR Tech SaaS Platform</span>
-              <h3>JoyCrew</h3>
-            </div>
-            <p>
-              JoyLab Founder로 기획부터 개발까지 주도한 기업용 포인트 기반 복지·리워드 SaaS입니다. 포인트·결제 핵심 백엔드와 EKS 기반 배포·모니터링 구조를 구현하고, 실제 기업 베타 테스트로 운영 경계를 검증했습니다.
-            </p>
-            <dl class="portfolio-points">
-              <div>
-                <dt>Problem</dt>
-                <dd>기업별 사용자, 포인트, 관리자 권한, 접근 범위를 분리해야 하는 B2B SaaS 운영 요구사항이 있었습니다.</dd>
-              </div>
-              <div>
-                <dt>Solution</dt>
-                <dd>EKS 기반 서비스 운영 구조를 구성하고, Host 기반 tenant 식별과 companyId 조건을 주요 비즈니스 로직에 적용했습니다.</dd>
-              </div>
-              <div>
-                <dt>Result</dt>
-                <dd>실제 기업 베타 테스트에서 고객사별 사용자와 포인트 데이터를 분리해 운영하며 멀티테넌트 SaaS의 핵심 경계를 검증했습니다.</dd>
-              </div>
-            </dl>
-            <div class="portfolio-tags">
-              <span>Java 17</span>
-              <span>Spring Boot</span>
-              <span>EKS</span>
-              <span>RDS</span>
-              <span>Multi-Tenant</span>
-              <span>Pessimistic Lock</span>
-            </div>
-            <a class="portfolio-link" href="https://github.com/JoyCrew/backend">GitHub</a>
-          </article>
 
-          <article class="portfolio-item">
-            <figure class="portfolio-visual">
-              <img class="portfolio-screenshot" src="./assets/portfolio/cloudops-rag.png" alt="CloudOps RAG 평가와 관측 대시보드" loading="lazy" />
-            </figure>
-            <div class="portfolio-heading">
-              <span class="portfolio-type">CloudOps RAG System</span>
-              <h3>CloudOps RAG</h3>
-            </div>
-            <p>
-              AWS와 Kubernetes troubleshooting 문서를 대상으로 검색, 답변 생성, 평가, fallback, serving, observability까지 확장한 evaluation-driven RAG 프로젝트입니다.
-            </p>
-            <dl class="portfolio-points">
-              <div>
-                <dt>Problem</dt>
-                <dd>튜토리얼 RAG는 답을 생성할 수는 있지만, 검색이 맞았는지와 답변이 신뢰 가능한지 판단하기 어렵습니다.</dd>
-              </div>
-              <div>
-                <dt>Solution</dt>
-                <dd>Hit@k, MRR, answer evaluation, threshold fallback, failure taxonomy, FastAPI serving, Prometheus metrics, CI regression gate를 추가했습니다.</dd>
-              </div>
-              <div>
-                <dt>Result</dt>
-                <dd>Held-out retrieval에서 Hit@3 8/8, MRR 0.9375를 확인했고, low-confidence query는 LLM 호출을 건너뛰도록 분리했습니다.</dd>
-              </div>
-            </dl>
-            <div class="portfolio-tags">
-              <span>Python</span>
-              <span>FastAPI</span>
-              <span>OpenAI API</span>
-              <span>Chroma</span>
-              <span>RAG Evaluation</span>
-              <span>Prometheus</span>
-            </div>
-            <a class="portfolio-link" href="./posts/rag-cloudops-productionish-evaluation-fallback-serving-observability.html">Case Study</a>
-          </article>
 
-          <article class="portfolio-item">
-            <figure class="portfolio-visual">
-              <img class="portfolio-screenshot" src="./assets/portfolio/hongik-taste-navigator.png" alt="Hongik Taste Navigator 매칭 화면" loading="lazy" />
-            </figure>
-            <div class="portfolio-heading">
-              <span class="portfolio-type">Club Fair Project</span>
-              <h3>Hongik Taste Navigator</h3>
-            </div>
-            <p>
-              동아리 박람회 방문객을 위한 식당 추천과 식사 메이트 매칭 서비스입니다. 이틀간 약 1,000명의 실사용자가 이용했습니다.
-            </p>
-            <dl class="portfolio-points">
-              <div>
-                <dt>Focus</dt>
-                <dd>Naver Local API 검색 결과를 좌표 기반 거리 계산으로 재분류해 역 기준 조회의 일관성을 높였습니다.</dd>
-              </div>
-            </dl>
-            <div class="portfolio-tags">
-              <span>Java 21</span>
-              <span>Spring Boot</span>
-              <span>MySQL</span>
-              <span>AWS EC2</span>
-              <span>Naver Local API</span>
-            </div>
-            <a class="portfolio-link" href="https://github.com/hicc-dvp/backend">GitHub</a>
-          </article>
 
-          <article class="portfolio-item">
-            <figure class="portfolio-visual">
-              <img class="portfolio-screenshot" src="./assets/portfolio/presentalk.png" alt="PresenTalk 모바일 UI 플로우" loading="lazy" />
-            </figure>
-            <div class="portfolio-heading">
-              <span class="portfolio-type">AI Gift Recommendation</span>
-              <h3>PresenTalk</h3>
-            </div>
-            <p>
-              카카오톡 대화 로그를 분석해 상대방의 취향을 파악하고 선물을 추천하는 AI 기반 서비스입니다.
-            </p>
-            <dl class="portfolio-points">
-              <div>
-                <dt>Focus</dt>
-                <dd>쿠팡 파트너스 API의 HMAC-SHA256 인증 헤더와 sliding-window rate limiter를 직접 구현했습니다.</dd>
-              </div>
-            </dl>
-            <div class="portfolio-tags">
-              <span>Spring Boot</span>
-              <span>OpenAI API</span>
-              <span>Selenium</span>
-              <span>External API</span>
-              <span>Rate Limiting</span>
-            </div>
-            <a class="portfolio-link" href="https://github.com/HongikComputerClub/backend">GitHub</a>
-          </article>
-
-          <article class="portfolio-item">
-            <figure class="portfolio-visual">
-              <img class="portfolio-screenshot" src="./assets/portfolio/musinsaobserver.png" alt="MusinsaObserver 상품 가격 추적 화면" loading="lazy" />
-            </figure>
-            <div class="portfolio-heading">
-              <span class="portfolio-type">Data Collection Platform</span>
-              <h3>MusinsaObserver</h3>
-            </div>
-            <p>
-              패션 상품 데이터를 주기적으로 수집하고 가격 변동을 추적하는 백엔드 시스템입니다.
-            </p>
-            <dl class="portfolio-points">
-              <div>
-                <dt>Focus</dt>
-                <dd>Jsoup 기반 HTML 파싱 병목을 분석하고 ExecutorService, FixedThreadPool 기반 병렬 수집으로 처리 속도를 약 3배 개선했습니다.</dd>
-              </div>
-            </dl>
-            <div class="portfolio-tags">
-              <span>Java 21</span>
-              <span>Spring Boot</span>
-              <span>ExecutorService</span>
-              <span>Docker</span>
-              <span>GitHub Actions</span>
-            </div>
-            <a class="portfolio-link" href="https://github.com/MusinsaObserver/backend">GitHub</a>
-          </article>
-
-          <article class="portfolio-item">
-            <figure class="portfolio-visual">
-              <img class="portfolio-screenshot" src="./assets/portfolio/noise-robust-vad.png" alt="Noise-Robust VAD 아키텍처 다이어그램" loading="lazy" />
-            </figure>
-            <div class="portfolio-heading">
-              <span class="portfolio-type">ML Systems Research</span>
-              <h3>Noise-Robust VAD</h3>
-            </div>
-            <p>
-              실제 감시 환경의 노이즈와 엣지 디바이스 제약을 고려한 VAD 연구입니다.
-            </p>
-            <dl class="portfolio-points">
-              <div>
-                <dt>Focus</dt>
-                <dd>MSTF 기반 시간 축 집계와 matched filter 후처리로 AUROC를 60.05%에서 72.49%로 개선하고, Jetson Nano 병목을 분석했습니다.</dd>
-              </div>
-            </dl>
-            <div class="portfolio-tags">
-              <span>Python</span>
-              <span>PyTorch</span>
-              <span>OpenCV</span>
-              <span>TensorRT</span>
-              <span>Jetson Nano</span>
-            </div>
-          </article>
-        </div>
-
-        <div class="portfolio-additional">
-          <div>
-            <p class="eyebrow">Additional Work</p>
-            <h3>기여와 해커톤 POC</h3>
-          </div>
-          <ul>
-            <li>
-              <span class="portfolio-link-group">
-                <a href="https://github.com/SeeATheater/CC_Frontend">SeeATheater Frontend</a>
-                <a href="https://github.com/SeeATheater/CC_Backend">SeeATheater Backend</a>
-              </span>
-              <span>중도 합류 후 frontend와 backend 양쪽 작업에 참여하며 기존 서비스 흐름에 기능을 연결한 협업 프로젝트입니다.</span>
-            </li>
-            <li>
-              <a href="https://github.com/DigiLabChallengeHackathon">DigiLab Challenge Hackathon</a>
-              <span>제주지역혁신플랫폼(RIS) 지능형서비스사업단 최우수상을 수상한 해커톤 POC입니다.</span>
-            </li>
-            <li>
-              <a href="https://github.com/Moong-Hackathon">Moong Hackathon</a>
-              <span>한국청년기업가정신재단상을 수상했으며, 제한 시간 안에 아이디어의 핵심 사용자 흐름을 검증한 POC입니다.</span>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <section class="section profile-section" id="profile">
-        <div class="section-heading">
-          <div>
-            <p class="eyebrow">Profile</p>
-            <h2>기술 이력</h2>
-          </div>
-          <p>
-            프로젝트와 글의 신뢰도를 뒷받침하는 경험, 자격, 수상만 선별했습니다.
-          </p>
-        </div>
-
-        <div class="profile-grid">
-          <article class="profile-card profile-card-wide">
-            <span class="profile-kicker">Experience</span>
-            <h3>Founder, JoyLab</h3>
-            <time datetime="2025-09">Sep 2025 - Dec 2025</time>
-            <p>
-              기업용 포인트 기반 복지·리워드 SaaS를 기획하고, 포인트·결제 백엔드와 AWS EKS 기반 배포·모니터링 구조를 구현했습니다. 실제 기업 환경에서 베타 테스트를 진행하며 서비스 안정성과 멀티테넌트 운영 경계를 검증했습니다.
-            </p>
-          </article>
-
-          <article class="profile-card">
-            <span class="profile-kicker">Education</span>
-            <h3>Hongik University</h3>
-            <p>
-              Computer Engineering 전공으로 소프트웨어공학, 운영체제, 머신러닝, 그래픽스 수업과 프로젝트를 수행했습니다.
-            </p>
-            <ul class="profile-list">
-              <li>BS, Computer Engineering</li>
-              <li>Major GPA 93.5</li>
-              <li>Mar 2020 - Aug 2026</li>
-            </ul>
-          </article>
-
-          <article class="profile-card">
-            <span class="profile-kicker">Education</span>
-            <h3>Apple Developer Academy @ POSTECH</h3>
-            <p>
-              Challenge Based Learning 기반의 프로젝트형 iOS 개발 과정을 수료하며 문제 정의, 사용자 흐름, 구현 검증을 함께 다뤘습니다.
-            </p>
-            <ul class="profile-list">
-              <li>Foundation Program</li>
-              <li>4th Cohort, 1st nationwide</li>
-              <li>Sep 2024 - Oct 2024</li>
-            </ul>
-          </article>
-
-          <article class="profile-card">
-            <span class="profile-kicker">Credentials</span>
-            <h3>자격과 인증</h3>
-            <ul class="profile-list profile-list-strong">
-              <li>NVIDIA Deep Learning Institute, Building RAG Agents with LLMs · Aug 2026</li>
-              <li>Engineer Information Processing · Jun 2026</li>
-              <li>SQLD, Korea Data Agency · Jun 2025</li>
-              <li>OPIc English, Intermediate High · Feb 2026</li>
-            </ul>
-          </article>
-
-          <article class="profile-card">
-            <span class="profile-kicker">Awards</span>
-            <h3>수상</h3>
-            <ul class="profile-list profile-list-strong">
-              <li>Hongik Computer Club Grand Prize · Aug 2025</li>
-              <li>MOONG Connecton 한국청년기업가정신재단상 · May 2025</li>
-              <li>Hongik Computer Club Grand Prize · Feb 2025</li>
-              <li>Jeju RIS 지능형서비스사업단 최우수상 · Dec 2024</li>
-            </ul>
-          </article>
-        </div>
-      </section>
 
       <section class="section writing-section" id="writing">
         <div class="section-heading">
@@ -714,7 +431,7 @@
           >
             <a href="./posts/s3-presigned-url-lambda-image-processing.html">
               <time datetime="2026-08-06">2026.08.06</time>
-              <span class="post-topic">DR</span>
+              <span class="post-topic">S3</span>
               <h3>[AWS] 이미지 업로드 병목 제거하기 - S3 Presigned URL과 Lambda로 Event-Driven Processing 구성</h3>
               <p>대용량 이미지 업로드 경로에서 애플리케이션 서버를 분리하고 S3 이벤트와 Lambda로 후처리하는 구조입니다.</p>
             </a>
@@ -778,6 +495,294 @@
               <h3>[AWS] CloudFront 설정 변경을 실시간으로 탐지하고 알림 보내기</h3>
               <p>CloudTrail, EventBridge, Lambda, SNS를 사용해 CloudFront Logging 비활성화를 탐지하는 패턴입니다.</p>
             </a>
+          </article>
+        </div>
+      </section>
+
+      <section class="section portfolio-section" id="portfolio">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">Portfolio</p>
+            <h2>프로젝트</h2>
+          </div>
+          <p>
+            실제 사용자, 기업 검증, 수상 경험이 있었던 작업을 중심으로 문제 정의, 설계 선택, 운영 경계, 결과를 분리해 보여줍니다.
+          </p>
+        </div>
+
+        <div class="portfolio-grid">
+          <article class="portfolio-item portfolio-featured">
+            <figure class="portfolio-visual">
+              <img class="portfolio-screenshot" src="./assets/portfolio/joycrew.png" alt="JoyCrew 서비스 화면" loading="lazy" />
+            </figure>
+            <div class="portfolio-heading">
+              <span class="portfolio-type">B2B HR Tech SaaS Platform</span>
+              <h3>JoyCrew</h3>
+            </div>
+            <p>
+              JoyLab Founder로 기획부터 개발까지 주도한 기업용 포인트 기반 복지·리워드 SaaS입니다. 포인트·결제 핵심 백엔드와 EKS 기반 배포·모니터링 구조를 구현하고, 실제 기업 베타 테스트로 운영 경계를 검증했습니다.
+            </p>
+            <dl class="portfolio-points">
+              <div>
+                <dt>Problem</dt>
+                <dd>기업별 사용자, 포인트, 관리자 권한, 접근 범위를 분리해야 하는 B2B SaaS 운영 요구사항이 있었습니다.</dd>
+              </div>
+              <div>
+                <dt>Solution</dt>
+                <dd>EKS 기반 서비스 운영 구조를 구성하고, Host 기반 tenant 식별과 companyId 조건을 주요 비즈니스 로직에 적용했습니다.</dd>
+              </div>
+              <div>
+                <dt>Result</dt>
+                <dd>실제 기업 베타 테스트에서 고객사별 사용자와 포인트 데이터를 분리해 운영하며 멀티테넌트 SaaS의 핵심 경계를 검증했습니다.</dd>
+              </div>
+            </dl>
+            <div class="portfolio-tags">
+              <span>Java 17</span>
+              <span>Spring Boot</span>
+              <span>EKS</span>
+              <span>RDS</span>
+              <span>Multi-Tenant</span>
+              <span>Pessimistic Lock</span>
+            </div>
+            <a class="portfolio-link" href="https://github.com/JoyCrew/backend">GitHub</a>
+          </article>
+
+          <article class="portfolio-item">
+            <figure class="portfolio-visual">
+              <img class="portfolio-screenshot" src="./assets/portfolio/cloudops-rag.png" alt="CloudOps RAG 평가와 관측 대시보드" loading="lazy" />
+            </figure>
+            <div class="portfolio-heading">
+              <span class="portfolio-type">CloudOps RAG System</span>
+              <h3>CloudOps RAG</h3>
+            </div>
+            <p>
+              AWS와 Kubernetes troubleshooting 문서를 대상으로 검색, 답변 생성, 평가, fallback, serving, observability까지 확장한 evaluation-driven RAG 프로젝트입니다.
+            </p>
+            <dl class="portfolio-points">
+              <div>
+                <dt>Problem</dt>
+                <dd>튜토리얼 RAG는 답을 생성할 수는 있지만, 검색이 맞았는지와 답변이 신뢰 가능한지 판단하기 어렵습니다.</dd>
+              </div>
+              <div>
+                <dt>Solution</dt>
+                <dd>Hit@k, MRR, answer evaluation, threshold fallback, failure taxonomy, FastAPI serving, Prometheus metrics, CI regression gate를 추가했습니다.</dd>
+              </div>
+              <div>
+                <dt>Result</dt>
+                <dd>Held-out retrieval에서 Hit@3 8/8, MRR 0.9375를 확인했고, low-confidence query는 LLM 호출을 건너뛰도록 분리했습니다.</dd>
+              </div>
+            </dl>
+            <div class="portfolio-tags">
+              <span>Python</span>
+              <span>FastAPI</span>
+              <span>OpenAI API</span>
+              <span>Chroma</span>
+              <span>RAG Evaluation</span>
+              <span>Prometheus</span>
+            </div>
+            <a class="portfolio-link" href="./posts/rag-cloudops-productionish-evaluation-fallback-serving-observability.html">Case Study</a>
+          </article>
+
+          <article class="portfolio-item">
+            <figure class="portfolio-visual">
+              <img class="portfolio-screenshot" src="./assets/portfolio/hongik-taste-navigator.png" alt="Hongik Taste Navigator 매칭 화면" loading="lazy" />
+            </figure>
+            <div class="portfolio-heading">
+              <span class="portfolio-type">Club Fair Project</span>
+              <h3>Hongik Taste Navigator</h3>
+            </div>
+            <p>
+              동아리 박람회 방문객을 위한 식당 추천과 식사 메이트 매칭 서비스입니다. 이틀간 약 1,000명의 실사용자가 이용했습니다.
+            </p>
+            <dl class="portfolio-points">
+              <div>
+                <dt>Focus</dt>
+                <dd>Naver Local API 검색 결과를 좌표 기반 거리 계산으로 재분류해 역 기준 조회의 일관성을 높였습니다.</dd>
+              </div>
+            </dl>
+            <div class="portfolio-tags">
+              <span>Java 21</span>
+              <span>Spring Boot</span>
+              <span>MySQL</span>
+              <span>AWS EC2</span>
+              <span>Naver Local API</span>
+            </div>
+            <a class="portfolio-link" href="https://github.com/hicc-dvp/backend">GitHub</a>
+          </article>
+
+          <article class="portfolio-item">
+            <figure class="portfolio-visual">
+              <img class="portfolio-screenshot" src="./assets/portfolio/presentalk.png" alt="PresenTalk 모바일 UI 플로우" loading="lazy" />
+            </figure>
+            <div class="portfolio-heading">
+              <span class="portfolio-type">AI Gift Recommendation</span>
+              <h3>PresenTalk</h3>
+            </div>
+            <p>
+              카카오톡 대화 로그를 분석해 상대방의 취향을 파악하고 선물을 추천하는 AI 기반 서비스입니다.
+            </p>
+            <dl class="portfolio-points">
+              <div>
+                <dt>Focus</dt>
+                <dd>쿠팡 파트너스 API의 HMAC-SHA256 인증 헤더와 sliding-window rate limiter를 직접 구현했습니다.</dd>
+              </div>
+            </dl>
+            <div class="portfolio-tags">
+              <span>Spring Boot</span>
+              <span>OpenAI API</span>
+              <span>Selenium</span>
+              <span>External API</span>
+              <span>Rate Limiting</span>
+            </div>
+            <a class="portfolio-link" href="https://github.com/HongikComputerClub/backend">GitHub</a>
+          </article>
+
+          <article class="portfolio-item">
+            <figure class="portfolio-visual">
+              <img class="portfolio-screenshot" src="./assets/portfolio/musinsaobserver.png" alt="MusinsaObserver 상품 가격 추적 화면" loading="lazy" />
+            </figure>
+            <div class="portfolio-heading">
+              <span class="portfolio-type">Data Collection Platform</span>
+              <h3>MusinsaObserver</h3>
+            </div>
+            <p>
+              패션 상품 데이터를 주기적으로 수집하고 가격 변동을 추적하는 백엔드 시스템입니다.
+            </p>
+            <dl class="portfolio-points">
+              <div>
+                <dt>Focus</dt>
+                <dd>Jsoup 기반 HTML 파싱 병목을 분석하고 ExecutorService, FixedThreadPool 기반 병렬 수집으로 처리 속도를 약 3배 개선했습니다.</dd>
+              </div>
+            </dl>
+            <div class="portfolio-tags">
+              <span>Java 21</span>
+              <span>Spring Boot</span>
+              <span>ExecutorService</span>
+              <span>Docker</span>
+              <span>GitHub Actions</span>
+            </div>
+            <a class="portfolio-link" href="https://github.com/MusinsaObserver/backend">GitHub</a>
+          </article>
+
+          <article class="portfolio-item">
+            <figure class="portfolio-visual">
+              <img class="portfolio-screenshot" src="./assets/portfolio/noise-robust-vad.png" alt="Noise-Robust VAD 아키텍처 다이어그램" loading="lazy" />
+            </figure>
+            <div class="portfolio-heading">
+              <span class="portfolio-type">ML Systems Research</span>
+              <h3>Noise-Robust VAD</h3>
+            </div>
+            <p>
+              실제 감시 환경의 노이즈와 엣지 디바이스 제약을 고려한 VAD 연구입니다.
+            </p>
+            <dl class="portfolio-points">
+              <div>
+                <dt>Focus</dt>
+                <dd>MSTF 기반 시간 축 집계와 matched filter 후처리로 AUROC를 60.05%에서 72.49%로 개선하고, Jetson Nano 병목을 분석했습니다.</dd>
+              </div>
+            </dl>
+            <div class="portfolio-tags">
+              <span>Python</span>
+              <span>PyTorch</span>
+              <span>OpenCV</span>
+              <span>TensorRT</span>
+              <span>Jetson Nano</span>
+            </div>
+          </article>
+        </div>
+
+        <div class="portfolio-additional">
+          <div>
+            <p class="eyebrow">Additional Work</p>
+            <h3>기여와 해커톤 POC</h3>
+          </div>
+          <ul>
+            <li>
+              <span class="portfolio-link-group">
+                <a href="https://github.com/SeeATheater/CC_Frontend">SeeATheater Frontend</a>
+                <a href="https://github.com/SeeATheater/CC_Backend">SeeATheater Backend</a>
+              </span>
+              <span>중도 합류 후 frontend와 backend 양쪽 작업에 참여하며 기존 서비스 흐름에 기능을 연결한 협업 프로젝트입니다.</span>
+            </li>
+            <li>
+              <a href="https://github.com/DigiLabChallengeHackathon">DigiLab Challenge Hackathon</a>
+              <span>제주지역혁신플랫폼(RIS) 지능형서비스사업단 최우수상을 수상한 해커톤 POC입니다.</span>
+            </li>
+            <li>
+              <a href="https://github.com/Moong-Hackathon">Moong Hackathon</a>
+              <span>한국청년기업가정신재단상을 수상했으며, 제한 시간 안에 아이디어의 핵심 사용자 흐름을 검증한 POC입니다.</span>
+            </li>
+          </ul>
+        </div>
+      </section>
+
+      <section class="section profile-section" id="profile">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">Profile</p>
+            <h2>기술 이력</h2>
+          </div>
+          <p>
+            프로젝트와 글의 신뢰도를 뒷받침하는 경험, 자격, 수상만 선별했습니다.
+          </p>
+        </div>
+
+        <div class="profile-grid">
+          <article class="profile-card profile-card-wide">
+            <span class="profile-kicker">Experience</span>
+            <h3>Founder, JoyLab</h3>
+            <time datetime="2025-09">Sep 2025 - Dec 2025</time>
+            <p>
+              기업용 포인트 기반 복지·리워드 SaaS를 기획하고, 포인트·결제 백엔드와 AWS EKS 기반 배포·모니터링 구조를 구현했습니다. 실제 기업 환경에서 베타 테스트를 진행하며 서비스 안정성과 멀티테넌트 운영 경계를 검증했습니다.
+            </p>
+          </article>
+
+          <article class="profile-card">
+            <span class="profile-kicker">Education</span>
+            <h3>Hongik University</h3>
+            <p>
+              Computer Engineering 전공으로 소프트웨어공학, 운영체제, 머신러닝, 그래픽스 수업과 프로젝트를 수행했습니다.
+            </p>
+            <ul class="profile-list">
+              <li>BS, Computer Engineering</li>
+              <li>Major GPA 93.5</li>
+              <li>Mar 2020 - Aug 2026</li>
+            </ul>
+          </article>
+
+          <article class="profile-card">
+            <span class="profile-kicker">Education</span>
+            <h3>Apple Developer Academy @ POSTECH</h3>
+            <p>
+              Challenge Based Learning 기반의 프로젝트형 iOS 개발 과정을 수료하며 문제 정의, 사용자 흐름, 구현 검증을 함께 다뤘습니다.
+            </p>
+            <ul class="profile-list">
+              <li>Foundation Program</li>
+              <li>4th Cohort, 1st nationwide</li>
+              <li>Sep 2024 - Oct 2024</li>
+            </ul>
+          </article>
+
+          <article class="profile-card">
+            <span class="profile-kicker">Credentials</span>
+            <h3>자격과 인증</h3>
+            <ul class="profile-list profile-list-strong">
+              <li>NVIDIA Deep Learning Institute, Building RAG Agents with LLMs · Aug 2026</li>
+              <li>Engineer Information Processing · Jun 2026</li>
+              <li>SQLD, Korea Data Agency · Jun 2025</li>
+              <li>OPIc English, Intermediate High · Feb 2026</li>
+            </ul>
+          </article>
+
+          <article class="profile-card">
+            <span class="profile-kicker">Awards</span>
+            <h3>수상</h3>
+            <ul class="profile-list profile-list-strong">
+              <li>Hongik Computer Club Grand Prize · Aug 2025</li>
+              <li>MOONG Connecton 한국청년기업가정신재단상 · May 2025</li>
+              <li>Hongik Computer Club Grand Prize · Feb 2025</li>
+              <li>Jeju RIS 지능형서비스사업단 최우수상 · Dec 2024</li>
+            </ul>
           </article>
         </div>
       </section>
