@@ -511,8 +511,113 @@ h3 {
   display: none;
 }
 
-.topic-section {
+.portfolio-section {
+  border-top: 1px solid var(--line);
   background: var(--paper);
+}
+
+.portfolio-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1px;
+  border: 1px solid var(--line);
+  background: var(--line);
+}
+
+.portfolio-item {
+  display: grid;
+  min-height: 420px;
+  align-content: start;
+  gap: 20px;
+  padding: clamp(22px, 3vw, 32px);
+  background: var(--paper);
+}
+
+.portfolio-featured {
+  grid-column: 1 / -1;
+  grid-template-columns: minmax(0, 0.7fr) minmax(280px, 1fr);
+  column-gap: clamp(28px, 5vw, 64px);
+}
+
+.portfolio-heading {
+  display: grid;
+  gap: 10px;
+}
+
+.portfolio-type {
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.portfolio-item p {
+  margin: 0;
+  color: #39352f;
+  font-size: 17px;
+  line-height: 1.72;
+}
+
+.portfolio-points {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+}
+
+.portfolio-points div {
+  display: grid;
+  grid-template-columns: 92px minmax(0, 1fr);
+  gap: 14px;
+  border-top: 1px solid var(--line);
+  padding-top: 12px;
+}
+
+.portfolio-points dt,
+.portfolio-points dd {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.55;
+}
+
+.portfolio-points dt {
+  color: var(--ink);
+  font-weight: 900;
+}
+
+.portfolio-points dd {
+  color: var(--muted);
+}
+
+.portfolio-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: auto;
+}
+
+.portfolio-tags span {
+  border: 1px solid var(--line);
+  padding: 6px 9px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.portfolio-link {
+  width: fit-content;
+  color: var(--accent-2);
+  font-size: 13px;
+  font-weight: 900;
+  text-decoration: none;
+}
+
+.portfolio-link:hover {
+  color: var(--ink);
+}
+
+.topic-section {
+  background: var(--bg);
   border-top: 1px solid var(--line);
   border-bottom: 1px solid var(--line);
 }
@@ -588,7 +693,8 @@ h3 {
 @media (max-width: 1040px) {
   .hero-layout,
   .section-heading,
-  .about-section {
+  .about-section,
+  .portfolio-featured {
     grid-template-columns: 1fr;
   }
 
@@ -602,6 +708,14 @@ h3 {
 
   .topic-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .portfolio-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .portfolio-featured {
+    grid-column: auto;
   }
 }
 
@@ -651,6 +765,11 @@ h3 {
   }
 
   .service-summary div {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+
+  .portfolio-points div {
     grid-template-columns: 1fr;
     gap: 4px;
   }
