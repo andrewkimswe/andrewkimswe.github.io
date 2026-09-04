@@ -48,8 +48,7 @@ postCountItems.forEach((postCount) => {
 });
 
 function counterPath() {
-  const path = window.location.pathname.replace(/\/index\.html$/, "/");
-  return path || "/";
+  return "TOTAL";
 }
 
 function counterApiUrl(path) {
@@ -87,9 +86,9 @@ async function loadVisitCount() {
 
     const data = await response.json();
     const count = data && data.count ? data.count : "0";
-    updateVisitText(`방문 ${count}`, "GoatCounter public counter API에서 가져온 현재 page visit count입니다.");
+    updateVisitText(`방문 ${count}`, "GoatCounter public counter API에서 가져온 전체 site visit count입니다.");
   } catch (error) {
-    updateVisitText("집계 대기", "GoatCounter visitor count 공개 설정이 꺼져 있거나 아직 이 path의 통계가 준비되지 않았습니다.");
+    updateVisitText("설정 필요", "GoatCounter site code가 없거나 public visitor counter 설정이 꺼져 있어 숫자를 가져오지 못했습니다.");
   }
 }
 

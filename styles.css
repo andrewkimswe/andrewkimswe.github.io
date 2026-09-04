@@ -114,8 +114,8 @@ a {
 }
 
 .hero {
-  min-height: min(820px, calc(100svh - 77px));
-  padding: clamp(36px, 7vw, 96px) clamp(18px, 4vw, 64px) 44px;
+  min-height: min(680px, calc(100svh - 77px));
+  padding: clamp(34px, 6vw, 78px) clamp(18px, 4vw, 64px) 44px;
 }
 
 .hero-kicker {
@@ -129,10 +129,10 @@ a {
 
 .hero-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(270px, 360px);
+  grid-template-columns: minmax(0, 0.95fr) minmax(300px, 390px);
   gap: clamp(34px, 6vw, 86px);
   align-items: end;
-  padding-top: clamp(42px, 7vw, 92px);
+  padding-top: clamp(38px, 6vw, 74px);
 }
 
 h1,
@@ -146,10 +146,10 @@ h1 {
   max-width: 1040px;
   margin: 0;
   font-family: Georgia, "Times New Roman", serif;
-  font-size: clamp(50px, 10vw, 136px);
+  font-size: clamp(54px, 8vw, 112px);
   font-weight: 500;
   letter-spacing: 0;
-  line-height: 0.9;
+  line-height: 0.94;
 }
 
 h2 {
@@ -170,9 +170,9 @@ h3 {
 
 .hero-text {
   max-width: 760px;
-  margin: 28px 0 0;
+  margin: 24px 0 0;
   color: var(--muted);
-  font-size: clamp(18px, 2vw, 22px);
+  font-size: clamp(18px, 1.8vw, 21px);
   line-height: 1.72;
 }
 
@@ -741,17 +741,25 @@ h3 {
 }
 
 .portfolio-link-group {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px 12px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
 }
 
 .portfolio-additional .portfolio-link-group a {
+  display: inline-flex;
+  min-height: 38px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 0 10px;
   color: var(--ink);
+  text-align: center;
 }
 
 .portfolio-additional .portfolio-link-group a + a {
-  color: var(--accent-2);
+  color: var(--ink);
 }
 
 .portfolio-additional span {

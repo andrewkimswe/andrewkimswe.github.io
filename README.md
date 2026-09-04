@@ -37,7 +37,7 @@ python3 scripts/validate_site.py
 ></script>
 ```
 
-실제로 집계하려면 GoatCounter에서 `jiwonkim-blog` 사이트를 만들거나, 원하는 분석 도구의 스크립트로 교체하면 됩니다.
+실제로 집계하려면 GoatCounter에서 `jiwonkim-blog` 사이트를 만들고 visitor counter 공개 설정을 켜거나, 원하는 분석 도구의 스크립트로 교체하면 됩니다. 홈 화면의 방문자 표시는 GoatCounter public counter API의 `TOTAL` 값을 사용합니다.
 
 AI 방문은 보통 HTML만 가져가고 JavaScript를 실행하지 않으면 집계되지 않습니다. 반대로 AI 브라우저나 렌더러가 JavaScript를 실행하면 일반 방문처럼 집계될 수 있습니다.
 

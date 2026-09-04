@@ -6,6 +6,7 @@ Jiwon Kim's Blog is a Korean technical blog about backend engineering, cloud inf
 
 - Home: https://andrewkimswe.github.io/
 - GitHub: https://github.com/andrewkimswe
+- LinkedIn: https://www.linkedin.com/in/jiwon-kim-867334285/
 - Sitemap: https://andrewkimswe.github.io/sitemap.xml
 - RSS: https://andrewkimswe.github.io/feed.xml
 

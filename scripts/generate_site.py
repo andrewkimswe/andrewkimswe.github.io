@@ -255,6 +255,7 @@ def write_llms(posts: list[Post]) -> None:
         "",
         f"- Home: {SITE_URL}/",
         "- GitHub: https://github.com/andrewkimswe",
+        "- LinkedIn: https://www.linkedin.com/in/jiwon-kim-867334285/",
         f"- Sitemap: {SITE_URL}/sitemap.xml",
         f"- RSS: {SITE_URL}/feed.xml",
         "",
