@@ -130,7 +130,11 @@ def choose_topic(tags: tuple[str, ...], eyebrow: str, title: str) -> str:
 
 
 def load_posts() -> list[Post]:
-    return sorted((parse_post(path) for path in (ROOT / "posts").glob("*.html")), key=lambda p: p.date, reverse=True)
+    return sorted(
+        (parse_post(path) for path in (ROOT / "posts").glob("*.html")),
+        key=lambda p: (p.date, p.slug),
+        reverse=True,
+    )
 
 
 def render_post_rows(posts: list[Post]) -> str:
