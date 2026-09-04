@@ -535,6 +535,23 @@ h3 {
   border-bottom: 1px solid var(--line);
 }
 
+.post-list {
+  max-height: min(760px, 78vh);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  padding-right: 10px;
+  scrollbar-color: var(--accent) transparent;
+  scrollbar-width: thin;
+}
+
+.post-list:focus-visible,
+.portfolio-grid:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 4px;
+}
+
 .post-row a {
   display: grid;
   grid-template-columns: 118px 130px minmax(240px, 0.86fr) minmax(220px, 1fr);
@@ -576,10 +593,15 @@ h3 {
 
 .portfolio-grid {
   display: grid;
+  max-height: min(1080px, 92vh);
+  overflow-y: auto;
+  overscroll-behavior: contain;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 1px;
   border: 1px solid var(--line);
   background: var(--line);
+  scrollbar-color: var(--accent) transparent;
+  scrollbar-width: thin;
 }
 
 .portfolio-item {
@@ -942,6 +964,7 @@ h3 {
 
   .portfolio-grid {
     grid-template-columns: 1fr;
+    max-height: min(940px, 90vh);
   }
 
   .portfolio-featured {
@@ -990,6 +1013,11 @@ h3 {
     padding: 24px 0;
   }
 
+  .post-list {
+    max-height: 680px;
+    padding-right: 0;
+  }
+
   .post-row p {
     grid-column: auto;
   }
@@ -1028,6 +1056,10 @@ h3 {
   .portfolio-visual,
   .portfolio-featured .portfolio-visual {
     min-height: 220px;
+  }
+
+  .portfolio-grid {
+    max-height: 760px;
   }
 
   .profile-grid {

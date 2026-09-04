@@ -159,7 +159,7 @@ def update_index(posts: list[Post]) -> None:
     html = ensure_social_meta(html, is_home=True)
     replacement = r'\1' + render_post_rows(posts).replace("\\", r"\\") + r'\3'
     html = re.sub(
-        r'(<div class="post-list" id="postGrid">\n)(.*?)(\n        </div>\n      </section>\n\n      <section class="section portfolio-section")',
+        r'(<div class="post-list" id="postGrid"[^>]*>\n)(.*?)(\n        </div>\n      </section>\n\n      <section class="section portfolio-section")',
         replacement,
         html,
         flags=re.S,

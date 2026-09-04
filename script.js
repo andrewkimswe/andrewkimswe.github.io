@@ -1,5 +1,6 @@
 const searchInput = document.querySelector("#postSearch");
 const filterButtons = document.querySelectorAll("[data-filter]");
+const postList = document.querySelector("#postGrid");
 const posts = document.querySelectorAll(".post-row");
 const visitStatusItems = document.querySelectorAll("#visitStatus, [data-visit-status]");
 const postCountItems = document.querySelectorAll("[data-post-count]");
@@ -33,11 +34,15 @@ filterButtons.forEach((button) => {
     button.classList.add("active");
     activeFilter = button.dataset.filter;
     updatePosts();
+    postList?.scrollTo({ top: 0, behavior: "smooth" });
   });
 });
 
 if (searchInput) {
-  searchInput.addEventListener("input", updatePosts);
+  searchInput.addEventListener("input", () => {
+    updatePosts();
+    postList?.scrollTo({ top: 0 });
+  });
 }
 
 visitStatusItems.forEach((visitStatus) => {
