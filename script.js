@@ -1,7 +1,8 @@
 const searchInput = document.querySelector("#postSearch");
 const filterButtons = document.querySelectorAll("[data-filter]");
 const posts = document.querySelectorAll(".post-row");
-const visitStatus = document.querySelector("#visitStatus");
+const visitStatusItems = document.querySelectorAll("#visitStatus, [data-visit-status]");
+const postCountItems = document.querySelectorAll("[data-post-count]");
 
 let activeFilter = "all";
 
@@ -35,9 +36,14 @@ if (searchInput) {
   searchInput.addEventListener("input", updatePosts);
 }
 
-if (visitStatus) {
-  visitStatus.textContent = "Visitor analytics ready";
-}
+visitStatusItems.forEach((visitStatus) => {
+  visitStatus.textContent = "집계 중";
+  visitStatus.title = "GoatCounter page view events. AI crawler traffic can be included when it loads JavaScript or the tracking pixel.";
+});
+
+postCountItems.forEach((postCount) => {
+  postCount.textContent = posts.length.toString();
+});
 
 async function renderMermaidDiagrams() {
   const diagrams = document.querySelectorAll(".mermaid");
