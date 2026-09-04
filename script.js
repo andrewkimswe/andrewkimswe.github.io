@@ -3,6 +3,8 @@ const filterButtons = document.querySelectorAll("[data-filter]");
 const posts = document.querySelectorAll(".post-row");
 const visitStatusItems = document.querySelectorAll("#visitStatus, [data-visit-status]");
 const postCountItems = document.querySelectorAll("[data-post-count]");
+const visitApiLinks = document.querySelectorAll("[data-visit-api-link]");
+const GOATCOUNTER_BASE_URL = "https://jiwonkim-blog.goatcounter.com";
 
 let activeFilter = "all";
 
@@ -44,6 +46,54 @@ visitStatusItems.forEach((visitStatus) => {
 postCountItems.forEach((postCount) => {
   postCount.textContent = posts.length.toString();
 });
+
+function counterPath() {
+  const path = window.location.pathname.replace(/\/index\.html$/, "/");
+  return path || "/";
+}
+
+function counterApiUrl(path) {
+  return `${GOATCOUNTER_BASE_URL}/counter/${encodeURIComponent(path)}.json`;
+}
+
+function updateVisitText(text, title) {
+  visitStatusItems.forEach((visitStatus) => {
+    visitStatus.textContent = text;
+    visitStatus.title = title;
+  });
+}
+
+async function loadVisitCount() {
+  if (!visitStatusItems.length) {
+    return;
+  }
+
+  const path = counterPath();
+  const url = counterApiUrl(path);
+
+  visitApiLinks.forEach((link) => {
+    link.href = url;
+  });
+
+  try {
+    const response = await fetch(url, {
+      cache: "no-store",
+      headers: { accept: "application/json" },
+    });
+
+    if (!response.ok) {
+      throw new Error(`Counter API returned ${response.status}`);
+    }
+
+    const data = await response.json();
+    const count = data && data.count ? data.count : "0";
+    updateVisitText(`방문 ${count}`, "GoatCounter public counter API에서 가져온 현재 page visit count입니다.");
+  } catch (error) {
+    updateVisitText("집계 대기", "GoatCounter visitor count 공개 설정이 꺼져 있거나 아직 이 path의 통계가 준비되지 않았습니다.");
+  }
+}
+
+loadVisitCount();
 
 async function renderMermaidDiagrams() {
   const diagrams = document.querySelectorAll(".mermaid");

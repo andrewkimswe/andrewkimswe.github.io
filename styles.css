@@ -245,6 +245,12 @@ h3 {
   line-height: 1.58;
 }
 
+.signal-note a {
+  color: var(--accent);
+  font-weight: 900;
+  text-decoration: none;
+}
+
 .section {
   padding: clamp(64px, 8vw, 112px) clamp(18px, 4vw, 64px);
 }
@@ -598,11 +604,13 @@ h3 {
 
 .portfolio-visual {
   position: relative;
+  display: grid;
+  place-items: center;
   overflow: hidden;
   min-height: 230px;
   margin: 0;
   border: 1px solid var(--line);
-  background: #16111f;
+  background: #101414;
 }
 
 .portfolio-visual img {
@@ -613,39 +621,9 @@ h3 {
   object-fit: cover;
 }
 
-.portfolio-rag-visual {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  align-content: center;
-  gap: 10px 18px;
-  padding: 28px;
-  background:
-    linear-gradient(135deg, rgba(14, 95, 89, 0.16), transparent 55%),
-    linear-gradient(45deg, #fbfaf7, #ece5d8);
-}
-
-.portfolio-rag-visual span,
-.portfolio-rag-visual small {
-  color: var(--muted);
-  font-size: 12px;
-  font-weight: 900;
-  text-transform: uppercase;
-}
-
-.portfolio-rag-visual strong {
-  color: var(--ink);
-  font-family: Georgia, "Times New Roman", serif;
-  font-size: clamp(46px, 7vw, 86px);
-  font-weight: 500;
-  line-height: 0.88;
-}
-
-.portfolio-rag-visual small {
-  grid-column: 1 / -1;
-  margin-top: 12px;
-  padding-top: 14px;
-  border-top: 1px solid var(--line);
-  line-height: 1.5;
+.portfolio-visual img.portfolio-screenshot {
+  object-fit: contain;
+  background: var(--paper);
 }
 
 .portfolio-heading {
@@ -759,6 +737,20 @@ h3 {
 }
 
 .portfolio-additional a:hover {
+  color: var(--accent-2);
+}
+
+.portfolio-link-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+}
+
+.portfolio-additional .portfolio-link-group a {
+  color: var(--ink);
+}
+
+.portfolio-additional .portfolio-link-group a + a {
   color: var(--accent-2);
 }
 
