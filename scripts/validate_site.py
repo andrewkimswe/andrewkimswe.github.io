@@ -15,17 +15,28 @@ class LinkParser(HTMLParser):
     def __init__(self) -> None:
         super().__init__()
         self.links: list[str] = []
+        self.post_row_links: list[str] = []
         self.meta: list[dict[str, str]] = []
         self.h1_count = 0
+        self._post_row_depth = 0
 
     def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
         data = {key: value or "" for key, value in attrs}
+        classes = set(data.get("class", "").split())
+        if "post-row" in classes:
+            self._post_row_depth += 1
         if tag == "a" and data.get("href"):
             self.links.append(data["href"])
+            if self._post_row_depth:
+                self.post_row_links.append(data["href"])
         if tag == "meta":
             self.meta.append(data)
         if tag == "h1":
             self.h1_count += 1
+
+    def handle_endtag(self, tag: str) -> None:
+        if tag == "article" and self._post_row_depth:
+            self._post_row_depth -= 1
 
 
 def parse_html(path: Path) -> LinkParser:
@@ -43,7 +54,7 @@ def main() -> int:
     post_files = sorted(path.name for path in (ROOT / "posts").glob("*.html"))
 
     index = parse_html(ROOT / "index.html")
-    index_posts = sorted(link.removeprefix("./posts/") for link in index.links if link.startswith("./posts/"))
+    index_posts = sorted(link.removeprefix("./posts/") for link in index.post_row_links if link.startswith("./posts/"))
     if index_posts != post_files:
         fail(f"index.html post links differ from posts directory: {set(post_files) ^ set(index_posts)}", errors)
 

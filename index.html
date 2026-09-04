@@ -132,6 +132,39 @@
 
           <article class="portfolio-item">
             <div class="portfolio-heading">
+              <span class="portfolio-type">CloudOps RAG System</span>
+              <h3>CloudOps RAG</h3>
+            </div>
+            <p>
+              AWS와 Kubernetes troubleshooting 문서를 대상으로 검색, 답변 생성, 평가, fallback, serving, observability까지 확장한 운영형 RAG 프로젝트입니다.
+            </p>
+            <dl class="portfolio-points">
+              <div>
+                <dt>Problem</dt>
+                <dd>튜토리얼 RAG는 답을 생성할 수는 있지만, 검색이 맞았는지와 답변이 신뢰 가능한지 판단하기 어렵습니다.</dd>
+              </div>
+              <div>
+                <dt>Solution</dt>
+                <dd>Hit@k, MRR, answer evaluation, threshold fallback, failure taxonomy, FastAPI serving, Prometheus metrics, CI regression gate를 추가했습니다.</dd>
+              </div>
+              <div>
+                <dt>Result</dt>
+                <dd>Held-out retrieval에서 Hit@3 8/8, MRR 0.9375를 확인했고, low-confidence query는 LLM 호출을 건너뛰도록 분리했습니다.</dd>
+              </div>
+            </dl>
+            <div class="portfolio-tags">
+              <span>Python</span>
+              <span>FastAPI</span>
+              <span>OpenAI API</span>
+              <span>Chroma</span>
+              <span>RAG Evaluation</span>
+              <span>Prometheus</span>
+            </div>
+            <a class="portfolio-link" href="./posts/rag-cloudops-productionish-evaluation-fallback-serving-observability.html">Case Study</a>
+          </article>
+
+          <article class="portfolio-item">
+            <div class="portfolio-heading">
               <span class="portfolio-type">Club Fair Project</span>
               <h3>Hongik Taste Navigator</h3>
             </div>
