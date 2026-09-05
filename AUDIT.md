@@ -47,6 +47,15 @@ Audit date: 2026-09-05
 - 브라우저 검색은 한국어 형태소와 의미 기반 검색을 지원하지 않습니다.
 - 기술 글의 모든 AWS 설정은 계정별 정책과 최신 공식 문서를 배포 전에 다시 확인해야 합니다.
 
+## Verification
+
+- Site validator: 29 posts and 3 indexable pages passed
+- Long-form article UI: 16 TOC links matched 16 article headings
+- Code controls: 20 code blocks matched 20 copy buttons
+- Mermaid: 36 of 36 diagrams rendered without fallback errors in the longest RAG article
+- Layout: no horizontal document overflow on audited desktop and mobile pages
+- Project media: all six lazy-loaded images completed with valid natural dimensions
+
 ## Next Priorities
 
 1. 실제 CloudOps RAG 저장소의 benchmark artifact와 블로그 수치를 자동으로 연결합니다.
