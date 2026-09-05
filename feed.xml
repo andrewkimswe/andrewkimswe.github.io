@@ -6,7 +6,14 @@
     <atom:link href="https://andrewkimswe.github.io/feed.xml" rel="self" type="application/rss+xml" />
     <description>백엔드, 클라우드, RAG, 아키텍처와 운영 판단을 기록하는 기술 블로그입니다.</description>
     <language>ko-KR</language>
-    <lastBuildDate>Sat, 05 Sep 2026 00:00:00 +0900</lastBuildDate>
+    <lastBuildDate>Sun, 06 Sep 2026 00:00:00 +0900</lastBuildDate>
+    <item>
+      <title>[AWS/Database] Lambda는 버티는데 RDS가 먼저 죽는 이유 - RDS Proxy, Connection Storm, Pinning</title>
+      <link>https://andrewkimswe.github.io/posts/aws-database-rds-proxy-connection-storm-pinning.html</link>
+      <guid isPermaLink="true">https://andrewkimswe.github.io/posts/aws-database-rds-proxy-connection-storm-pinning.html</guid>
+      <pubDate>Sun, 06 Sep 2026 00:00:00 +0900</pubDate>
+      <description>RDS Proxy를 붙이는 구성에서 더 나아가 연결 예산, pinning 회귀, 부하 테스트, 장애조치와 운영 책임까지 설계합니다.</description>
+    </item>
     <item>
       <title>[AWS/Security] 여러 계정의 CloudTrail 로그를 중앙화해도 감사 공백이 생기는 이유 - Organization Trail, S3 Policy, KMS, Delivery SLO</title>
       <link>https://andrewkimswe.github.io/posts/aws-cloudtrail-organization-central-s3-governance.html</link>

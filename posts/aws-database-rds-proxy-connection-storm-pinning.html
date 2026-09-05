@@ -1,0 +1,587 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>[AWS/Database] Lambda는 버티는데 RDS가 먼저 죽는 이유 - RDS Proxy, Connection Storm, Pinning | Jiwon Kim Engineering Notes</title>
+    <meta name="description" content="Lambda 트래픽 급증이 RDS connection storm으로 번지는 과정을 재현하고, RDS Proxy의 pooling과 multiplexing, session pinning, SLO, 비용 기준, canary rollout과 rollback을 운영 관점에서 설계합니다." />
+    <meta name="author" content="Jiwon Kim" />
+    <meta name="robots" content="index, follow, max-image-preview:large" />
+    <link rel="canonical" href="https://andrewkimswe.github.io/posts/aws-database-rds-proxy-connection-storm-pinning.html" />
+    <meta property="og:site_name" content="Jiwon Kim | Engineering Notes" />
+    <meta property="og:title" content="[AWS/Database] Lambda는 버티는데 RDS가 먼저 죽는 이유 - RDS Proxy, Connection Storm, Pinning" />
+    <meta property="og:description" content="RDS Proxy를 붙이는 구성에서 더 나아가 연결 예산, pinning 회귀, 부하 테스트, 장애조치와 운영 책임까지 설계합니다." />
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="https://andrewkimswe.github.io/posts/aws-database-rds-proxy-connection-storm-pinning.html" />
+    <meta property="og:image" content="https://andrewkimswe.github.io/assets/social-card.png" />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Jiwon Kim Engineering Notes" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://andrewkimswe.github.io/assets/social-card.png" />
+    <meta name="twitter:title" content="[AWS/Database] Lambda는 버티는데 RDS가 먼저 죽는 이유 - RDS Proxy, Connection Storm, Pinning" />
+    <meta name="twitter:description" content="RDS Proxy를 붙이는 구성에서 더 나아가 연결 예산, pinning 회귀, 부하 테스트, 장애조치와 운영 책임까지 설계합니다." />
+    <meta property="article:modified_time" content="2026-09-06T00:00:00+09:00" />
+    <meta name="twitter:image:alt" content="Jiwon Kim Engineering Notes" />
+    <meta property="article:published_time" content="2026-09-06T00:00:00+09:00" />
+    <meta property="article:author" content="Jiwon Kim" />
+    <meta property="article:tag" content="AWS" />
+    <meta property="article:tag" content="Database" />
+    <meta property="article:tag" content="RDS Proxy" />
+    <meta property="article:tag" content="Lambda" />
+    <meta property="article:tag" content="MySQL" />
+    <meta property="article:tag" content="Reliability" />
+    <meta property="article:tag" content="Observability" />
+    <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="../styles.css?v=20260905-4" />
+    <script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","headline":"[AWS/Database] Lambda는 버티는데 RDS가 먼저 죽는 이유 - RDS Proxy, Connection Storm, Pinning","description":"Lambda 트래픽 급증이 RDS connection storm으로 번지는 과정을 재현하고, RDS Proxy의 pooling과 multiplexing, session pinning, SLO, 비용 기준, canary rollout과 rollback을 운영 관점에서 설계합니다.","datePublished":"2026-09-06T00:00:00+09:00","dateModified":"2026-09-06T00:00:00+09:00","author":{"@type":"Person","name":"Jiwon Kim","url":"https://github.com/andrewkimswe"},"publisher":{"@type":"Person","name":"Jiwon Kim"},"mainEntityOfPage":"https://andrewkimswe.github.io/posts/aws-database-rds-proxy-connection-storm-pinning.html","inLanguage":"ko-KR"}
+    </script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main-content">본문으로 바로가기</a>
+    <header class="site-header">
+      <a class="brand" href="../" aria-label="Jiwon Kim Engineering Notes 홈">
+        <span class="brand-mark" aria-hidden="true">JK</span>
+        <span class="brand-copy"><strong>Jiwon Kim</strong><small>Engineering Notes</small></span>
+      </a>
+      <nav class="nav-links" aria-label="주요 메뉴">
+        <a href="../articles.html">Articles</a>
+        <a href="../projects.html">Projects</a>
+        <a href="../#about">About</a>
+        <span class="nav-divider" aria-hidden="true"></span>
+        <a href="https://github.com/andrewkimswe">GitHub</a>
+        <a href="https://www.linkedin.com/in/jiwon-kim-867334285/">LinkedIn</a>
+      </nav>
+    </header>
+
+    <main id="main-content">
+      <article class="article-page">
+        <header class="article-hero">
+          <a class="back-link" href="../articles.html">All articles</a>
+          <p class="eyebrow">AWS · Database · Reliability</p>
+          <h1>[AWS/Database] Lambda는 버티는데 RDS가 먼저 죽는 이유 - RDS Proxy, Connection Storm, Pinning</h1>
+          <p class="article-summary">RDS Proxy를 붙이는 구성에서 더 나아가 연결 예산, pinning 회귀, 부하 테스트, 장애조치와 운영 책임까지 설계합니다.</p>
+          <div class="article-meta"><time datetime="2026-09-06">2026.09.06</time><span>AWS</span><span>Database</span><span>RDS Proxy</span><span>Reliability</span><span class="reading-time" data-generated="true">약 30분</span></div>
+        </header>
+
+        <!-- GENERATED:ARTICLE_TOC:START -->
+        <aside class="article-toc" aria-label="이 글의 목차">
+          <details open>
+            <summary>On this page</summary>
+            <ol>
+              <li><a href="#section-01">1. 장애를 Lambda 문제가 아니라 연결 예산 초과로 정의한다</a></li>
+              <li><a href="#section-02">2. 연결 수를 계산하지 않으면 작은 pool도 장애를 만든다</a></li>
+              <li><a href="#section-03">3. 네 가지 선택지를 비교하고 Proxy의 책임을 제한한다</a></li>
+              <li><a href="#section-04">4. Pooling과 multiplexing은 같은 말이 아니다</a></li>
+              <li><a href="#section-05">5. 네트워크 경계는 Lambda, Proxy, DB 세 단계로 나눈다</a></li>
+              <li><a href="#section-06">6. Secrets Manager와 IAM 인증의 역할을 분리한다</a></li>
+              <li><a href="#section-07">7. CloudFormation으로 연결 상한과 borrow timeout을 코드화한다</a></li>
+              <li><a href="#section-08">8. Lambda도 Client 연결을 재사용하고 timeout을 짧게 둔다</a></li>
+              <li><a href="#section-09">9. 처음 실패하기 쉬운 접근은 작은 pool을 각 함수에 두는 것이다</a></li>
+              <li><a href="#section-10">10. Session pinning은 Proxy를 비싼 pass-through로 만든다</a></li>
+              <li><a href="#section-11">11. 부하 실험은 direct, proxy, pinned 세 집단으로 나눈다</a></li>
+              <li><a href="#section-12">12. 성공 기준은 API latency와 DB 보호를 함께 본다</a></li>
+              <li><a href="#section-13">13. CloudWatch에서는 연결 수보다 연결 재사용률을 본다</a></li>
+              <li><a href="#section-14">14. Failover 실험은 연결 유지와 transaction 실패를 구분한다</a></li>
+              <li><a href="#section-15">15. 실패 유형마다 alert와 runbook을 분리한다</a></li>
+              <li><a href="#section-16">16. Canary rollout에는 direct endpoint로 돌아가는 경로가 필요하다</a></li>
+              <li><a href="#section-17">17. 비용 판단은 Proxy와 다음 DB 증설 비용을 비교한다</a></li>
+              <li><a href="#section-18">18. 설정 변경도 성능 회귀로 취급한다</a></li>
+              <li><a href="#section-19">19. 운영 책임은 애플리케이션과 데이터베이스 사이에 걸쳐 있다</a></li>
+              <li><a href="#section-20">20. 아직 production-grade라고 주장하지 않는 범위</a></li>
+              <li><a href="#section-21">21. 마무리</a></li>
+            </ol>
+          </details>
+        </aside>
+        <!-- GENERATED:ARTICLE_TOC:END -->
+
+        <div class="article-body">
+          <p>서버리스 API에 트래픽이 몰렸을 때 Lambda 동시 실행 수는 빠르게 증가합니다. 그런데 데이터베이스는 같은 속도로 연결 수를 늘릴 수 없습니다. API Gateway와 Lambda는 정상인데 RDS에서 <code>Too many connections</code>, 연결 시간 초과와 메모리 압박이 먼저 발생하는 이유입니다.</p>
+          <p>이 글은 실제 프로덕션 장애 회고가 아니라, Lambda와 RDS for MySQL 사이의 connection storm을 통제 가능한 시스템으로 바꾸기 위한 설계와 검증 계획입니다. 아래의 숫자는 실측 결과가 아니라 <strong>초기 acceptance target</strong>입니다. 실제 환경에서 부하 테스트를 수행한 뒤 결과 열을 채우기 전까지 성능 개선을 달성했다고 주장하지 않습니다.</p>
+
+          <h2 id="section-01">1. 장애를 Lambda 문제가 아니라 연결 예산 초과로 정의한다</h2>
+          <p>요청 하나가 실행 환경 하나와 데이터베이스 연결 하나를 요구한다고 가정하면, Lambda의 확장은 곧 연결 수의 급증이 됩니다. 평소 30개의 실행 환경을 사용하던 API가 행사 시작과 함께 500개로 늘어나면 애플리케이션 컴퓨팅은 확장되지만 DB의 <code>max_connections</code>와 연결 생성 CPU 비용은 그대로입니다.</p>
+          <div class="mermaid diagram">
+flowchart LR
+    clients[Traffic burst] --> api[API Gateway]
+    api --> lambda[Lambda concurrency<br/>30 to 500]
+    lambda -->|new connection per environment| rds[(RDS MySQL)]
+    rds --> limit{Connection budget}
+    limit -->|exceeded| errors[Timeouts and<br/>connection errors]
+          </div>
+          <p>관찰되는 증상은 비슷해도 원인은 네 가지로 나뉩니다.</p>
+          <table>
+            <thead><tr><th>원인</th><th>관찰 신호</th><th>잘못된 대응</th></tr></thead>
+            <tbody>
+              <tr><td>연결 수 한도</td><td>DB <code>DatabaseConnections</code>가 상한에 근접</td><td>Lambda timeout만 증가</td></tr>
+              <tr><td>연결 생성 비용</td><td>짧은 요청에서도 DB CPU와 connect latency 증가</td><td>쿼리 튜닝만 수행</td></tr>
+              <tr><td>긴 트랜잭션</td><td>연결이 반환되지 않고 borrow latency 증가</td><td>Proxy pool 크기만 확대</td></tr>
+              <tr><td>Session pinning</td><td>Client는 많고 DB 연결 재사용률은 낮음</td><td>Proxy를 붙였으니 pooling이 된다고 가정</td></tr>
+            </tbody>
+          </table>
+          <p>핵심 지표는 Lambda 동시 실행 수 자체가 아니라 <strong>DB가 감당할 수 있는 연결 예산과 한 연결이 점유되는 시간</strong>입니다.</p>
+
+          <h2 id="section-02">2. 연결 수를 계산하지 않으면 작은 pool도 장애를 만든다</h2>
+          <p>컨테이너나 EC2에서는 프로세스 하나의 connection pool이 작아 보여도 전체 합계가 문제가 됩니다. Lambda에서는 실행 환경마다 독립적인 연결이나 작은 pool이 만들어질 수 있어 더 쉽게 증폭됩니다.</p>
+          <pre><code class="language-text">Direct connection upper bound
+  = active execution environments
+  x connections per environment
+  x database users or tenant-specific pools
+
+Example
+  500 environments x 1 connection = 500 client connections
+  100 ECS tasks x pool size 10 = 1,000 client connections</code></pre>
+          <p>애플리케이션 pool을 10에서 5로 줄이는 것은 도움이 되지만, task 수가 20배 늘면 합계는 다시 한도를 넘습니다. 따라서 계산에는 인스턴스 하나의 pool 크기가 아니라 최대 replica 수, Lambda reserved concurrency, 배치 worker와 운영자 연결까지 포함해야 합니다.</p>
+          <p>DB 연결 한도 전체를 애플리케이션에 주지도 않습니다. 장애조사, migration, monitoring, failover 후 재연결을 위한 headroom을 남겨야 합니다. 이 글의 초기 정책은 RDS Proxy가 사용할 수 있는 DB 연결을 <code>max_connections</code>의 70%로 제한하고, 나머지를 운영과 예외 workload에 남기는 것입니다. 70%는 보편적인 정답이 아니라 부하 테스트를 시작하기 위한 값입니다.</p>
+
+          <h2 id="section-03">3. 네 가지 선택지를 비교하고 Proxy의 책임을 제한한다</h2>
+          <table>
+            <thead><tr><th>선택지</th><th>장점</th><th>한계</th><th>선택 조건</th></tr></thead>
+            <tbody>
+              <tr><td>DB instance 확장</td><td>코드 변경이 거의 없고 즉시 한도 증가</td><td>연결 폭증 원인은 남고 비용이 계속 증가</td><td>CPU·메모리·쿼리 처리량도 함께 부족할 때</td></tr>
+              <tr><td>애플리케이션 pool</td><td>추가 서비스 비용이 없음</td><td>Lambda·다수 replica에서는 pool이 분산되어 합계가 증가</td><td>고정된 소수의 장기 실행 프로세스</td></tr>
+              <tr><td>RDS Proxy</td><td>관리형 pooling, multiplexing, 연결 제한과 failover 추상화</td><td>추가 비용, latency, pinning과 엔진 제약</td><td>짧고 독립적인 트랜잭션이 많은 burst workload</td></tr>
+              <tr><td>데이터 계층 재설계</td><td>HTTP 기반 데이터 API나 비관계형 저장소로 연결 문제 제거 가능</td><td>가장 큰 코드·데이터 모델 변경</td><td>장기적인 재설계가 이미 필요한 경우</td></tr>
+            </tbody>
+          </table>
+          <p>여기서는 Lambda가 짧은 트랜잭션으로 MySQL에 접근하며, 갑작스러운 연결 증가가 주된 병목이라는 조건에서 RDS Proxy를 선택합니다. Proxy는 느린 SQL을 빠르게 만들지 않고, lock contention이나 잘못된 index도 해결하지 않습니다. 책임은 <strong>연결 생성·재사용·DB 보호·failover 연결 처리</strong>로 한정합니다.</p>
+
+          <h2 id="section-04">4. Pooling과 multiplexing은 같은 말이 아니다</h2>
+          <p>RDS Proxy에는 Client에서 Proxy로 향하는 연결과 Proxy에서 DB로 향하는 연결이 따로 존재합니다. Proxy는 DB 연결을 pool에 보관하고, transaction이 끝났을 때 안전하다면 다른 Client transaction에 재사용합니다. 이 transaction 단위 재사용이 multiplexing입니다.</p>
+          <div class="mermaid diagram">
+flowchart LR
+    subgraph clients[Client connections]
+      l1[Lambda 1]
+      l2[Lambda 2]
+      l3[Lambda 3]
+      ln[Lambda N]
+    end
+    subgraph proxy[RDS Proxy]
+      queue[Borrow queue]
+      pool[Connection pool]
+    end
+    subgraph database[RDS MySQL]
+      d1[DB connection 1]
+      d2[DB connection 2]
+      dm[DB connection M]
+    end
+    l1 --> queue
+    l2 --> queue
+    l3 --> queue
+    ln --> queue
+    queue --> pool
+    pool --> d1
+    pool --> d2
+    pool --> dm
+          </div>
+          <p><code>N</code>개의 Client 연결이 반드시 <code>N</code>개의 DB 연결을 뜻하지 않는 것이 Proxy의 가치입니다. 하지만 transaction이 오래 지속되거나 session 상태에 의존하면 한 Client가 한 DB 연결을 계속 점유합니다. 이때는 연결 수를 줄이지 못한 채 Proxy 비용과 hop만 추가될 수 있습니다.</p>
+
+          <h2 id="section-05">5. 네트워크 경계는 Lambda, Proxy, DB 세 단계로 나눈다</h2>
+          <p>Proxy는 데이터베이스와 같은 VPC에 배치하고 여러 가용 영역의 private subnet을 사용합니다. 보안 그룹은 애플리케이션이 DB endpoint로 직접 우회하지 못하도록 단계별로 연결합니다.</p>
+          <div class="mermaid diagram compact-diagram">
+flowchart LR
+    lambda[Lambda SG] -->|TCP 3306| proxy[RDS Proxy SG]
+    proxy -->|TCP 3306| db[RDS DB SG]
+    lambda -. blocked .-> db
+    secret[Secrets Manager] --> proxy
+    metrics[CloudWatch] --- proxy
+          </div>
+          <ul>
+            <li>Proxy SG의 inbound는 Lambda SG만 source로 허용합니다.</li>
+            <li>DB SG의 inbound는 Proxy SG만 허용합니다.</li>
+            <li>Canary 기간에는 별도 direct-test SG 규칙을 잠시 유지하고 종료일을 기록합니다.</li>
+            <li>함수와 Proxy subnet의 IP 여유를 배포 전에 확인합니다.</li>
+            <li>인터넷 egress가 필요하지 않다면 Secrets Manager와 CloudWatch 접근 경로도 VPC endpoint 또는 조직의 승인된 egress로 통제합니다.</li>
+          </ul>
+          <p>RDS Proxy를 사용하면서 Lambda SG에서 DB SG로 직접 접근을 계속 허용하면 일부 함수가 환경 변수나 배포 drift 때문에 Proxy를 우회할 수 있습니다. 관측 지표가 좋아 보여도 전체 workload가 Proxy를 사용한다는 보장이 없어집니다.</p>
+
+          <h2 id="section-06">6. Secrets Manager와 IAM 인증의 역할을 분리한다</h2>
+          <p>Proxy가 DB에 연결할 때는 Secrets Manager의 database credential을 사용할 수 있습니다. Client에서 Proxy까지는 password 인증 또는 IAM database authentication을 선택할 수 있습니다. 여기서는 Lambda에 장기 password를 전달하지 않기 위해 Client-to-Proxy IAM 인증을 요구합니다.</p>
+          <div class="mermaid diagram compact-diagram">
+sequenceDiagram
+    participant L as Lambda
+    participant IAM as IAM/RDS Auth
+    participant P as RDS Proxy
+    participant S as Secrets Manager
+    participant D as RDS MySQL
+    L->>IAM: Generate short-lived auth token
+    L->>P: Connect with TLS and token
+    P->>S: Read approved DB secret
+    P->>D: Borrow or create DB connection
+    D-->>L: Transaction result through Proxy
+          </div>
+          <p>Lambda execution role에는 모든 database user가 아니라 특정 Proxy resource ID와 DB user에 대한 <code>rds-db:connect</code>만 부여합니다. Proxy service role에는 승인된 Secret의 <code>secretsmanager:GetSecretValue</code>와 필요한 KMS decrypt 권한만 부여합니다. Secret rotation을 활성화했다면 Proxy와 DB 양쪽에서 새 credential이 정상화되는지를 별도 canary query로 확인합니다.</p>
+
+          <h2 id="section-07">7. CloudFormation으로 연결 상한과 borrow timeout을 코드화한다</h2>
+          <p>다음은 핵심 리소스만 남긴 예시입니다. 실제 stack에는 subnet, security group, DB resource와 KMS 조건을 조직 표준에 맞게 연결해야 합니다.</p>
+          <pre><code class="language-yaml">Resources:
+  ProxyRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: rds.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: ReadDatabaseSecret
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action: secretsmanager:GetSecretValue
+                Resource: !Ref DbSecretArn
+
+  OrderApiProxy:
+    Type: AWS::RDS::DBProxy
+    Properties:
+      DBProxyName: order-api-proxy
+      EngineFamily: MYSQL
+      RequireTLS: true
+      RoleArn: !GetAtt ProxyRole.Arn
+      VpcSubnetIds: !Ref PrivateSubnetIds
+      VpcSecurityGroupIds:
+        - !Ref ProxySecurityGroup
+      Auth:
+        - AuthScheme: SECRETS
+          SecretArn: !Ref DbSecretArn
+          IAMAuth: REQUIRED
+
+  ProxyTargetGroup:
+    Type: AWS::RDS::DBProxyTargetGroup
+    Properties:
+      DBProxyName: !Ref OrderApiProxy
+      TargetGroupName: default
+      DBInstanceIdentifiers:
+        - !Ref DbInstanceIdentifier
+      ConnectionPoolConfigurationInfo:
+        MaxConnectionsPercent: 70
+        MaxIdleConnectionsPercent: 35
+        ConnectionBorrowTimeout: 5</code></pre>
+          <p><code>MaxConnectionsPercent</code>는 DB의 <code>max_connections</code> 대비 Proxy가 만들 수 있는 연결 비율입니다. <code>ConnectionBorrowTimeout</code>을 무작정 늘리면 error는 줄어 보여도 사용자 요청이 queue에서 오래 기다릴 수 있습니다. API latency budget보다 작은 값에서 시작하고, 연결 대기가 정상 처리로 회복될 수 있는 범위인지 부하 테스트로 결정합니다.</p>
+
+          <h2 id="section-08">8. Lambda도 Client 연결을 재사용하고 timeout을 짧게 둔다</h2>
+          <p>Proxy가 있다고 매 invocation마다 Client 연결을 새로 만들 이유는 없습니다. Lambda execution environment가 재사용되는 동안 연결을 보관하되, 끊어진 연결은 짧은 timeout으로 다시 생성합니다.</p>
+          <pre><code class="language-python">import os
+import boto3
+import pymysql
+
+DB_HOST = os.environ["DB_PROXY_ENDPOINT"]
+DB_USER = os.environ["DB_USER"]
+DB_NAME = os.environ["DB_NAME"]
+DB_PORT = 3306
+
+rds = boto3.client("rds")
+connection = None
+
+
+def get_connection():
+    global connection
+
+    if connection is not None:
+        try:
+            connection.ping(reconnect=False)
+            return connection
+        except Exception:
+            connection = None
+
+    token = rds.generate_db_auth_token(
+        DBHostname=DB_HOST,
+        Port=DB_PORT,
+        DBUsername=DB_USER,
+    )
+    connection = pymysql.connect(
+        host=DB_HOST,
+        user=DB_USER,
+        password=token,
+        database=DB_NAME,
+        port=DB_PORT,
+        connect_timeout=2,
+        read_timeout=2,
+        write_timeout=2,
+        ssl={"ca": "/opt/rds-ca.pem"},
+        autocommit=False,
+    )
+    return connection
+
+
+def handler(event, context):
+    global connection
+    conn = get_connection()
+    try:
+        with conn.cursor() as cursor:
+            cursor.execute(
+                "SELECT status FROM orders WHERE order_id = %s",
+                (event["order_id"],),
+            )
+            row = cursor.fetchone()
+        conn.commit()
+        return {"status": row[0] if row else "NOT_FOUND"}
+    except Exception:
+        conn.rollback()
+        connection = None
+        raise</code></pre>
+          <p><code>/opt/rds-ca.pem</code>은 Lambda Layer 또는 container image에 현재 RDS CA bundle을 포함했다는 전제의 경로입니다. Lambda execution role에는 대상 Proxy DB user로 접속할 수 있는 <code>rds-db:connect</code> 권한도 필요합니다. 인증서 검증이나 IAM 권한을 생략해 연결 문제를 우회하지 않습니다.</p>
+          <p>이 예시의 timeout 값 역시 초기값입니다. 무조건 재시도하지 않고 authentication error, connection exhaustion, transient failover를 분류해야 합니다. 사용자 요청 안에서의 재시도는 1회처럼 작게 제한하고, 전체 latency budget을 넘기기 전에 실패를 반환합니다.</p>
+
+          <h2 id="section-09">9. 처음 실패하기 쉬운 접근은 작은 pool을 각 함수에 두는 것이다</h2>
+          <p>처음에는 함수 내부에 pool을 만들면 연결 문제가 해결될 것처럼 보입니다. 하지만 Lambda execution environment가 500개 생성되고 각 환경이 하나의 idle connection만 보관해도 DB에는 500개가 남습니다. pool이 로컬에서는 효율적이어도 전체 시스템에서는 분산된 연결 재고가 됩니다.</p>
+          <p>두 번째 실패는 DB instance class와 <code>max_connections</code>만 늘리는 것입니다. connection storm의 임계점은 늦출 수 있지만, 행사 규모가 다시 증가하면 같은 형태로 재발합니다. CPU와 memory headroom이 실제 query workload에도 부족하다면 instance 확장이 필요하지만, 연결 생성만 문제라면 비용 대비 효과를 따로 측정해야 합니다.</p>
+          <p>세 번째 실패는 Proxy 도입 후 direct endpoint를 영구적으로 열어두는 것입니다. 일부 서비스가 direct endpoint를 사용하면 Proxy 지표와 DB 지표가 어긋나고 장애 원인 추적이 어려워집니다.</p>
+
+          <h2 id="section-10">10. Session pinning은 Proxy를 비싼 pass-through로 만든다</h2>
+          <p>Proxy는 다음 transaction이 이전 session 상태에 의존하지 않을 때 DB 연결을 다른 Client에 빌려줄 수 있습니다. MySQL에서 user variable 설정, temporary table, named lock, 일부 prepared statement와 큰 SQL text 같은 동작은 session pinning을 유발할 수 있습니다.</p>
+          <div class="mermaid diagram compact-diagram">
+flowchart TD
+    tx[Transaction completed] --> state{Session state remains?}
+    state -->|no| return[Return DB connection<br/>to shared pool]
+    state -->|yes| pin[Pin DB connection<br/>to client session]
+    pin --> pressure[Less multiplexing<br/>higher borrow latency]
+          </div>
+          <p>예를 들어 tenant ID를 session variable에 넣는 방식은 편하지만 연결 재사용을 제한할 수 있습니다.</p>
+          <pre><code class="language-sql">-- Pinning 위험: transaction 이후에도 session state가 남는다.
+SET @tenant_id = 'tenant-42';
+SELECT * FROM orders WHERE tenant_id = @tenant_id;
+
+-- 선호: 요청 값을 query parameter로 전달한다.
+SELECT * FROM orders WHERE tenant_id = ?;</code></pre>
+          <p>ORM과 driver가 애플리케이션 코드 밖에서 session initialization, prepared statement 또는 health-check query를 실행할 수도 있습니다. 따라서 SQL 코드 리뷰만으로 끝내지 않고 Proxy enhanced logging과 <code>DatabaseConnectionsCurrentlySessionPinned</code>를 canary gate에 포함합니다.</p>
+
+          <h2 id="section-11">11. 부하 실험은 direct, proxy, pinned 세 집단으로 나눈다</h2>
+          <p>Proxy 전후 숫자 하나만 비교하면 원인을 설명하기 어렵습니다. 같은 DB와 query를 사용하고 endpoint와 session behavior만 바꾼 세 집단을 비교합니다.</p>
+          <table>
+            <thead><tr><th>집단</th><th>연결 경로</th><th>목적</th></tr></thead>
+            <tbody>
+              <tr><td>A. Direct baseline</td><td>Lambda → RDS</td><td>현재 connection error와 DB 부하 기록</td></tr>
+              <tr><td>B. Proxy multiplexed</td><td>Lambda → Proxy → RDS</td><td>짧은 stateless transaction의 재사용 효과 측정</td></tr>
+              <tr><td>C. Proxy pinned</td><td>Lambda → Proxy → RDS + session state</td><td>pinning이 이점을 얼마나 상쇄하는지 확인</td></tr>
+            </tbody>
+          </table>
+          <p>부하는 세 단계로 고정합니다.</p>
+          <ol>
+            <li>Warm-up: 50 RPS로 5분 실행하여 Lambda environment와 연결을 준비합니다.</li>
+            <li>Burst: 10초 안에 500 RPS로 올리고 2분 유지합니다.</li>
+            <li>Recovery: 50 RPS로 낮춘 뒤 DB 연결과 borrow latency가 baseline으로 돌아오는 시간을 측정합니다.</li>
+          </ol>
+          <p>각 요청은 같은 index query와 짧은 transaction을 사용합니다. Proxy의 효과와 query plan 변화를 섞지 않기 위해 데이터셋, SQL, Lambda memory, Region과 RDS instance class를 고정합니다.</p>
+
+          <h2 id="section-12">12. 성공 기준은 API latency와 DB 보호를 함께 본다</h2>
+          <p>Proxy가 DB 연결 수를 줄였더라도 API가 오래 queue에서 대기하면 성공이 아닙니다. 반대로 p95 latency가 낮아도 DB 연결을 상한까지 사용한다면 다음 burst를 버틸 여유가 없습니다.</p>
+          <table>
+            <thead><tr><th>Signal</th><th>초기 acceptance target</th><th>실패 의미</th></tr></thead>
+            <tbody>
+              <tr><td>API success rate</td><td>Burst 구간 99.9% 이상</td><td>사용자 영향이 남음</td></tr>
+              <tr><td>API p95 latency</td><td>정상 250ms, Burst 500ms 이하</td><td>Proxy queue 또는 DB 처리 지연</td></tr>
+              <tr><td>DB connection utilization</td><td>99%의 1분 구간에서 70% 이하</td><td>운영·failover headroom 부족</td></tr>
+              <tr><td>Borrow latency p95</td><td>정상 20ms, Burst 100ms 이하</td><td>pool exhaustion 또는 긴 transaction</td></tr>
+              <tr><td>Pinned connection ratio</td><td>Canary p95 5% 미만</td><td>multiplexing 효과 감소</td></tr>
+              <tr><td>DB connection setup failure</td><td>0건</td><td>Secret, network, target 상태 문제</td></tr>
+              <tr><td>Failover write recovery</td><td>60초 이내</td><td>Client retry·transaction 복구 미흡</td></tr>
+            </tbody>
+          </table>
+          <p>이 값들은 AWS SLA가 아닙니다. 주문 조회 API를 가정한 내부 목표이며, workload의 기존 latency와 비즈니스 SLO에 맞게 변경해야 합니다. 중요한 것은 배포 전에 성공과 실패를 숫자로 합의하는 것입니다.</p>
+
+          <h2 id="section-13">13. CloudWatch에서는 연결 수보다 연결 재사용률을 본다</h2>
+          <p>대시보드는 Lambda, Proxy, DB 세 계층을 같은 시간축에 배치합니다.</p>
+          <table>
+            <thead><tr><th>계층</th><th>지표</th><th>판단</th></tr></thead>
+            <tbody>
+              <tr><td>Lambda</td><td><code>ConcurrentExecutions</code>, <code>Duration</code>, <code>Errors</code>, <code>Throttles</code></td><td>요청 급증과 함수 한도 확인</td></tr>
+              <tr><td>Proxy Client</td><td><code>ClientConnections</code>, 연결 생성·종료 수</td><td>Client churn 확인</td></tr>
+              <tr><td>Proxy Pool</td><td><code>DatabaseConnections</code>, <code>MaxDatabaseConnectionsAllowed</code></td><td>DB 연결 headroom 확인</td></tr>
+              <tr><td>Proxy Wait</td><td><code>DatabaseConnectionsBorrowLatency</code></td><td>pool에서 연결을 기다린 시간</td></tr>
+              <tr><td>Proxy Pinning</td><td><code>DatabaseConnectionsCurrentlySessionPinned</code></td><td>multiplexing 회귀 확인</td></tr>
+              <tr><td>Proxy Setup</td><td><code>DatabaseConnectionsSetupFailed</code></td><td>Secret·network·DB 연결 실패</td></tr>
+              <tr><td>RDS</td><td><code>DatabaseConnections</code>, <code>CPUUtilization</code>, <code>FreeableMemory</code>, DB load</td><td>Proxy 뒤 실제 DB 보호 여부</td></tr>
+            </tbody>
+          </table>
+          <pre><code class="language-text">Connection utilization
+  = DatabaseConnections / MaxDatabaseConnectionsAllowed x 100
+
+Pinned ratio
+  = DatabaseConnectionsCurrentlySessionPinned
+    / max(DatabaseConnections, 1) x 100
+
+Multiplexing signal
+  = ClientConnections / max(DatabaseConnections, 1)</code></pre>
+          <p>마지막 값이 높다고 자동으로 좋은 것은 아닙니다. Client가 idle connection만 많이 유지할 수도 있기 때문입니다. API latency, transaction rate와 DB load를 함께 봐야 합니다. CloudWatch label에는 request ID, order ID, tenant ID를 넣지 않고 endpoint, operation, error class처럼 제한된 값만 사용합니다.</p>
+
+          <h2 id="section-14">14. Failover 실험은 연결 유지와 transaction 실패를 구분한다</h2>
+          <p>RDS Proxy는 DB writer 변경을 추적하고 Client의 idle connection을 유지할 수 있습니다. 그러나 장애 시점에 실행 중이던 SQL이나 transaction까지 성공시키는 것은 아닙니다. 애플리케이션은 transaction 실패를 받고 멱등하게 재시도할 준비가 필요합니다.</p>
+          <div class="mermaid diagram compact-diagram">
+sequenceDiagram
+    participant C as Client
+    participant P as RDS Proxy
+    participant B as Primary DB
+    participant G as Standby DB
+    C->>P: Begin transaction
+    P->>B: Execute write
+    B--xP: Failover starts
+    P--xC: In-flight transaction fails
+    P->>G: Connect to promoted writer
+    C->>P: Bounded idempotent retry
+    P->>G: Execute write
+    G-->>C: Success
+          </div>
+          <p>Sandbox의 Multi-AZ DB에서 maintenance window를 잡고 강제 failover를 수행합니다. Direct 집단과 Proxy 집단에 같은 부하를 보내면서 마지막 성공 write, 첫 실패, 새 writer의 첫 성공 write 시각을 기록합니다. 운영 DB에서 예고 없이 실행해서는 안 됩니다.</p>
+          <pre><code class="language-bash"># Sandbox 또는 승인된 복구 훈련에서만 실행
+aws rds reboot-db-instance \
+  --db-instance-identifier sandbox-orders \
+  --force-failover</code></pre>
+          <p>검증 대상은 DNS lookup 시간만이 아닙니다. Client connection 재생성 수, in-flight transaction 실패율, retry 이후 중복 write, 정상 latency로 회복하는 시간까지 포함합니다.</p>
+
+          <h2 id="section-15">15. 실패 유형마다 alert와 runbook을 분리한다</h2>
+          <table>
+            <thead><tr><th>증상</th><th>우선 확인</th><th>대응</th></tr></thead>
+            <tbody>
+              <tr><td>Borrow latency 급증</td><td>긴 transaction, pool utilization, DB load</td><td>traffic 완화, 장기 query 중단 기준 적용, 원인 transaction 수정</td></tr>
+              <tr><td>Pinning ratio 급증</td><td>최근 ORM·driver·SQL 변경, enhanced logging</td><td>변경 rollback, session state 제거</td></tr>
+              <tr><td>Setup failure</td><td>Secret version, KMS, SG, target health</td><td>credential와 network 경로 복구 후 canary query</td></tr>
+              <tr><td>Client connection rate limit</td><td>재시도 폭증, cold start, connection reuse</td><td>bounded backoff, concurrency 제한, Client reuse 복구</td></tr>
+              <tr><td>DB CPU만 증가</td><td>query plan, lock, DB load</td><td>Proxy 조정보다 SQL·index·capacity 대응</td></tr>
+              <tr><td>Failover 중 write error</td><td>transaction 상태와 retry idempotency</td><td>안전한 요청만 제한 재시도, 중복 write 확인</td></tr>
+            </tbody>
+          </table>
+          <p>Borrow latency 경보만 보고 <code>MaxConnectionsPercent</code>를 올리면 DB가 보호 한도를 잃을 수 있습니다. 먼저 누가 연결을 오래 점유하는지 확인한 뒤, DB CPU와 memory headroom이 증명될 때만 상한을 변경합니다.</p>
+
+          <h2 id="section-16">16. Canary rollout에는 direct endpoint로 돌아가는 경로가 필요하다</h2>
+          <div class="mermaid diagram">
+flowchart LR
+    baseline[0. Direct baseline] --> provision[1. Provision Proxy]
+    provision --> canary[2. Canary alias 5%]
+    canary --> gate{SLO and pinning pass?}
+    gate -->|no| rollback[Shift traffic to direct alias]
+    gate -->|yes| ramp[3. 25% to 50% to 100%]
+    ramp --> observe[4. Observe one peak cycle]
+    observe --> restrict[5. Remove normal direct DB access]
+          </div>
+          <ol>
+            <li>현재 endpoint, connection pool 설정, session SQL과 peak connection 수를 inventory합니다.</li>
+            <li>Direct와 Proxy Lambda alias를 동일한 코드로 만들고 <code>DB_HOST</code>만 다르게 둡니다.</li>
+            <li>5% traffic에서 authentication, latency, pinning과 오류 분류를 확인합니다.</li>
+            <li>한 단계마다 최소 한 번의 정상 peak와 인위적 burst를 통과한 뒤 비율을 높입니다.</li>
+            <li>100% 전환 후에도 한 번의 peak cycle 동안 direct rollback 경로를 유지합니다.</li>
+            <li>관찰 기간이 끝나면 일반 workload의 direct DB SG 접근을 제거하고 break-glass 절차만 남깁니다.</li>
+          </ol>
+          <p>Rollback은 Proxy를 삭제하는 작업이 아닙니다. Lambda alias traffic을 검증된 direct endpoint 구성으로 되돌리는 작업입니다. Direct 경로도 credential, TLS와 connection limit이 준비되어 있어야 하며, rollback 때문에 원래 connection storm을 더 크게 만들지 않도록 reserved concurrency를 함께 낮춥니다.</p>
+
+          <h2 id="section-17">17. 비용 판단은 Proxy와 다음 DB 증설 비용을 비교한다</h2>
+          <p>Provisioned RDS와 Aurora에서 RDS Proxy는 DB의 vCPU를 기준으로 시간당 과금되고, Aurora Serverless에서는 ACU 기준으로 과금됩니다. 추가 Proxy endpoint는 PrivateLink 비용도 만들 수 있습니다. 따라서 요청 수만 보고 비용을 계산하지 않습니다.</p>
+          <pre><code class="language-text">Monthly Proxy cost
+  = billable database capacity x regional Proxy rate x active hours
+  + additional Proxy endpoint cost
+  + monitoring and test traffic cost
+
+Decision guardrail
+  Proxy monthly cost
+  &lt; next DB class upgrade delta + expected incident cost reduction</code></pre>
+          <p>DB instance를 키우지 않고도 연결 폭증을 흡수했다는 이유만으로 비용 절감이라고 부르면 안 됩니다. Proxy 비용, DB class 유지 비용, failover 개선과 운영 시간을 함께 비교합니다. 반대로 Proxy를 사용한 뒤 DB를 낮은 class로 바로 축소하지 않습니다. 먼저 CPU, memory, query latency가 한 peak cycle 이상 안정적인지 확인합니다.</p>
+
+          <h2 id="section-18">18. 설정 변경도 성능 회귀로 취급한다</h2>
+          <p>다음 변경은 canary 부하 테스트 없이 바로 배포하지 않습니다.</p>
+          <ul>
+            <li>ORM이나 MySQL driver의 major version 변경</li>
+            <li>Session initialization query와 <code>SET</code> 문 추가</li>
+            <li>Prepared statement mode 변경</li>
+            <li><code>MaxConnectionsPercent</code>, idle connection과 borrow timeout 변경</li>
+            <li>Lambda reserved concurrency 또는 ECS replica 상한 변경</li>
+            <li>DB instance class, <code>max_connections</code>, failover 구성 변경</li>
+          </ul>
+          <pre><code class="language-yaml"># release-gate.yml - 도구 독립적인 운영 계약 예시
+rds_proxy_gate:
+  load_profile: burst-500-rps
+  require:
+    api_success_rate: ">= 99.9%"
+    api_p95_ms: "<= 500"
+    db_connection_utilization_p99: "<= 70%"
+    borrow_latency_p95_ms: "<= 100"
+    pinned_connection_ratio_p95: "< 5%"
+    setup_failures: 0
+  rollback_on:
+    - authentication_regression
+    - pinning_regression
+    - latency_budget_exceeded</code></pre>
+          <p>이 YAML은 특정 CI 제품 문법이 아니라 merge와 rollout을 막을 판단 기준입니다. 실험 결과는 commit SHA, Lambda alias, Proxy 설정 revision, DB class와 데이터셋 버전을 함께 저장해야 재현할 수 있습니다.</p>
+
+          <h2 id="section-19">19. 운영 책임은 애플리케이션과 데이터베이스 사이에 걸쳐 있다</h2>
+          <table>
+            <thead><tr><th>영역</th><th>Primary owner</th><th>책임</th></tr></thead>
+            <tbody>
+              <tr><td>SQL과 transaction 경계</td><td>Application team</td><td>Session state, retry idempotency, Client connection reuse</td></tr>
+              <tr><td>Proxy pool과 target</td><td>Database platform</td><td>연결 상한, target health, engine 제약, failover</td></tr>
+              <tr><td>IAM·Secret·network</td><td>Cloud platform</td><td>Role, rotation, SG, subnet과 IaC</td></tr>
+              <tr><td>SLO와 incident</td><td>SRE 또는 service owner</td><td>대시보드, alert, rollback 판단과 runbook 훈련</td></tr>
+              <tr><td>비용 검토</td><td>Service owner + FinOps</td><td>Proxy 비용과 DB 증설 대안 비교</td></tr>
+            </tbody>
+          </table>
+          <p>Pinning은 DB팀만의 문제가 아니고 connection limit은 애플리케이션팀만의 문제도 아닙니다. Proxy 설정과 Client 동작이 함께 결정하는 결과이므로 두 팀이 같은 dashboard와 release gate를 소유해야 합니다.</p>
+
+          <h2 id="section-20">20. 아직 production-grade라고 주장하지 않는 범위</h2>
+          <ul>
+            <li>이 글의 acceptance target은 실제 AWS 환경에서 측정된 결과가 아닙니다.</li>
+            <li>MySQL workload를 기준으로 했으며 PostgreSQL과 SQL Server의 pinning 조건은 다릅니다.</li>
+            <li>실제 데이터 크기, lock contention, query plan과 tenant별 traffic skew를 재현하지 않았습니다.</li>
+            <li>Secret rotation 중 장기 연결과 failover가 겹치는 복합 장애를 검증하지 않았습니다.</li>
+            <li>Region별 RDS Proxy 단가와 PrivateLink 비용을 실제 월간 사용량으로 계산하지 않았습니다.</li>
+            <li>최소 한 번의 planned failover와 peak-cycle 관찰 전에는 direct endpoint 접근을 완전히 제거할 수 없습니다.</li>
+          </ul>
+          <p>이 범위가 남아 있는 상태에서 말할 수 있는 것은 "Proxy 구성을 만들었다"까지입니다. L5 수준의 운영 주장이 되려면 위 실험의 결과, 실패한 canary와 수정 이력, 승인된 SLO를 실제 값으로 남겨야 합니다.</p>
+
+          <h2 id="section-21">21. 마무리</h2>
+          <p>RDS Proxy의 목적은 Lambda와 RDS 사이에 서비스를 하나 더 놓는 것이 아닙니다. 무제한에 가까운 애플리케이션 확장과 유한한 DB 연결 사이에 예산, queue, load shedding과 failover 경계를 만드는 것입니다.</p>
+          <blockquote><p>Proxy 도입의 성공 기준은 endpoint가 연결되는지가 아닙니다. Burst에서도 사용자 latency budget을 지키면서 DB 연결 headroom을 남기고, session pinning이 그 효과를 무너뜨리지 않는지를 증명하는 것입니다.</p></blockquote>
+          <p><strong>참고 문서:</strong>
+            <a href="https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/rds-proxy.html">Amazon RDS Proxy</a>,
+            <a href="https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/rds-proxy.howitworks.html">RDS Proxy concepts and terminology</a>,
+            <a href="https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/rds-proxy-best-practices.usage-scenarios.html">RDS Proxy usage scenarios</a>,
+            <a href="https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/rds-proxy-connections.html">RDS Proxy connection considerations</a>,
+            <a href="https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/rds-proxy-pinning.html">Avoiding pinning</a>,
+            <a href="https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/rds-proxy.monitoring.html">Monitoring RDS Proxy</a>,
+            <a href="https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/rds-proxy.troubleshooting.html">Troubleshooting RDS Proxy</a>,
+            <a href="https://aws.amazon.com/rds/proxy/pricing/">RDS Proxy pricing</a>
+          </p>
+        </div>
+
+        <!-- GENERATED:ARTICLE_TAIL:START -->
+        <nav class="article-pagination" aria-label="발행 순서로 읽기">
+          <span class="article-nav-empty"><span>Newer</span><strong>더 이상 글이 없습니다.</strong></span>
+          <a href="./aws-cloudtrail-organization-central-s3-governance.html"><span>Older</span><strong>[AWS/Security] 여러 계정의 CloudTrail 로그를 중앙화해도 감사 공백이 생기는 이유 - Organization Trail, S3 Policy, KMS, Delivery SLO</strong></a>
+        </nav>
+        <aside class="related-notes" aria-labelledby="related-heading">
+          <h2 id="related-heading">Related notes</h2>
+          <div class="related-note-list">
+          <a href="./aws-database-neptune-graph-multi-hop-traversal.html">
+            <span>Database · 2026.08.17</span>
+            <strong>[AWS/Database] JOIN이 깊어질수록 왜 Graph DB가 유리할까? - Amazon Neptune으로 다단계 관계 탐색하기</strong>
+          </a>
+          <a href="./aws-s3-inventory-batch-operations-delete-objects.html">
+            <span>S3 · 2026.08.26</span>
+            <strong>[AWS/S3] 수백만 개의 오래된 S3 객체를 서버리스로 삭제하려면? - S3 Inventory와 Batch Operations</strong>
+          </a>
+          <a href="./rag-cloudops-productionish-evaluation-fallback-serving-observability.html">
+            <span>RAG · 2026.08.18</span>
+            <strong>[RAG] 튜토리얼 RAG를 운영 가능한 CloudOps RAG로 확장하기 - 평가, Fallback, Serving, Observability</strong>
+          </a>
+          </div>
+        </aside>
+        <!-- GENERATED:ARTICLE_TAIL:END -->
+      </article>
+    </main>
+
+    <footer class="site-footer">
+      <p>© 2026 Jiwon Kim</p>
+      <div class="footer-links">
+        <span id="visitStatus">집계 중</span>
+        <a href="../articles.html">Articles</a>
+        <a href="../feed.xml">RSS</a>
+      </div>
+    </footer>
+    <script src="../script.js?v=20260905-4"></script>
+    <script data-goatcounter="https://jiwonkim-blog.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
+    <noscript><img class="tracking-pixel" src="https://jiwonkim-blog.goatcounter.com/count?p=/posts/aws-database-rds-proxy-connection-storm-pinning.html" alt="" /></noscript>
+  </body>
+</html>
