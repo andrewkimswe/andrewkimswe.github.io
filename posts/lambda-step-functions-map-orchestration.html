@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>[AWS] Lambda 반복 호출을 Step Functions Map으로 분리하기 | Jiwon Kim's Blog</title>
+    <title>[AWS] Lambda 반복 호출을 Step Functions Map으로 분리하기 | Jiwon Kim Engineering Notes</title>
     <meta
       name="description"
       content="Lambda 내부 반복 호출 구조를 AWS Step Functions Map 상태로 분리해 Timeout, Retry, Error Handling, Concurrency를 관리하는 Serverless Orchestration 설계입니다."
@@ -14,7 +14,7 @@
       rel="canonical"
       href="https://andrewkimswe.github.io/posts/lambda-step-functions-map-orchestration.html"
     />
-    <meta property="og:site_name" content="Jiwon Kim's Blog" />
+    <meta property="og:site_name" content="Jiwon Kim | Engineering Notes" />
     <meta
       property="og:title"
       content="[AWS] Lambda 반복 호출을 Step Functions Map으로 분리하기 - Serverless Orchestration 설계"
@@ -28,16 +28,25 @@
       property="og:url"
       content="https://andrewkimswe.github.io/posts/lambda-step-functions-map-orchestration.html"
     />
-    <meta property="og:image" content="https://andrewkimswe.github.io/assets/social-card.svg" />
+    <meta property="og:image" content="https://andrewkimswe.github.io/assets/social-card.png" />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Jiwon Kim Engineering Notes" />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:image" content="https://andrewkimswe.github.io/assets/social-card.svg" />
+    <meta name="twitter:image" content="https://andrewkimswe.github.io/assets/social-card.png" />
+    <meta name="twitter:title" content="[AWS] Lambda 반복 호출을 Step Functions Map으로 분리하기 - Serverless Orchestration 설계" />
+    <meta name="twitter:description" content="반복 호출과 재시도 책임을 Lambda 코드에서 Step Functions Map 상태로 분리하는 설계입니다." />
+    <meta property="article:modified_time" content="2026-08-03T00:00:00+09:00" />
+    <meta name="twitter:image:alt" content="Jiwon Kim Engineering Notes" />
     <meta property="article:published_time" content="2026-08-03T00:00:00+09:00" />
     <meta property="article:author" content="Jiwon Kim" />
     <meta property="article:tag" content="AWS" />
     <meta property="article:tag" content="Lambda" />
     <meta property="article:tag" content="Step Functions" />
     <meta property="article:tag" content="Serverless" />
-    <link rel="stylesheet" href="../styles.css" />
+    <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="../styles.css?v=20260905-4" />
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
@@ -61,21 +70,26 @@
     </script>
   </head>
   <body>
+    <a class="skip-link" href="#main-content">본문으로 바로가기</a>
     <header class="site-header">
-      <a class="brand" href="../" aria-label="Jiwon Kim's Blog 홈">
-        <span class="brand-mark">JK</span>
-        <span>
-          <strong>Jiwon Kim's Blog</strong>
-          <small>Engineering notes</small>
-        </span>
+      <a class="brand" href="../" aria-label="Jiwon Kim Engineering Notes 홈">
+        <span class="brand-mark" aria-hidden="true">JK</span>
+        <span class="brand-copy"><strong>Jiwon Kim</strong><small>Engineering Notes</small></span>
       </a>
-      <nav class="nav-links" aria-label="주요 메뉴"><a href="../#writing">Writing</a><a href="../#portfolio">Portfolio</a><a href="../#profile">Profile</a><a href="../#topics">Topics</a><a href="../#about">About</a><a href="https://github.com/andrewkimswe">GitHub</a><a href="https://www.linkedin.com/in/jiwon-kim-867334285/">LinkedIn</a></nav>
+      <nav class="nav-links" aria-label="주요 메뉴">
+        <a href="../articles.html">Articles</a>
+        <a href="../projects.html">Projects</a>
+        <a href="../#about">About</a>
+        <span class="nav-divider" aria-hidden="true"></span>
+        <a href="https://github.com/andrewkimswe">GitHub</a>
+        <a href="https://www.linkedin.com/in/jiwon-kim-867334285/">LinkedIn</a>
+      </nav>
     </header>
 
-    <main>
+    <main id="main-content">
       <article class="article-page">
         <header class="article-hero">
-          <a class="back-link" href="../#writing">Back to writing</a>
+          <a class="back-link" href="../articles.html">All articles</a>
           <p class="eyebrow">Cloud · Serverless · Orchestration</p>
           <h1>[AWS] Lambda 반복 호출을 Step Functions Map으로 분리하기 - Serverless Orchestration 설계</h1>
           <p class="article-summary">
@@ -87,9 +101,29 @@
             <time datetime="2026-08-03">2026.08.03</time>
             <span>AWS</span>
             <span>Lambda</span>
-            <span>Step Functions</span>
-          </div>
+            <span>Step Functions</span><span class="reading-time" data-generated="true">약 10분</span></div>
         </header>
+
+        <!-- GENERATED:ARTICLE_TOC:START -->
+        <aside class="article-toc" aria-label="이 글의 목차">
+          <details open>
+            <summary>On this page</summary>
+            <ol>
+              <li><a href="#section-01">1. 기존 구조의 문제</a></li>
+              <li><a href="#section-02">2. Step Functions로 Orchestration 분리</a></li>
+              <li><a href="#section-03">3. Map State</a></li>
+              <li><a href="#section-04">4. Lambda 내부 반복문과 무엇이 다른가?</a></li>
+              <li><a href="#section-05">5. 병렬 처리</a></li>
+              <li><a href="#section-06">6. Concurrency 제어</a></li>
+              <li><a href="#section-07">7. Retry와 Error Handling</a></li>
+              <li><a href="#section-08">8. Lambda는 Worker, Step Functions는 Orchestrator</a></li>
+              <li><a href="#section-09">9. EventBridge Scheduler와는 무엇이 다른가?</a></li>
+              <li><a href="#section-10">10. 언제 Step Functions Map이 적합한가?</a></li>
+              <li><a href="#section-11">정리</a></li>
+            </ol>
+          </details>
+        </aside>
+        <!-- GENERATED:ARTICLE_TOC:END -->
 
         <div class="article-body">
           <p>
@@ -130,7 +164,7 @@ flowchart TB
             AWS Step Functions의 <code>Map</code> 상태를 사용할 수 있다.
           </p>
 
-          <h2>1. 기존 구조의 문제</h2>
+          <h2 id="section-01">1. 기존 구조의 문제</h2>
           <p>다음과 같은 Lambda 함수가 있다고 가정한다.</p>
           <pre><code>def handler(event, context):
     device_ids = get_unregistered_devices()
@@ -153,7 +187,7 @@ flowchart TB
             처리가 종속된다. Lambda의 최대 실행시간은 제한되어 있기 때문에 장기적으로 확장하기 어렵다.
           </p>
 
-          <h2>2. Step Functions로 Orchestration 분리</h2>
+          <h2 id="section-02">2. Step Functions로 Orchestration 분리</h2>
           <p>구조를 다음과 같이 변경할 수 있다.</p>
           <div class="mermaid diagram">
 flowchart TB
@@ -186,7 +220,7 @@ flowchart TB
             전체를 관리할 필요가 없다.
           </p>
 
-          <h2>3. Map State</h2>
+          <h2 id="section-03">3. Map State</h2>
           <p>
             Step Functions의 Map 상태는 배열이나 데이터 집합의 각 항목에 동일한 워크플로를 적용할 때
             사용할 수 있다.
@@ -229,7 +263,7 @@ flowchart LR
 }</code></pre>
           <p>핵심은 반복문이 Lambda 코드가 아니라 워크플로 정의에 있다는 점이다.</p>
 
-          <h2>4. Lambda 내부 반복문과 무엇이 다른가?</h2>
+          <h2 id="section-04">4. Lambda 내부 반복문과 무엇이 다른가?</h2>
           <dl class="service-summary">
             <div>
               <dt>Lambda 직접 반복</dt>
@@ -244,7 +278,7 @@ flowchart LR
             Step Functions가 상태와 실행 흐름을 관리하기 때문에 Lambda는 개별 비즈니스 작업에 집중할 수 있다.
           </p>
 
-          <h2>5. 병렬 처리</h2>
+          <h2 id="section-05">5. 병렬 처리</h2>
           <p>Map 상태의 장점 중 하나는 여러 작업을 병렬로 실행할 수 있다는 점이다.</p>
           <div class="mermaid diagram compact-diagram">
 flowchart LR
@@ -260,7 +294,7 @@ flowchart LR
             과도한 병렬 호출이 오히려 병목을 만들 수 있다. 따라서 동시 실행 수를 제어하는 것이 중요하다.
           </p>
 
-          <h2>6. Concurrency 제어</h2>
+          <h2 id="section-06">6. Concurrency 제어</h2>
           <p>
             예를 들어 Activate Lambda가 외부 API를 호출한다고 가정해보자. 수천 개의 작업을 한 번에
             실행하면 외부 API의 Rate Limit을 초과할 수 있다.
@@ -280,7 +314,7 @@ flowchart TB
             <strong>병렬성을 제어하는 orchestration layer</strong>로 사용할 수 있다.
           </p>
 
-          <h2>7. Retry와 Error Handling</h2>
+          <h2 id="section-07">7. Retry와 Error Handling</h2>
           <p>Lambda 내부에서 다른 Lambda를 반복 호출하면 실패 처리를 직접 구현해야 한다.</p>
           <pre><code>for device_id in device_ids:
     try:
@@ -313,7 +347,7 @@ flowchart TB
           </div>
           <p>따라서 재시도 정책이 애플리케이션 코드와 분리된다.</p>
 
-          <h2>8. Lambda는 Worker, Step Functions는 Orchestrator</h2>
+          <h2 id="section-08">8. Lambda는 Worker, Step Functions는 Orchestrator</h2>
           <p>이 구조에서 역할을 명확하게 나눌 수 있다.</p>
           <dl class="service-summary">
             <div>
@@ -336,7 +370,7 @@ flowchart TB
           </div>
           <p>이렇게 하면 Lambda 함수가 더 작고 독립적인 컴포넌트가 된다.</p>
 
-          <h2>9. EventBridge Scheduler와는 무엇이 다른가?</h2>
+          <h2 id="section-09">9. EventBridge Scheduler와는 무엇이 다른가?</h2>
           <p>EventBridge Scheduler는 특정 시간이나 주기에 작업을 실행하는 데 적합하다.</p>
           <dl class="service-summary">
             <div>
@@ -363,7 +397,7 @@ flowchart TB
     map --- activate
           </div>
 
-          <h2>10. 언제 Step Functions Map이 적합한가?</h2>
+          <h2 id="section-10">10. 언제 Step Functions Map이 적합한가?</h2>
           <p>대표적으로 다음과 같은 경우 사용할 수 있다.</p>
           <dl class="service-summary">
             <div>
@@ -385,7 +419,7 @@ flowchart TB
           </dl>
           <p>공통점은 하나의 큰 작업을 여러 독립적인 작은 작업으로 나눌 수 있다는 것이다.</p>
 
-          <h2>정리</h2>
+          <h2 id="section-11">정리</h2>
           <p>
             Lambda 내부에서 반복문을 사용해 여러 Lambda를 호출하는 구조는 작은 규모에서는 단순하고
             효과적이다. 하지만 작업 수가 증가하면 전체 실행시간이 하나의 Lambda에 종속되고,
@@ -419,18 +453,43 @@ flowchart TB
             <strong>실행 흐름과 상태를 관리하는 orchestration layer</strong>가 중요해진다.
           </p>
         </div>
+
+        <!-- GENERATED:ARTICLE_TAIL:START -->
+        <nav class="article-pagination" aria-label="발행 순서로 읽기">
+          <a href="./cloudfront-private-alb-vpc-origins.html"><span>Newer</span><strong>[AWS] CloudFront 뒤의 ALB를 Private하게 구성하기 - VPC Origins</strong></a>
+          <a href="./s3-data-lake-lake-formation-row-level-access-control.html"><span>Older</span><strong>[AWS] Multi-Tenant Data Lake에서 Tenant 데이터 격리하기 - S3와 Lake Formation Row-Level Security</strong></a>
+        </nav>
+        <aside class="related-notes" aria-labelledby="related-heading">
+          <h2 id="related-heading">Related notes</h2>
+          <div class="related-note-list">
+          <a href="./aws-s3-inventory-batch-operations-delete-objects.html">
+            <span>S3 · 2026.08.26</span>
+            <strong>[AWS/S3] 수백만 개의 오래된 S3 객체를 서버리스로 삭제하려면? - S3 Inventory와 Batch Operations</strong>
+          </a>
+          <a href="./s3-presigned-url-lambda-image-processing.html">
+            <span>S3 · 2026.08.06</span>
+            <strong>[AWS] 이미지 업로드 병목 제거하기 - S3 Presigned URL과 Lambda로 Event-Driven Processing 구성</strong>
+          </a>
+          <a href="./cloudfront-private-alb-vpc-origins.html">
+            <span>Security · 2026.08.04</span>
+            <strong>[AWS] CloudFront 뒤의 ALB를 Private하게 구성하기 - VPC Origins</strong>
+          </a>
+          </div>
+        </aside>
+        <!-- GENERATED:ARTICLE_TAIL:END -->
       </article>
     </main>
 
     <footer class="site-footer">
-      <p>© 2026 Jiwon Kim. Technical writing, notes, and experiments.</p>
+      <p>© 2026 Jiwon Kim</p>
       <div class="footer-links">
-        <span id="visitStatus">Analytics ready</span>
-        <a href="https://github.com/andrewkimswe">github.com/andrewkimswe</a><a href="https://www.linkedin.com/in/jiwon-kim-867334285/">LinkedIn</a>
+        <span id="visitStatus">집계 중</span>
+        <a href="../articles.html">Articles</a>
+        <a href="../feed.xml">RSS</a>
       </div>
     </footer>
 
-    <script src="../script.js"></script>
+    <script src="../script.js?v=20260905-4"></script>
     <script
       data-goatcounter="https://jiwonkim-blog.goatcounter.com/count"
       async

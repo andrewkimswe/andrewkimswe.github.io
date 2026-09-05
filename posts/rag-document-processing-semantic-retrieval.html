@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>[RAG] 긴 문서에서 필요한 근거를 찾는 과정 | Jiwon Kim's Blog</title>
+    <title>[RAG] 긴 문서에서 필요한 근거를 찾는 과정 | Jiwon Kim Engineering Notes</title>
     <meta
       name="description"
       content="Chunking, MapReduce, Refine, Embedding, Vector Store, Retriever를 연결해 RAG retrieval pipeline이 필요한 이유를 설명합니다."
@@ -11,7 +11,7 @@
     <meta name="author" content="Jiwon Kim" />
     <meta name="robots" content="index, follow, max-image-preview:large" />
     <link rel="canonical" href="https://andrewkimswe.github.io/posts/rag-document-processing-semantic-retrieval.html" />
-    <meta property="og:site_name" content="Jiwon Kim's Blog" />
+    <meta property="og:site_name" content="Jiwon Kim | Engineering Notes" />
     <meta
       property="og:title"
       content="[RAG] 긴 문서에서 필요한 근거를 찾는 과정 - Chunking, Embedding, Vector Store와 Semantic Retrieval"
@@ -22,16 +22,25 @@
     />
     <meta property="og:type" content="article" />
     <meta property="og:url" content="https://andrewkimswe.github.io/posts/rag-document-processing-semantic-retrieval.html" />
-    <meta property="og:image" content="https://andrewkimswe.github.io/assets/social-card.svg" />
+    <meta property="og:image" content="https://andrewkimswe.github.io/assets/social-card.png" />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Jiwon Kim Engineering Notes" />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:image" content="https://andrewkimswe.github.io/assets/social-card.svg" />
+    <meta name="twitter:image" content="https://andrewkimswe.github.io/assets/social-card.png" />
+    <meta name="twitter:title" content="[RAG] 긴 문서에서 필요한 근거를 찾는 과정 - Chunking, Embedding, Vector Store와 Semantic Retrieval" />
+    <meta name="twitter:description" content="긴 문서를 작은 chunk로 나누고 의미 기반 검색으로 필요한 근거를 찾는 RAG retrieval pipeline입니다." />
+    <meta property="article:modified_time" content="2026-08-10T00:00:00+09:00" />
+    <meta name="twitter:image:alt" content="Jiwon Kim Engineering Notes" />
     <meta property="article:published_time" content="2026-08-10T00:00:00+09:00" />
     <meta property="article:author" content="Jiwon Kim" />
     <meta property="article:tag" content="RAG" />
     <meta property="article:tag" content="Embedding" />
     <meta property="article:tag" content="Vector Store" />
     <meta property="article:tag" content="Semantic Retrieval" />
-    <link rel="stylesheet" href="../styles.css" />
+    <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="../styles.css?v=20260905-4" />
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
@@ -55,21 +64,26 @@
     </script>
   </head>
   <body>
+    <a class="skip-link" href="#main-content">본문으로 바로가기</a>
     <header class="site-header">
-      <a class="brand" href="../" aria-label="Jiwon Kim's Blog 홈">
-        <span class="brand-mark">JK</span>
-        <span>
-          <strong>Jiwon Kim's Blog</strong>
-          <small>Engineering notes</small>
-        </span>
+      <a class="brand" href="../" aria-label="Jiwon Kim Engineering Notes 홈">
+        <span class="brand-mark" aria-hidden="true">JK</span>
+        <span class="brand-copy"><strong>Jiwon Kim</strong><small>Engineering Notes</small></span>
       </a>
-      <nav class="nav-links" aria-label="주요 메뉴"><a href="../#writing">Writing</a><a href="../#portfolio">Portfolio</a><a href="../#profile">Profile</a><a href="../#topics">Topics</a><a href="../#about">About</a><a href="https://github.com/andrewkimswe">GitHub</a><a href="https://www.linkedin.com/in/jiwon-kim-867334285/">LinkedIn</a></nav>
+      <nav class="nav-links" aria-label="주요 메뉴">
+        <a href="../articles.html">Articles</a>
+        <a href="../projects.html">Projects</a>
+        <a href="../#about">About</a>
+        <span class="nav-divider" aria-hidden="true"></span>
+        <a href="https://github.com/andrewkimswe">GitHub</a>
+        <a href="https://www.linkedin.com/in/jiwon-kim-867334285/">LinkedIn</a>
+      </nav>
     </header>
 
-    <main>
+    <main id="main-content">
       <article class="article-page">
         <header class="article-hero">
-          <a class="back-link" href="../#writing">Back to writing</a>
+          <a class="back-link" href="../articles.html">All articles</a>
           <p class="eyebrow">RAG · Retrieval · Embedding</p>
           <h1>[RAG] 긴 문서에서 필요한 근거를 찾는 과정 - Chunking, Embedding, Vector Store와 Semantic Retrieval</h1>
           <p class="article-summary">
@@ -80,9 +94,31 @@
             <time datetime="2026-08-10">2026.08.10</time>
             <span>RAG</span>
             <span>Embedding</span>
-            <span>Retrieval</span>
-          </div>
+            <span>Retrieval</span><span class="reading-time" data-generated="true">약 8분</span></div>
         </header>
+
+        <!-- GENERATED:ARTICLE_TOC:START -->
+        <aside class="article-toc" aria-label="이 글의 목차">
+          <details open>
+            <summary>On this page</summary>
+            <ol>
+              <li><a href="#section-01">1. 긴 문서를 그대로 넣기 어려운 이유</a></li>
+              <li><a href="#section-02">2. Chunking</a></li>
+              <li><a href="#section-03">3. 모든 Chunk를 처리하는 방법: MapReduce</a></li>
+              <li><a href="#section-04">4. 이전 결과를 누적하는 Refine</a></li>
+              <li><a href="#section-05">5. 모든 Chunk를 읽을 필요가 없는 질문</a></li>
+              <li><a href="#section-06">6. Keyword가 아니라 의미로 검색하기</a></li>
+              <li><a href="#section-07">7. Semantic Similarity</a></li>
+              <li><a href="#section-08">8. Bi-Encoder와 Cross-Encoder</a></li>
+              <li><a href="#section-09">9. Vector Store와 Retriever</a></li>
+              <li><a href="#section-10">10. RAG</a></li>
+              <li><a href="#section-11">11. Offline과 Online을 분리해서 보기</a></li>
+              <li><a href="#section-12">12. Naive RAG</a></li>
+              <li><a href="#section-13">정리</a></li>
+            </ol>
+          </details>
+        </aside>
+        <!-- GENERATED:ARTICLE_TOC:END -->
 
         <div class="article-body">
           <p>
@@ -104,7 +140,7 @@ flowchart TB
             <li>그중 현재 질문에 필요한 부분을 어떻게 찾을 것인가?</li>
           </ul>
 
-          <h2>1. 긴 문서를 그대로 넣기 어려운 이유</h2>
+          <h2 id="section-01">1. 긴 문서를 그대로 넣기 어려운 이유</h2>
           <p>
             Context window가 커졌다고 해서 항상 전체 문서를 넣는 것이 최적이라는 뜻은 아니다. 질문과 무관한
             내용까지 함께 전달하면 모델이 처리해야 할 정보가 증가하고 비용과 latency도 증가한다.
@@ -124,7 +160,7 @@ flowchart TB
             </div>
           </dl>
 
-          <h2>2. Chunking</h2>
+          <h2 id="section-02">2. Chunking</h2>
           <p>
             문서를 작은 단위로 나누면 각 chunk가 이후 처리의 기본 단위가 된다. 너무 작으면 문맥이 끊기고,
             너무 크면 한 chunk 안에 불필요한 정보가 많아진다.
@@ -150,7 +186,7 @@ flowchart TB
             영향을 주는 hyperparameter다.
           </p>
 
-          <h2>3. 모든 Chunk를 처리하는 방법: MapReduce</h2>
+          <h2 id="section-03">3. 모든 Chunk를 처리하는 방법: MapReduce</h2>
           <p>문서 전체를 요약해야 한다면 모든 chunk를 처리할 수 있다.</p>
           <div class="mermaid diagram">
 flowchart TB
@@ -176,7 +212,7 @@ flowchart TB
             쉽지만 chunk 사이의 관계를 직접 고려하기 어렵고 최종 통합 과정에서 세부 정보가 사라질 수 있다.
           </p>
 
-          <h2>4. 이전 결과를 누적하는 Refine</h2>
+          <h2 id="section-04">4. 이전 결과를 누적하는 Refine</h2>
           <p>다른 접근은 이전 결과를 다음 chunk와 함께 전달하는 것이다.</p>
           <div class="mermaid diagram compact-diagram">
 flowchart TB
@@ -198,7 +234,7 @@ flowchart TB
             Map 방식보다 병렬화가 어렵고, 초기에 잘못 요약된 정보가 이후 단계에 영향을 줄 수 있다.
           </p>
 
-          <h2>5. 모든 Chunk를 읽을 필요가 없는 질문</h2>
+          <h2 id="section-05">5. 모든 Chunk를 읽을 필요가 없는 질문</h2>
           <p>
             문서 요약이라면 모든 chunk가 중요할 수 있다. 하지만 <code>EKS Pod가 Pending 상태일 때 어떤 원인을
             확인해야 하나요?</code>라는 질문에 AWS와 Kubernetes 공식 문서 수백 개를 전부 LLM에 전달할 이유는 없다.
@@ -208,7 +244,7 @@ flowchart TB
           </blockquote>
           <p>여기서 retrieval이 등장한다.</p>
 
-          <h2>6. Keyword가 아니라 의미로 검색하기</h2>
+          <h2 id="section-06">6. Keyword가 아니라 의미로 검색하기</h2>
           <p>
             질문과 문서가 정확히 같은 단어를 사용하지 않을 수 있다. <code>Pod가 스케줄링되지 않아요</code>와
             <code>Debug Pods in Pending state</code>는 표현은 다르지만 의미는 가깝다.
@@ -224,7 +260,7 @@ flowchart TB
           </div>
           <p>좋은 embedding model에서는 의미가 비슷한 텍스트의 vector도 가까워지도록 학습된다.</p>
 
-          <h2>7. Semantic Similarity</h2>
+          <h2 id="section-07">7. Semantic Similarity</h2>
           <p>Query와 document를 각각 embedding한 뒤 vector 간 거리를 계산한다.</p>
           <table>
             <thead>
@@ -250,7 +286,7 @@ flowchart TB
           </table>
           <p>threshold를 사용할 때는 vector store가 반환하는 score의 의미를 반드시 확인해야 한다.</p>
 
-          <h2>8. Bi-Encoder와 Cross-Encoder</h2>
+          <h2 id="section-08">8. Bi-Encoder와 Cross-Encoder</h2>
           <p>
             대규모 retrieval에서는 문서를 미리 embedding해두고 사용자 요청 시 query만 embedding하는 Bi-Encoder
             구조가 자주 사용된다.
@@ -275,7 +311,7 @@ flowchart TB
             매번 실행하기에는 비싸기 때문에 보통 vector search로 후보를 줄인 뒤 reranking에 사용한다.
           </p>
 
-          <h2>9. Vector Store와 Retriever</h2>
+          <h2 id="section-09">9. Vector Store와 Retriever</h2>
           <p>
             Embedding vector가 많아지면 이를 저장하고 효율적으로 검색할 구조가 필요하다. Vector store는 vector,
             chunk text, document id, source URL, metadata를 함께 관리한다.
@@ -286,7 +322,7 @@ flowchart TB
             query embedding, similarity search, ranking, top-k documents 선택이 수행된다.
           </p>
 
-          <h2>10. RAG</h2>
+          <h2 id="section-10">10. RAG</h2>
           <p>이제 retrieval 결과를 LLM context에 추가한다.</p>
           <div class="mermaid diagram">
 flowchart TB
@@ -308,7 +344,7 @@ flowchart TB
             제공하는 것이다.
           </p>
 
-          <h2>11. Offline과 Online을 분리해서 보기</h2>
+          <h2 id="section-11">11. Offline과 Online을 분리해서 보기</h2>
           <dl class="service-summary">
             <div>
               <dt>Offline / Ingestion</dt>
@@ -321,7 +357,7 @@ flowchart TB
           </dl>
           <p>문서 embedding을 미리 수행할 수 있기 때문에 사용자 요청마다 전체 corpus를 다시 처리하지 않는다.</p>
 
-          <h2>12. Naive RAG</h2>
+          <h2 id="section-12">12. Naive RAG</h2>
           <p>
             가장 단순한 RAG는 모든 질문에서 retrieval을 수행한다. 구조가 단순하고 평가하기 쉽지만 모든 질문에
             retrieval이 필요한 것은 아니다. 더 발전된 시스템에서는 planner나 router가 retrieval 여부 자체를
@@ -339,7 +375,7 @@ flowchart TB
     router --- direct
           </div>
 
-          <h2>정리</h2>
+          <h2 id="section-13">정리</h2>
           <p>
             RAG는 긴 문서를 통째로 prompt에 넣는 문제가 아니라, 문서를 검색 가능한 단위로 준비하고 질문 시점에
             필요한 근거를 찾아 context로 제공하는 구조다. Chunking은 문서 처리 단위를 결정하고, embedding과 vector
@@ -347,18 +383,43 @@ flowchart TB
             감싼다.
           </p>
         </div>
+
+        <!-- GENERATED:ARTICLE_TAIL:START -->
+        <nav class="article-pagination" aria-label="발행 순서로 읽기">
+          <a href="./rag-evaluation-driven-retrieval-tuning.html"><span>Newer</span><strong>[RAG] 감으로 Top-k를 정하지 않기 - Chunking, Embedding, Threshold를 실험으로 선택한 과정</strong></a>
+          <a href="./rag-stateful-query-clarification.html"><span>Older</span><strong>[RAG] 불완전한 질문을 바로 검색하지 않기 - Running State와 Slot Filling으로 Query Clarification 설계하기</strong></a>
+        </nav>
+        <aside class="related-notes" aria-labelledby="related-heading">
+          <h2 id="related-heading">Related notes</h2>
+          <div class="related-note-list">
+          <a href="./rag-evaluation-driven-retrieval-tuning.html">
+            <span>RAG · 2026.08.11</span>
+            <strong>[RAG] 감으로 Top-k를 정하지 않기 - Chunking, Embedding, Threshold를 실험으로 선택한 과정</strong>
+          </a>
+          <a href="./rag-stateful-query-clarification.html">
+            <span>RAG · 2026.08.09</span>
+            <strong>[RAG] 불완전한 질문을 바로 검색하지 않기 - Running State와 Slot Filling으로 Query Clarification 설계하기</strong>
+          </a>
+          <a href="./rag-evaluation-retrieval-vs-answer-quality.html">
+            <span>RAG · 2026.08.12</span>
+            <strong>[RAG] Hit@k가 높으면 좋은 RAG일까? - Retrieval과 Answer Quality를 따로 평가해본 과정</strong>
+          </a>
+          </div>
+        </aside>
+        <!-- GENERATED:ARTICLE_TAIL:END -->
       </article>
     </main>
 
     <footer class="site-footer">
-      <p>© 2026 Jiwon Kim. Technical writing, notes, and experiments.</p>
+      <p>© 2026 Jiwon Kim</p>
       <div class="footer-links">
-        <span id="visitStatus">Analytics ready</span>
-        <a href="https://github.com/andrewkimswe">github.com/andrewkimswe</a><a href="https://www.linkedin.com/in/jiwon-kim-867334285/">LinkedIn</a>
+        <span id="visitStatus">집계 중</span>
+        <a href="../articles.html">Articles</a>
+        <a href="../feed.xml">RSS</a>
       </div>
     </footer>
 
-    <script src="../script.js"></script>
+    <script src="../script.js?v=20260905-4"></script>
     <script
       data-goatcounter="https://jiwonkim-blog.goatcounter.com/count"
       async

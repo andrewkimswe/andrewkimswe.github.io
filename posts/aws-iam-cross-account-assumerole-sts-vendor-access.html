@@ -3,21 +3,28 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>[AWS/IAM] 외부 업체에 Access Key를 주지 않고 AWS 계정 접근을 허용하기 | Jiwon Kim's Blog</title>
+    <title>[AWS/IAM] 외부 업체에 Access Key를 주지 않고 AWS 계정 접근을 허용하기 | Jiwon Kim Engineering Notes</title>
     <meta name="description" content="외부 업체나 SaaS 벤더에게 장기 Access Key를 전달하지 않고 Cross-Account IAM Role, Trust Policy, AWS STS AssumeRole, External ID로 접근을 위임하는 방식을 정리합니다." />
     <meta name="author" content="Jiwon Kim" />
     <meta name="robots" content="index, follow, max-image-preview:large" />
     <link rel="canonical" href="https://andrewkimswe.github.io/posts/aws-iam-cross-account-assumerole-sts-vendor-access.html" />
-    <meta property="og:site_name" content="Jiwon Kim's Blog" />
+    <meta property="og:site_name" content="Jiwon Kim | Engineering Notes" />
     <meta property="og:title" content="[AWS/IAM] 외부 업체에 Access Key를 주지 않고 AWS 계정 접근을 허용하기 - Cross-Account AssumeRole과 STS" />
     <meta property="og:description" content="외부 업체에 장기 Access Key를 넘기지 않고 접근을 위임하려면 IAM User 복제가 아니라 Cross-Account Role과 STS AssumeRole을 설계해야 합니다." />
     <meta property="og:type" content="article" />
     <meta property="og:url" content="https://andrewkimswe.github.io/posts/aws-iam-cross-account-assumerole-sts-vendor-access.html" />
-    <meta property="og:image" content="https://andrewkimswe.github.io/assets/social-card.svg" />
+    <meta property="og:image" content="https://andrewkimswe.github.io/assets/social-card.png" />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Jiwon Kim Engineering Notes" />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:image" content="https://andrewkimswe.github.io/assets/social-card.svg" />
+    <meta name="twitter:image" content="https://andrewkimswe.github.io/assets/social-card.png" />
+    <meta name="twitter:title" content="[AWS/IAM] 외부 업체에 Access Key를 주지 않고 AWS 계정 접근을 허용하기 - Cross-Account AssumeRole과 STS" />
+    <meta name="twitter:description" content="외부 업체에 장기 Access Key를 넘기지 않고 접근을 위임하려면 IAM User 복제가 아니라 Cross-Account Role과 STS AssumeRole을 설계해야 합니다." />
+    <meta property="article:modified_time" content="2026-09-05T00:00:00+09:00" />
+    <meta name="twitter:image:alt" content="Jiwon Kim Engineering Notes" />
     <meta property="article:published_time" content="2026-08-30T00:00:00+09:00" />
-    <meta property="article:modified_time" content="2026-08-30T00:00:00+09:00" />
     <meta property="article:author" content="Jiwon Kim" />
     <meta property="article:tag" content="AWS" />
     <meta property="article:tag" content="IAM" />
@@ -26,26 +33,61 @@
     <meta property="article:tag" content="Cross-Account" />
     <meta property="article:tag" content="AssumeRole" />
     <meta property="article:tag" content="External ID" />
-    <link rel="stylesheet" href="../styles.css" />
+    <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="../styles.css?v=20260905-4" />
     <script type="application/ld+json">
-{"@context":"https://schema.org","@type":"BlogPosting","headline":"[AWS/IAM] 외부 업체에 Access Key를 주지 않고 AWS 계정 접근을 허용하기 - Cross-Account AssumeRole과 STS","description":"외부 업체나 SaaS 벤더에게 장기 Access Key를 전달하지 않고 Cross-Account IAM Role, Trust Policy, AWS STS AssumeRole, External ID로 접근을 위임하는 방식을 정리합니다.","datePublished":"2026-08-30T00:00:00+09:00","dateModified":"2026-08-30T00:00:00+09:00","author":{"@type":"Person","name":"Jiwon Kim","url":"https://github.com/andrewkimswe"},"publisher":{"@type":"Person","name":"Jiwon Kim"},"mainEntityOfPage":"https://andrewkimswe.github.io/posts/aws-iam-cross-account-assumerole-sts-vendor-access.html","inLanguage":"ko-KR"}
+{"@context":"https://schema.org","@type":"BlogPosting","headline":"[AWS/IAM] 외부 업체에 Access Key를 주지 않고 AWS 계정 접근을 허용하기 - Cross-Account AssumeRole과 STS","description":"외부 업체나 SaaS 벤더에게 장기 Access Key를 전달하지 않고 Cross-Account IAM Role, Trust Policy, AWS STS AssumeRole, External ID로 접근을 위임하는 방식을 정리합니다.","datePublished":"2026-08-30T00:00:00+09:00","dateModified":"2026-09-05T00:00:00+09:00","author":{"@type":"Person","name":"Jiwon Kim","url":"https://github.com/andrewkimswe"},"publisher":{"@type":"Person","name":"Jiwon Kim"},"mainEntityOfPage":"https://andrewkimswe.github.io/posts/aws-iam-cross-account-assumerole-sts-vendor-access.html","inLanguage":"ko-KR"}
     </script>
   </head>
   <body>
+    <a class="skip-link" href="#main-content">본문으로 바로가기</a>
     <header class="site-header">
-      <a class="brand" href="../" aria-label="Jiwon Kim's Blog 홈"><span class="brand-mark">JK</span><span><strong>Jiwon Kim's Blog</strong><small>Engineering notes</small></span></a>
-      <nav class="nav-links" aria-label="주요 메뉴"><a href="../#writing">Writing</a><a href="../#portfolio">Portfolio</a><a href="../#profile">Profile</a><a href="../#topics">Topics</a><a href="../#about">About</a><a href="https://github.com/andrewkimswe">GitHub</a><a href="https://www.linkedin.com/in/jiwon-kim-867334285/">LinkedIn</a></nav>
+      <a class="brand" href="../" aria-label="Jiwon Kim Engineering Notes 홈">
+        <span class="brand-mark" aria-hidden="true">JK</span>
+        <span class="brand-copy"><strong>Jiwon Kim</strong><small>Engineering Notes</small></span>
+      </a>
+      <nav class="nav-links" aria-label="주요 메뉴">
+        <a href="../articles.html">Articles</a>
+        <a href="../projects.html">Projects</a>
+        <a href="../#about">About</a>
+        <span class="nav-divider" aria-hidden="true"></span>
+        <a href="https://github.com/andrewkimswe">GitHub</a>
+        <a href="https://www.linkedin.com/in/jiwon-kim-867334285/">LinkedIn</a>
+      </nav>
     </header>
 
-    <main>
+    <main id="main-content">
       <article class="article-page">
         <header class="article-hero">
-          <a class="back-link" href="../#writing">Back to writing</a>
+          <a class="back-link" href="../articles.html">All articles</a>
           <p class="eyebrow">AWS · IAM · Security</p>
           <h1>[AWS/IAM] 외부 업체에 Access Key를 주지 않고 AWS 계정 접근을 허용하기 - Cross-Account AssumeRole과 STS</h1>
           <p class="article-summary">외부 업체에 장기 Access Key를 넘기지 않고 접근을 위임하려면 IAM User 복제가 아니라 Cross-Account Role과 STS AssumeRole을 설계해야 합니다.</p>
-          <div class="article-meta"><time datetime="2026-08-30">2026.08.30</time><span>AWS</span><span>IAM</span><span>STS</span><span>Security</span></div>
+          <div class="article-meta"><time datetime="2026-08-30">2026.08.30</time><span>AWS</span><span>IAM</span><span>STS</span><span>Security</span><span class="reading-time" data-generated="true">약 7분</span></div>
         </header>
+
+        <!-- GENERATED:ARTICLE_TOC:START -->
+        <aside class="article-toc" aria-label="이 글의 목차">
+          <details open>
+            <summary>On this page</summary>
+            <ol>
+              <li><a href="#section-01">1. 문제를 먼저 분해한다</a></li>
+              <li><a href="#section-02">2. 전체 구조</a></li>
+              <li><a href="#section-03">3. IAM Role과 IAM User의 차이</a></li>
+              <li><a href="#section-04">4. Trust Policy와 Permission Policy를 같이 봐야 한다</a></li>
+              <li><a href="#section-05">5. Access Key를 넘기지 않는 이유</a></li>
+              <li><a href="#section-06">6. 최소 권한 원칙</a></li>
+              <li><a href="#section-07">7. Vendor Account 전체를 신뢰하지 않는다</a></li>
+              <li><a href="#section-08">8. External ID와 Confused Deputy Problem</a></li>
+              <li><a href="#section-09">9. 실제 요청 흐름</a></li>
+              <li><a href="#section-10">10. IAM Group이나 IdP가 답이 아닌 경우</a></li>
+              <li><a href="#section-11">11. 사람 접근과 machine 접근을 구분한다</a></li>
+              <li><a href="#section-12">12. 외부 workload 접근의 선택 기준</a></li>
+              <li><a href="#section-13">마무리</a></li>
+            </ol>
+          </details>
+        </aside>
+        <!-- GENERATED:ARTICLE_TOC:END -->
 
         <div class="article-body">
           <p>외부 운영 업체나 SaaS 벤더가 우리 AWS 계정의 리소스에 접근해야 할 때 가장 단순한 방법은 IAM User를 만들고 Access Key를 전달하는 것입니다. 하지만 이 방식은 외부 업체가 우리 계정의 장기 자격 증명을 보관하게 만듭니다.</p>
@@ -55,9 +97,9 @@ flowchart LR
     sts --> role[Company VendorAccessRole]
     role --> resources[Allowed AWS Resources]
           </div>
-          <h2>1. 문제를 먼저 분해한다</h2>
+          <h2 id="section-01">1. 문제를 먼저 분해한다</h2>
           <p>필요한 것은 Vendor AWS Account에서 Company AWS Account의 리소스에 접근하는 것입니다. 외부 업체가 이미 자신의 AWS identity를 가지고 있다면 우리 계정에 IAM User를 새로 만들 필요가 없습니다.</p>
-          <h2>2. 전체 구조</h2>
+          <h2 id="section-02">2. 전체 구조</h2>
           <div class="mermaid diagram">
 flowchart TB
     subgraph vendorAccount[Vendor Account]
@@ -72,14 +114,14 @@ flowchart TB
     role --> policy
     policy --> resource
           </div>
-          <h2>3. IAM Role과 IAM User의 차이</h2>
+          <h2 id="section-03">3. IAM Role과 IAM User의 차이</h2>
           <p>IAM User는 password나 access key 같은 장기 credential을 가질 수 있습니다. 반면 IAM Role은 직접 장기 access key를 가지지 않고, STS를 통해 임시 보안 자격 증명을 발급받아 사용합니다.</p>
           <pre><code>AssumeRole -&gt; AWS STS -&gt; Temporary Credentials
 Access Key ID
 Secret Access Key
 Session Token
 Expiration</code></pre>
-          <h2>4. Trust Policy와 Permission Policy를 같이 봐야 한다</h2>
+          <h2 id="section-04">4. Trust Policy와 Permission Policy를 같이 봐야 한다</h2>
           <p>Cross-account role에는 두 질문이 있습니다. 누가 이 role을 assume할 수 있는가, 그리고 assume한 뒤 무엇을 할 수 있는가입니다.</p>
           <table><thead><tr><th>정책</th><th>역할</th></tr></thead><tbody><tr><td>Trust Policy</td><td>WHO can assume this role?</td></tr><tr><td>Permission Policy</td><td>WHAT can this role do?</td></tr></tbody></table>
           <pre><code class="language-json">{
@@ -89,13 +131,13 @@ Expiration</code></pre>
   },
   &quot;Action&quot;: &quot;sts:AssumeRole&quot;
 }</code></pre>
-          <h2>5. Access Key를 넘기지 않는 이유</h2>
+          <h2 id="section-05">5. Access Key를 넘기지 않는 이유</h2>
           <p>IAM User와 Access Key를 전달하면 key 생성, 전달, 저장, rotation, 유출 대응, 계약 종료 시 폐기까지 credential lifecycle을 우리가 관리해야 합니다. AssumeRole 구조에서는 temporary credential이 자동 만료되고, trust relationship을 제거하는 방식으로 접근을 철회할 수 있습니다.</p>
-          <h2>6. 최소 권한 원칙</h2>
+          <h2 id="section-06">6. 최소 권한 원칙</h2>
           <p>외부 업체가 운영 업무를 한다고 해서 AdministratorAccess가 필요한 것은 아닙니다. EC2 상태 확인과 재시작만 담당한다면 DescribeInstances, RebootInstances, StartInstances, StopInstances 정도로 권한을 좁힐 수 있습니다.</p>
-          <h2>7. Vendor Account 전체를 신뢰하지 않는다</h2>
+          <h2 id="section-07">7. Vendor Account 전체를 신뢰하지 않는다</h2>
           <p>trust policy에서 vendor account root를 principal로 지정할 수도 있지만, 가능하면 vendor의 특정 automation role처럼 principal을 좁히는 편이 명확합니다. 최소 권한은 resource permission뿐 아니라 누가 assume할 수 있는지에도 적용됩니다.</p>
-          <h2>8. External ID와 Confused Deputy Problem</h2>
+          <h2 id="section-08">8. External ID와 Confused Deputy Problem</h2>
           <p>제3자 SaaS처럼 하나의 vendor가 여러 고객 AWS 계정에 접근한다면 External ID를 고려해야 합니다. External ID는 vendor가 어느 고객을 대신해 AssumeRole을 수행하는지 구분해 confused deputy risk를 줄이는 장치입니다.</p>
           <pre><code class="language-json">{
   &quot;Effect&quot;: &quot;Allow&quot;,
@@ -117,7 +159,7 @@ flowchart TB
     check -->|yes| role[Customer Role]
     check -->|no| deny[Deny]
           </div>
-          <h2>9. 실제 요청 흐름</h2>
+          <h2 id="section-09">9. 실제 요청 흐름</h2>
           <div class="mermaid diagram">
 sequenceDiagram
     participant V as Vendor AutomationRole
@@ -131,24 +173,55 @@ sequenceDiagram
     V->>A: Call API with temporary credentials
     A-->>V: Evaluate permission policy result
           </div>
-          <h2>10. IAM Group이나 IdP가 답이 아닌 경우</h2>
+          <h2 id="section-10">10. IAM Group이나 IdP가 답이 아닌 경우</h2>
           <p>다른 계정의 IAM User를 우리 계정의 IAM Group에 직접 추가하는 방식은 cross-account delegation 모델이 아닙니다. 또 AWS 계정 간 접근을 위해 별도의 SAML/OIDC IdP를 만드는 것도 문제의 핵심이 아닐 수 있습니다. AWS account 간에는 role trust가 기본 해법입니다.</p>
-          <h2>11. 사람 접근과 machine 접근을 구분한다</h2>
+          <h2 id="section-11">11. 사람 접근과 machine 접근을 구분한다</h2>
           <p>외부 사람이 AWS Console과 Private EC2 OS에 접근해야 한다면 IAM Identity Center와 Session Manager 같은 workforce access 설계가 더 적절합니다. 반면 vendor의 automation workload가 우리 AWS account에 접근한다면 Cross-Account IAM Role과 STS AssumeRole이 자연스럽습니다.</p>
           <pre><code>Human Access -&gt; Identity Center / Federation
 Machine Cross-Account Access -&gt; IAM Role + Trust Policy + STS</code></pre>
-          <h2>12. SAA에서 빠르게 판단하는 기준</h2>
-          <p>문제에 external AWS account, vendor, partner, automation tool, our account resource access, most secure가 함께 나오면 Cross-Account IAM Role과 STS AssumeRole을 먼저 떠올릴 수 있습니다.</p>
-          <h2>마무리</h2>
+          <h2 id="section-12">12. 외부 workload 접근의 선택 기준</h2>
+          <p>다른 AWS account의 vendor 또는 automation workload가 우리 account 리소스에 접근해야 한다면 Cross-Account IAM Role과 STS AssumeRole을 먼저 검토합니다. 사람의 대화형 접근인지 machine-to-machine 접근인지부터 구분해야 권한 수명과 감사 경계를 올바르게 설계할 수 있습니다.</p>
+          <h2 id="section-13">마무리</h2>
           <p>안전한 cross-account access의 핵심은 다른 계정의 identity를 우리 계정에 복제하는 것이 아닙니다. 기존 identity를 신뢰하고, 필요한 권한을 가진 role을 일시적으로 위임하는 것입니다.</p>
           <blockquote><p>Identity → Trust → Temporary Credential → Least Privilege 흐름으로 보면 Cross-Account IAM 설계가 훨씬 단순해집니다.</p></blockquote>
         </div>
+
+        <!-- GENERATED:ARTICLE_TAIL:START -->
+        <nav class="article-pagination" aria-label="발행 순서로 읽기">
+          <span class="article-nav-empty"><span>Newer</span><strong>더 이상 글이 없습니다.</strong></span>
+          <a href="./aws-networking-transit-gateway-hub-spoke-vpc-scale.html"><span>Older</span><strong>[AWS/Networking] VPC가 1,000개라면 Peering은 왜 무너질까? - Transit Gateway와 Hub-and-Spoke 설계</strong></a>
+        </nav>
+        <aside class="related-notes" aria-labelledby="related-heading">
+          <h2 id="related-heading">Related notes</h2>
+          <div class="related-note-list">
+          <a href="./aws-security-prevent-detect-remediate-config-ssm.html">
+            <span>Security · 2026.08.28</span>
+            <strong>[AWS/Security] 보안 정책은 탐지만 해서는 부족하다 - IAM, AWS Config, Systems Manager로 Prevent·Detect·Remediate 만들기</strong>
+          </a>
+          <a href="./aws-security-identity-center-session-manager-private-ec2-access.html">
+            <span>Security · 2026.08.27</span>
+            <strong>[AWS/Security] 외부 엔지니어에게 SSH 키 없이 Private EC2 접근을 제공하기 - IAM Identity Center와 Session Manager</strong>
+          </a>
+          <a href="./aws-security-ec2-patch-rollout-compliance.html">
+            <span>Security · 2026.08.16</span>
+            <strong>[AWS/Security] EC2 패치 자동화는 어디까지 자동화해야 할까? - Maintenance Window, Compliance, Staged Rollout</strong>
+          </a>
+          </div>
+        </aside>
+        <!-- GENERATED:ARTICLE_TAIL:END -->
       </article>
     </main>
 
-    <footer class="site-footer"><p>© 2026 Jiwon Kim. Technical writing, notes, and experiments.</p><div class="footer-links"><span id="visitStatus">Analytics ready</span><a href="https://github.com/andrewkimswe">github.com/andrewkimswe</a><a href="https://www.linkedin.com/in/jiwon-kim-867334285/">LinkedIn</a></div></footer>
-    <script src="../script.js"></script>
+    <footer class="site-footer">
+      <p>© 2026 Jiwon Kim</p>
+      <div class="footer-links">
+        <span id="visitStatus">집계 중</span>
+        <a href="../articles.html">Articles</a>
+        <a href="../feed.xml">RSS</a>
+      </div>
+    </footer>
+    <script src="../script.js?v=20260905-4"></script>
     <script data-goatcounter="https://jiwonkim-blog.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
-    <noscript><img src="https://jiwonkim-blog.goatcounter.com/count?p=/posts/aws-iam-cross-account-assumerole-sts-vendor-access.html" alt="" /></noscript>
+    <noscript><img class="tracking-pixel" src="https://jiwonkim-blog.goatcounter.com/count?p=/posts/aws-iam-cross-account-assumerole-sts-vendor-access.html" alt="" /></noscript>
   </body>
 </html>

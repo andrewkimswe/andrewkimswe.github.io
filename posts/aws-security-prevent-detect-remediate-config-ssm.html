@@ -3,21 +3,28 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>[AWS/Security] 보안 정책은 탐지만 해서는 부족하다 | Jiwon Kim's Blog</title>
+    <title>[AWS/Security] 보안 정책은 탐지만 해서는 부족하다 | Jiwon Kim Engineering Notes</title>
     <meta name="description" content="EBS 암호화 정책을 예로 IAM, AWS Config, Systems Manager Automation을 조합해 Prevent, Detect, Remediate 보안 운영 loop를 설계하는 방법을 정리합니다." />
     <meta name="author" content="Jiwon Kim" />
     <meta name="robots" content="index, follow, max-image-preview:large" />
     <link rel="canonical" href="https://andrewkimswe.github.io/posts/aws-security-prevent-detect-remediate-config-ssm.html" />
-    <meta property="og:site_name" content="Jiwon Kim's Blog" />
+    <meta property="og:site_name" content="Jiwon Kim | Engineering Notes" />
     <meta property="og:title" content="[AWS/Security] 보안 정책은 탐지만 해서는 부족하다 - IAM, AWS Config, Systems Manager로 Prevent·Detect·Remediate 만들기" />
     <meta property="og:description" content="보안 정책은 탐지만으로 끝나지 않습니다. IAM으로 예방하고, AWS Config로 평가하고, Systems Manager로 안전하게 복구하는 운영 loop를 설계합니다." />
     <meta property="og:type" content="article" />
     <meta property="og:url" content="https://andrewkimswe.github.io/posts/aws-security-prevent-detect-remediate-config-ssm.html" />
-    <meta property="og:image" content="https://andrewkimswe.github.io/assets/social-card.svg" />
+    <meta property="og:image" content="https://andrewkimswe.github.io/assets/social-card.png" />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Jiwon Kim Engineering Notes" />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:image" content="https://andrewkimswe.github.io/assets/social-card.svg" />
+    <meta name="twitter:image" content="https://andrewkimswe.github.io/assets/social-card.png" />
+    <meta name="twitter:title" content="[AWS/Security] 보안 정책은 탐지만 해서는 부족하다 - IAM, AWS Config, Systems Manager로 Prevent·Detect·Remediate 만들기" />
+    <meta name="twitter:description" content="보안 정책은 탐지만으로 끝나지 않습니다. IAM으로 예방하고, AWS Config로 평가하고, Systems Manager로 안전하게 복구하는 운영 loop를 설계합니다." />
+    <meta property="article:modified_time" content="2026-09-05T00:00:00+09:00" />
+    <meta name="twitter:image:alt" content="Jiwon Kim Engineering Notes" />
     <meta property="article:published_time" content="2026-08-28T00:00:00+09:00" />
-    <meta property="article:modified_time" content="2026-08-28T00:00:00+09:00" />
     <meta property="article:author" content="Jiwon Kim" />
     <meta property="article:tag" content="AWS" />
     <meta property="article:tag" content="Security" />
@@ -26,26 +33,60 @@
     <meta property="article:tag" content="Systems Manager" />
     <meta property="article:tag" content="Compliance" />
     <meta property="article:tag" content="Operations" />
-    <link rel="stylesheet" href="../styles.css" />
+    <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="../styles.css?v=20260905-4" />
     <script type="application/ld+json">
-{"@context":"https://schema.org","@type":"BlogPosting","headline":"[AWS/Security] 보안 정책은 탐지만 해서는 부족하다 - IAM, AWS Config, Systems Manager로 Prevent·Detect·Remediate 만들기","description":"EBS 암호화 정책을 예로 IAM, AWS Config, Systems Manager Automation을 조합해 Prevent, Detect, Remediate 보안 운영 loop를 설계하는 방법을 정리합니다.","datePublished":"2026-08-28T00:00:00+09:00","dateModified":"2026-08-28T00:00:00+09:00","author":{"@type":"Person","name":"Jiwon Kim","url":"https://github.com/andrewkimswe"},"publisher":{"@type":"Person","name":"Jiwon Kim"},"mainEntityOfPage":"https://andrewkimswe.github.io/posts/aws-security-prevent-detect-remediate-config-ssm.html","inLanguage":"ko-KR"}
+{"@context":"https://schema.org","@type":"BlogPosting","headline":"[AWS/Security] 보안 정책은 탐지만 해서는 부족하다 - IAM, AWS Config, Systems Manager로 Prevent·Detect·Remediate 만들기","description":"EBS 암호화 정책을 예로 IAM, AWS Config, Systems Manager Automation을 조합해 Prevent, Detect, Remediate 보안 운영 loop를 설계하는 방법을 정리합니다.","datePublished":"2026-08-28T00:00:00+09:00","dateModified":"2026-09-05T00:00:00+09:00","author":{"@type":"Person","name":"Jiwon Kim","url":"https://github.com/andrewkimswe"},"publisher":{"@type":"Person","name":"Jiwon Kim"},"mainEntityOfPage":"https://andrewkimswe.github.io/posts/aws-security-prevent-detect-remediate-config-ssm.html","inLanguage":"ko-KR"}
     </script>
   </head>
   <body>
+    <a class="skip-link" href="#main-content">본문으로 바로가기</a>
     <header class="site-header">
-      <a class="brand" href="../" aria-label="Jiwon Kim's Blog 홈"><span class="brand-mark">JK</span><span><strong>Jiwon Kim's Blog</strong><small>Engineering notes</small></span></a>
-      <nav class="nav-links" aria-label="주요 메뉴"><a href="../#writing">Writing</a><a href="../#portfolio">Portfolio</a><a href="../#profile">Profile</a><a href="../#topics">Topics</a><a href="../#about">About</a><a href="https://github.com/andrewkimswe">GitHub</a><a href="https://www.linkedin.com/in/jiwon-kim-867334285/">LinkedIn</a></nav>
+      <a class="brand" href="../" aria-label="Jiwon Kim Engineering Notes 홈">
+        <span class="brand-mark" aria-hidden="true">JK</span>
+        <span class="brand-copy"><strong>Jiwon Kim</strong><small>Engineering Notes</small></span>
+      </a>
+      <nav class="nav-links" aria-label="주요 메뉴">
+        <a href="../articles.html">Articles</a>
+        <a href="../projects.html">Projects</a>
+        <a href="../#about">About</a>
+        <span class="nav-divider" aria-hidden="true"></span>
+        <a href="https://github.com/andrewkimswe">GitHub</a>
+        <a href="https://www.linkedin.com/in/jiwon-kim-867334285/">LinkedIn</a>
+      </nav>
     </header>
 
-    <main>
+    <main id="main-content">
       <article class="article-page">
         <header class="article-hero">
-          <a class="back-link" href="../#writing">Back to writing</a>
+          <a class="back-link" href="../articles.html">All articles</a>
           <p class="eyebrow">AWS · Security · Operations</p>
           <h1>[AWS/Security] 보안 정책은 탐지만 해서는 부족하다 - IAM, AWS Config, Systems Manager로 Prevent·Detect·Remediate 만들기</h1>
           <p class="article-summary">보안 정책은 탐지만으로 끝나지 않습니다. IAM으로 예방하고, AWS Config로 평가하고, Systems Manager로 안전하게 복구하는 운영 loop를 설계합니다.</p>
-          <div class="article-meta"><time datetime="2026-08-28">2026.08.28</time><span>AWS</span><span>Security</span><span>Config</span><span>SSM</span></div>
+          <div class="article-meta"><time datetime="2026-08-28">2026.08.28</time><span>AWS</span><span>Security</span><span>Config</span><span>SSM</span><span class="reading-time" data-generated="true">약 5분</span></div>
         </header>
+
+        <!-- GENERATED:ARTICLE_TOC:START -->
+        <aside class="article-toc" aria-label="이 글의 목차">
+          <details open>
+            <summary>On this page</summary>
+            <ol>
+              <li><a href="#section-01">1. 예시: 모든 EBS 볼륨은 암호화되어야 한다</a></li>
+              <li><a href="#section-02">2. Prevent: IAM으로 잘못된 생성을 줄인다</a></li>
+              <li><a href="#section-03">3. IAM만으로 충분하지 않은 이유</a></li>
+              <li><a href="#section-04">4. Detect: AWS Config로 현재 상태를 평가한다</a></li>
+              <li><a href="#section-05">5. CloudTrail, EventBridge, Config를 구분한다</a></li>
+              <li><a href="#section-06">6. Remediate: Systems Manager Automation으로 반복 작업을 줄인다</a></li>
+              <li><a href="#section-07">7. EventBridge와 Lambda만으로 직접 만들 수도 있다</a></li>
+              <li><a href="#section-08">8. Macie나 Inspector가 아닌 이유</a></li>
+              <li><a href="#section-09">9. 자동 Remediation의 안전장치</a></li>
+              <li><a href="#section-10">10. Organizations 환경으로 확장하기</a></li>
+              <li><a href="#section-11">11. 운영 책임별 선택 기준</a></li>
+              <li><a href="#section-12">마무리</a></li>
+            </ol>
+          </details>
+        </aside>
+        <!-- GENERATED:ARTICLE_TOC:END -->
 
         <div class="article-body">
           <p>클라우드 보안 정책은 탐지만으로 끝나지 않습니다. 실제 운영에서는 위반을 줄이고, 현재 상태를 평가하고, 안전한 범위에서 복구하는 loop가 필요합니다.</p>
@@ -56,9 +97,9 @@ flowchart LR
     remediate --> verify[Verify]
     verify --> detect
           </div>
-          <h2>1. 예시: 모든 EBS 볼륨은 암호화되어야 한다</h2>
+          <h2 id="section-01">1. 예시: 모든 EBS 볼륨은 암호화되어야 한다</h2>
           <p>문서에 정책을 적어두는 것만으로는 부족합니다. 누군가 실수로 암호화 옵션을 끈 채 볼륨을 만들 수도 있고, 예외 계정이나 과거 리소스가 이미 남아 있을 수도 있습니다.</p>
-          <h2>2. Prevent: IAM으로 잘못된 생성을 줄인다</h2>
+          <h2 id="section-02">2. Prevent: IAM으로 잘못된 생성을 줄인다</h2>
           <p>가장 좋은 보안 위반은 애초에 발생하지 않는 위반입니다. IAM policy나 Organizations 환경의 guardrail을 통해 허용되지 않은 리소스 생성을 제한할 수 있습니다.</p>
           <div class="mermaid diagram compact-diagram">
 flowchart TB
@@ -66,9 +107,9 @@ flowchart TB
     iam --> allowed[Encrypted EBS Allowed]
     iam -. deny .-> blocked[Unencrypted EBS Denied]
           </div>
-          <h2>3. IAM만으로 충분하지 않은 이유</h2>
+          <h2 id="section-03">3. IAM만으로 충분하지 않은 이유</h2>
           <p>IAM은 앞으로의 행동을 제한하지만 현재 존재하는 리소스 상태를 모두 설명하지는 못합니다. 기존 리소스, 다른 자동화 경로, 정책 변경, 예외 계정 때문에 non-compliant resource는 여전히 존재할 수 있습니다.</p>
-          <h2>4. Detect: AWS Config로 현재 상태를 평가한다</h2>
+          <h2 id="section-04">4. Detect: AWS Config로 현재 상태를 평가한다</h2>
           <p>AWS Config는 resource configuration을 기록하고 rule을 통해 compliance 상태를 평가합니다. EBS 볼륨이 암호화되어 있는지 같은 configuration compliance 문제에는 Config가 직접적인 도구입니다.</p>
           <div class="mermaid diagram compact-diagram">
 flowchart TB
@@ -76,9 +117,9 @@ flowchart TB
     config --> compliant[COMPLIANT]
     config --> non[NON_COMPLIANT]
           </div>
-          <h2>5. CloudTrail, EventBridge, Config를 구분한다</h2>
+          <h2 id="section-05">5. CloudTrail, EventBridge, Config를 구분한다</h2>
           <table><thead><tr><th>서비스</th><th>답하는 질문</th></tr></thead><tbody><tr><td>CloudTrail</td><td>누가 어떤 API를 호출했는가?</td></tr><tr><td>EventBridge</td><td>어떤 이벤트가 발생했는가?</td></tr><tr><td>AWS Config</td><td>현재 리소스 구성이 정책을 준수하는가?</td></tr></tbody></table>
-          <h2>6. Remediate: Systems Manager Automation으로 반복 작업을 줄인다</h2>
+          <h2 id="section-06">6. Remediate: Systems Manager Automation으로 반복 작업을 줄인다</h2>
           <p>위반 리소스가 발견되면 사람이 매번 ticket을 보고 수정할 수도 있습니다. 하지만 정책이 명확하고 조치가 안전하다면 Systems Manager Automation runbook으로 remediation을 연결할 수 있습니다.</p>
           <div class="mermaid diagram">
 flowchart TB
@@ -87,12 +128,12 @@ flowchart TB
     ssm --> action[Remediation Action]
     action --> config
           </div>
-          <h2>7. EventBridge와 Lambda만으로 직접 만들 수도 있다</h2>
+          <h2 id="section-07">7. EventBridge와 Lambda만으로 직접 만들 수도 있다</h2>
           <p>CreateVolume event를 EventBridge로 받고 Lambda에서 encryption check와 remediation을 수행하는 구조도 가능합니다. 하지만 이 경우 event pattern, state tracking, compliance history, retry, evaluation logic을 직접 만들어야 합니다.</p>
           <blockquote><p>요구사항이 지속적인 compliance evaluation이라면 AWS Config가 더 직접적입니다. EventBridge와 Lambda는 특정 event reaction에 더 가깝습니다.</p></blockquote>
-          <h2>8. Macie나 Inspector가 아닌 이유</h2>
+          <h2 id="section-08">8. Macie나 Inspector가 아닌 이유</h2>
           <p>Macie는 주로 S3 민감 데이터 탐지에 강하고, Inspector는 EC2, container image, Lambda의 취약점과 노출 평가가 중심입니다. EBS 암호화 여부 같은 configuration compliance에는 AWS Config가 더 맞습니다.</p>
-          <h2>9. 자동 Remediation의 안전장치</h2>
+          <h2 id="section-09">9. 자동 Remediation의 안전장치</h2>
           <p>자동화를 무조건 적용하면 안 됩니다. destructive action은 더 큰 장애를 만들 수 있으므로 idempotency, blast radius, rollback, approval, logging, failure handling을 함께 설계해야 합니다.</p>
           <div class="mermaid diagram compact-diagram">
 flowchart LR
@@ -101,21 +142,52 @@ flowchart LR
     approval --> remediate[Remediate]
     remediate --> log[Log and Verify]
           </div>
-          <h2>10. Organizations 환경으로 확장하기</h2>
+          <h2 id="section-10">10. Organizations 환경으로 확장하기</h2>
           <p>계정이 여러 개라면 account 단위 정책이 아니라 organization-wide guardrail, centralized compliance, automated remediation 관점으로 확장해야 합니다.</p>
-          <h2>11. SAA에서 빠르게 판단하는 기준</h2>
+          <h2 id="section-11">11. 운영 책임별 선택 기준</h2>
           <pre><code>Block creation -&gt; IAM or SCP
 Check compliance -&gt; AWS Config
 Fix violation -&gt; Systems Manager Automation or Lambda</code></pre>
-          <h2>마무리</h2>
+          <h2 id="section-12">마무리</h2>
           <p>보안은 alert를 많이 만드는 일이 아닙니다. Policy, enforcement, verification, remediation이 하나의 반복 가능한 운영 체계로 이어질 때 실제 governance에 가까워집니다.</p>
         </div>
+
+        <!-- GENERATED:ARTICLE_TAIL:START -->
+        <nav class="article-pagination" aria-label="발행 순서로 읽기">
+          <a href="./aws-networking-transit-gateway-hub-spoke-vpc-scale.html"><span>Newer</span><strong>[AWS/Networking] VPC가 1,000개라면 Peering은 왜 무너질까? - Transit Gateway와 Hub-and-Spoke 설계</strong></a>
+          <a href="./aws-security-identity-center-session-manager-private-ec2-access.html"><span>Older</span><strong>[AWS/Security] 외부 엔지니어에게 SSH 키 없이 Private EC2 접근을 제공하기 - IAM Identity Center와 Session Manager</strong></a>
+        </nav>
+        <aside class="related-notes" aria-labelledby="related-heading">
+          <h2 id="related-heading">Related notes</h2>
+          <div class="related-note-list">
+          <a href="./aws-security-ec2-patch-rollout-compliance.html">
+            <span>Security · 2026.08.16</span>
+            <strong>[AWS/Security] EC2 패치 자동화는 어디까지 자동화해야 할까? - Maintenance Window, Compliance, Staged Rollout</strong>
+          </a>
+          <a href="./aws-security-identity-center-session-manager-private-ec2-access.html">
+            <span>Security · 2026.08.27</span>
+            <strong>[AWS/Security] 외부 엔지니어에게 SSH 키 없이 Private EC2 접근을 제공하기 - IAM Identity Center와 Session Manager</strong>
+          </a>
+          <a href="./aws-iam-cross-account-assumerole-sts-vendor-access.html">
+            <span>Security · 2026.08.30</span>
+            <strong>[AWS/IAM] 외부 업체에 Access Key를 주지 않고 AWS 계정 접근을 허용하기 - Cross-Account AssumeRole과 STS</strong>
+          </a>
+          </div>
+        </aside>
+        <!-- GENERATED:ARTICLE_TAIL:END -->
       </article>
     </main>
 
-    <footer class="site-footer"><p>© 2026 Jiwon Kim. Technical writing, notes, and experiments.</p><div class="footer-links"><span id="visitStatus">Analytics ready</span><a href="https://github.com/andrewkimswe">github.com/andrewkimswe</a><a href="https://www.linkedin.com/in/jiwon-kim-867334285/">LinkedIn</a></div></footer>
-    <script src="../script.js"></script>
+    <footer class="site-footer">
+      <p>© 2026 Jiwon Kim</p>
+      <div class="footer-links">
+        <span id="visitStatus">집계 중</span>
+        <a href="../articles.html">Articles</a>
+        <a href="../feed.xml">RSS</a>
+      </div>
+    </footer>
+    <script src="../script.js?v=20260905-4"></script>
     <script data-goatcounter="https://jiwonkim-blog.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
-    <noscript><img src="https://jiwonkim-blog.goatcounter.com/count?p=/posts/aws-security-prevent-detect-remediate-config-ssm.html" alt="" /></noscript>
+    <noscript><img class="tracking-pixel" src="https://jiwonkim-blog.goatcounter.com/count?p=/posts/aws-security-prevent-detect-remediate-config-ssm.html" alt="" /></noscript>
   </body>
 </html>

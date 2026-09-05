@@ -1,0 +1,252 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Projects | Jiwon Kim Engineering Notes</title>
+    <meta
+      name="description"
+      content="B2B SaaS, CloudOps RAG, 데이터 수집, AI 서비스와 ML 시스템 프로젝트에서 직접 구현하고 검증한 범위를 정리합니다."
+    />
+    <meta name="author" content="Jiwon Kim" />
+    <meta name="robots" content="index, follow, max-image-preview:large" />
+    <link rel="canonical" href="https://andrewkimswe.github.io/projects.html" />
+    <link rel="icon" href="./assets/favicon.svg" type="image/svg+xml" />
+    <meta property="og:site_name" content="Jiwon Kim | Engineering Notes" />
+    <meta property="og:title" content="Projects | Jiwon Kim Engineering Notes" />
+    <meta property="og:description" content="직접 구현한 범위, 설계 판단, 측정 결과와 남은 한계를 구분한 프로젝트 기록." />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://andrewkimswe.github.io/projects.html" />
+    <meta property="og:image" content="https://andrewkimswe.github.io/assets/social-card.png" />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Jiwon Kim Engineering Notes" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://andrewkimswe.github.io/assets/social-card.png" />
+    <meta name="twitter:image:alt" content="Jiwon Kim Engineering Notes" />
+    <meta name="twitter:title" content="Projects | Jiwon Kim Engineering Notes" />
+    <meta name="twitter:description" content="B2B SaaS, CloudOps RAG, 데이터 수집과 ML 시스템 프로젝트." />
+    <link rel="stylesheet" href="./styles.css?v=20260905-4" />
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "CollectionPage",
+        "name": "Projects | Jiwon Kim Engineering Notes",
+        "url": "https://andrewkimswe.github.io/projects.html",
+        "description": "Selected software engineering projects by Jiwon Kim.",
+        "author": {"@type": "Person", "name": "Jiwon Kim"},
+        "inLanguage": "ko-KR"
+      }
+    </script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main-content">본문으로 바로가기</a>
+    <header class="site-header">
+      <a class="brand" href="./" aria-label="Jiwon Kim Engineering Notes 홈">
+        <span class="brand-mark" aria-hidden="true">JK</span>
+        <span class="brand-copy"><strong>Jiwon Kim</strong><small>Engineering Notes</small></span>
+      </a>
+      <nav class="nav-links" aria-label="주요 메뉴">
+        <a href="./articles.html">Articles</a>
+        <a class="is-current" href="./projects.html" aria-current="page">Projects</a>
+        <a href="./#about">About</a>
+        <span class="nav-divider" aria-hidden="true"></span>
+        <a href="https://github.com/andrewkimswe">GitHub</a>
+        <a href="https://www.linkedin.com/in/jiwon-kim-867334285/">LinkedIn</a>
+      </nav>
+    </header>
+
+    <main id="main-content" class="projects-page">
+      <header class="page-intro project-intro">
+        <p class="eyebrow">Selected engineering work</p>
+        <div class="page-intro-grid">
+          <h1>Projects</h1>
+          <div>
+            <p>
+              결과만 나열하지 않고 문제, 직접 맡은 범위, 확인한 결과,
+              아직 해결하지 않은 경계를 함께 적었습니다.
+            </p>
+            <span>6 selected projects · 3 contributions &amp; POCs</span>
+          </div>
+        </div>
+      </header>
+
+      <section class="project-case project-case-featured" id="joycrew">
+        <figure class="project-case-media">
+          <img src="./assets/portfolio/joycrew.png" alt="JoyCrew 기업용 복지·리워드 서비스 화면" />
+          <figcaption>기업용 포인트 기반 복지·리워드 SaaS</figcaption>
+        </figure>
+        <div class="project-case-copy">
+          <span class="project-number">01 · Founder / Full-stack</span>
+          <h2>JoyCrew</h2>
+          <p class="project-deck">
+            기획부터 백엔드 핵심 기능, AWS EKS 배포와 모니터링까지 주도한 B2B SaaS입니다.
+            실제 기업 환경의 베타 테스트를 통해 멀티테넌트 경계와 운영 흐름을 확인했습니다.
+          </p>
+          <dl class="project-facts">
+            <div><dt>Problem</dt><dd>기업별 사용자, 포인트, 관리자 권한과 데이터 접근 범위를 분리해야 했습니다.</dd></div>
+            <div><dt>Implemented</dt><dd>포인트·결제 백엔드, Host 기반 tenant 식별, companyId 접근 조건, EKS 배포·모니터링 구조를 구현했습니다.</dd></div>
+            <div><dt>Validated</dt><dd>실제 기업 베타 테스트에서 고객사별 사용자와 포인트 데이터를 분리해 운영했습니다.</dd></div>
+            <div><dt>Boundary</dt><dd>장기 대규모 트래픽과 다수 고객사 확장성은 아직 검증 범위가 아닙니다.</dd></div>
+          </dl>
+          <div class="portfolio-tags" aria-label="사용 기술">
+            <span>Java 17</span><span>Spring Boot</span><span>EKS</span><span>RDS</span><span>Multi-Tenant</span><span>Pessimistic Lock</span>
+          </div>
+          <a class="text-link" href="https://github.com/JoyCrew/backend">Backend repository <span aria-hidden="true">↗</span></a>
+        </div>
+      </section>
+
+      <section class="project-case" id="cloudops-rag">
+        <figure class="project-case-media">
+          <img src="./assets/portfolio/cloudops-rag.png" alt="CloudOps RAG 평가와 관측 흐름" loading="lazy" />
+          <figcaption>평가, fallback, serving과 관측을 연결한 RAG 시스템</figcaption>
+        </figure>
+        <div class="project-case-copy">
+          <span class="project-number">02 · AI systems</span>
+          <h2>CloudOps RAG</h2>
+          <p class="project-deck">
+            AWS와 Kubernetes 공식 troubleshooting 문서를 대상으로, 답을 생성하는 데모를
+            검색과 답변 품질을 따로 평가할 수 있는 서비스로 확장했습니다.
+          </p>
+          <dl class="project-facts">
+            <div><dt>Problem</dt><dd>자연스러운 답변만으로는 retrieval이 맞았는지, 근거가 충분한지 판단하기 어려웠습니다.</dd></div>
+            <div><dt>Implemented</dt><dd>Hit@k·MRR, answer evaluation, threshold fallback, failure taxonomy, FastAPI, Prometheus, CI regression gate를 구현했습니다.</dd></div>
+            <div><dt>Measured</dt><dd>작은 held-out set에서 Hit@3 8/8, MRR 0.9375를 확인했습니다.</dd></div>
+            <div><dt>Boundary</dt><dd>평가 표본이 작고 대규모 부하 테스트, circuit breaker, 비동기 ingestion은 구현하지 않았습니다.</dd></div>
+          </dl>
+          <div class="portfolio-tags" aria-label="사용 기술">
+            <span>Python</span><span>FastAPI</span><span>OpenAI API</span><span>Chroma</span><span>Prometheus</span><span>CI</span>
+          </div>
+          <a class="text-link" href="./posts/rag-cloudops-productionish-evaluation-fallback-serving-observability.html">Case study <span aria-hidden="true">→</span></a>
+        </div>
+      </section>
+
+      <section class="project-case" id="hongik-taste-navigator">
+        <figure class="project-case-media">
+          <img src="./assets/portfolio/hongik-taste-navigator.png" alt="Hongik Taste Navigator 식사 메이트 매칭 화면" loading="lazy" />
+          <figcaption>동아리 박람회 현장에서 운영한 추천·매칭 서비스</figcaption>
+        </figure>
+        <div class="project-case-copy">
+          <span class="project-number">03 · Backend</span>
+          <h2>Hongik Taste Navigator</h2>
+          <p class="project-deck">동아리 박람회 방문객에게 식당을 추천하고 식사 메이트를 연결한 서비스입니다.</p>
+          <dl class="project-facts">
+            <div><dt>Problem</dt><dd>역 이름 기반 검색에서 외부 API 결과가 실제 거리 순서와 일치하지 않는 경우가 있었습니다.</dd></div>
+            <div><dt>Implemented</dt><dd>Naver Local API 결과를 좌표 기반 거리로 다시 계산해 정렬했습니다.</dd></div>
+            <div><dt>Observed</dt><dd>이틀간 약 1,000명의 실사용자가 서비스를 이용했습니다.</dd></div>
+          </dl>
+          <div class="portfolio-tags" aria-label="사용 기술">
+            <span>Java 21</span><span>Spring Boot</span><span>MySQL</span><span>AWS EC2</span><span>Naver Local API</span>
+          </div>
+          <a class="text-link" href="https://github.com/hicc-dvp/backend">Repository <span aria-hidden="true">↗</span></a>
+        </div>
+      </section>
+
+      <section class="project-case" id="presentalk">
+        <figure class="project-case-media">
+          <img src="./assets/portfolio/presentalk.png" alt="PresenTalk 모바일 사용자 흐름" loading="lazy" />
+          <figcaption>대화 로그 기반 선물 추천 서비스</figcaption>
+        </figure>
+        <div class="project-case-copy">
+          <span class="project-number">04 · Backend / AI integration</span>
+          <h2>PresenTalk</h2>
+          <p class="project-deck">카카오톡 대화 로그에서 취향 단서를 추출해 선물을 추천하는 AI 기반 서비스입니다.</p>
+          <dl class="project-facts">
+            <div><dt>Implemented</dt><dd>쿠팡 파트너스 API의 HMAC-SHA256 인증 헤더와 sliding-window rate limiter를 구현했습니다.</dd></div>
+            <div><dt>Constraint</dt><dd>외부 API 인증 규약과 호출 제한을 애플리케이션 경계에서 통제했습니다.</dd></div>
+          </dl>
+          <div class="portfolio-tags" aria-label="사용 기술">
+            <span>Spring Boot</span><span>OpenAI API</span><span>Selenium</span><span>External API</span><span>Rate Limiting</span>
+          </div>
+          <a class="text-link" href="https://github.com/HongikComputerClub/backend">Repository <span aria-hidden="true">↗</span></a>
+        </div>
+      </section>
+
+      <section class="project-case" id="musinsa-observer">
+        <figure class="project-case-media">
+          <img src="./assets/portfolio/musinsaobserver.png" alt="MusinsaObserver 상품 가격 추적 화면" loading="lazy" />
+          <figcaption>상품 수집과 가격 변동 추적 플랫폼</figcaption>
+        </figure>
+        <div class="project-case-copy">
+          <span class="project-number">05 · Backend / Data collection</span>
+          <h2>MusinsaObserver</h2>
+          <p class="project-deck">패션 상품 데이터를 주기적으로 수집하고 가격 변동을 추적하는 백엔드 시스템입니다.</p>
+          <dl class="project-facts">
+            <div><dt>Problem</dt><dd>Jsoup 기반 HTML 파싱이 순차 실행되며 전체 수집 시간을 지배했습니다.</dd></div>
+            <div><dt>Implemented</dt><dd>ExecutorService와 FixedThreadPool로 수집 작업의 동시 실행 범위를 제한했습니다.</dd></div>
+            <div><dt>Measured</dt><dd>동일한 수집 흐름의 처리 속도를 약 3배 개선했습니다.</dd></div>
+          </dl>
+          <div class="portfolio-tags" aria-label="사용 기술">
+            <span>Java 21</span><span>Spring Boot</span><span>ExecutorService</span><span>Docker</span><span>GitHub Actions</span>
+          </div>
+          <a class="text-link" href="https://github.com/MusinsaObserver/backend">Repository <span aria-hidden="true">↗</span></a>
+        </div>
+      </section>
+
+      <section class="project-case" id="noise-robust-vad">
+        <figure class="project-case-media">
+          <img src="./assets/portfolio/noise-robust-vad.png" alt="Noise-Robust VAD 처리 아키텍처" loading="lazy" />
+          <figcaption>노이즈와 edge 제약을 고려한 Video Anomaly Detection 연구</figcaption>
+        </figure>
+        <div class="project-case-copy">
+          <span class="project-number">06 · ML systems research</span>
+          <h2>Noise-Robust VAD</h2>
+          <p class="project-deck">실제 감시 환경의 노이즈와 Jetson Nano 실행 제약을 함께 고려한 VAD 연구입니다.</p>
+          <dl class="project-facts">
+            <div><dt>Implemented</dt><dd>MSTF 기반 시간 축 집계와 matched filter 후처리를 적용했습니다.</dd></div>
+            <div><dt>Measured</dt><dd>AUROC를 60.05%에서 72.49%로 개선했습니다.</dd></div>
+            <div><dt>Analyzed</dt><dd>Jetson Nano에서 TensorRT·ONNX 최적화가 필요한 추론 병목을 분리했습니다.</dd></div>
+          </dl>
+          <div class="portfolio-tags" aria-label="사용 기술">
+            <span>Python</span><span>PyTorch</span><span>OpenCV</span><span>TensorRT</span><span>Jetson Nano</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="contribution-section" aria-labelledby="contribution-heading">
+        <div>
+          <p class="eyebrow">Additional work</p>
+          <h2 id="contribution-heading">기여와 해커톤 POC</h2>
+          <p>완성 제품과 동일하게 포장하지 않고, 참여 형태와 결과를 그대로 표시합니다.</p>
+        </div>
+        <div class="contribution-list">
+          <article>
+            <span>Collaboration</span>
+            <h3>SeeATheater</h3>
+            <p>중도 합류 후 기존 서비스의 frontend와 backend 양쪽 기능 구현 및 연동에 참여했습니다.</p>
+            <div class="balanced-links">
+              <a href="https://github.com/SeeATheater/CC_Frontend">Frontend <span aria-hidden="true">↗</span></a>
+              <a href="https://github.com/SeeATheater/CC_Backend">Backend <span aria-hidden="true">↗</span></a>
+            </div>
+          </article>
+          <article>
+            <span>Hackathon POC · Award</span>
+            <h3>DigiLab Challenge</h3>
+            <p>제한 시간 안에 핵심 사용자 흐름을 구현한 POC로, 제주지역혁신플랫폼(RIS) 지능형서비스사업단 최우수상을 수상했습니다.</p>
+            <a class="text-link" href="https://github.com/DigiLabChallengeHackathon">Organization <span aria-hidden="true">↗</span></a>
+          </article>
+          <article>
+            <span>Hackathon POC · Award</span>
+            <h3>MOONG Connecton</h3>
+            <p>아이디어의 핵심 흐름을 POC까지 구현해 한국청년기업가정신재단상을 수상했습니다.</p>
+            <a class="text-link" href="https://github.com/Moong-Hackathon">Organization <span aria-hidden="true">↗</span></a>
+          </article>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <p>© 2026 Jiwon Kim</p>
+      <div class="footer-links">
+        <span id="visitStatus">집계 중</span>
+        <a href="./articles.html">Articles</a>
+        <a href="./#about">About</a>
+      </div>
+    </footer>
+
+    <script src="./script.js?v=20260905-4"></script>
+    <script data-goatcounter="https://jiwonkim-blog.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
+    <noscript><img class="tracking-pixel" src="https://jiwonkim-blog.goatcounter.com/count?p=/projects.html" alt="" /></noscript>
+  </body>
+</html>

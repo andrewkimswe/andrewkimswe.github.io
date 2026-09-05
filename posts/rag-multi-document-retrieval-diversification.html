@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>[RAG] Top-k를 늘렸는데 왜 필요한 문서를 못 찾을까? | Jiwon Kim's Blog</title>
+    <title>[RAG] Top-k를 늘렸는데 왜 필요한 문서를 못 찾을까? | Jiwon Kim Engineering Notes</title>
     <meta
       name="description"
       content="Multi-document RAG에서 duplicate chunk가 Top-k를 점유하는 문제와 per-document cap, MMR, reranking, hybrid retrieval 개선 방향을 정리합니다."
@@ -11,7 +11,7 @@
     <meta name="author" content="Jiwon Kim" />
     <meta name="robots" content="index, follow, max-image-preview:large" />
     <link rel="canonical" href="https://andrewkimswe.github.io/posts/rag-multi-document-retrieval-diversification.html" />
-    <meta property="og:site_name" content="Jiwon Kim's Blog" />
+    <meta property="og:site_name" content="Jiwon Kim | Engineering Notes" />
     <meta
       property="og:title"
       content="[RAG] Top-k를 늘렸는데 왜 필요한 문서를 못 찾을까? - Duplicate Chunk와 Retrieval Diversification"
@@ -22,16 +22,25 @@
     />
     <meta property="og:type" content="article" />
     <meta property="og:url" content="https://andrewkimswe.github.io/posts/rag-multi-document-retrieval-diversification.html" />
-    <meta property="og:image" content="https://andrewkimswe.github.io/assets/social-card.svg" />
+    <meta property="og:image" content="https://andrewkimswe.github.io/assets/social-card.png" />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Jiwon Kim Engineering Notes" />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:image" content="https://andrewkimswe.github.io/assets/social-card.svg" />
+    <meta name="twitter:image" content="https://andrewkimswe.github.io/assets/social-card.png" />
+    <meta name="twitter:title" content="[RAG] Top-k를 늘렸는데 왜 필요한 문서를 못 찾을까? - Duplicate Chunk와 Retrieval Diversification" />
+    <meta name="twitter:description" content="Top-5가 다섯 개의 독립 근거를 의미하지 않는 이유와 multi-document completeness를 높이기 위한 retrieval diversification 실험입니다." />
+    <meta property="article:modified_time" content="2026-08-13T00:00:00+09:00" />
+    <meta name="twitter:image:alt" content="Jiwon Kim Engineering Notes" />
     <meta property="article:published_time" content="2026-08-13T00:00:00+09:00" />
     <meta property="article:author" content="Jiwon Kim" />
     <meta property="article:tag" content="RAG" />
     <meta property="article:tag" content="Retrieval" />
     <meta property="article:tag" content="Diversification" />
     <meta property="article:tag" content="MMR" />
-    <link rel="stylesheet" href="../styles.css" />
+    <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="../styles.css?v=20260905-4" />
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
@@ -55,21 +64,26 @@
     </script>
   </head>
   <body>
+    <a class="skip-link" href="#main-content">본문으로 바로가기</a>
     <header class="site-header">
-      <a class="brand" href="../" aria-label="Jiwon Kim's Blog 홈">
-        <span class="brand-mark">JK</span>
-        <span>
-          <strong>Jiwon Kim's Blog</strong>
-          <small>Engineering notes</small>
-        </span>
+      <a class="brand" href="../" aria-label="Jiwon Kim Engineering Notes 홈">
+        <span class="brand-mark" aria-hidden="true">JK</span>
+        <span class="brand-copy"><strong>Jiwon Kim</strong><small>Engineering Notes</small></span>
       </a>
-      <nav class="nav-links" aria-label="주요 메뉴"><a href="../#writing">Writing</a><a href="../#portfolio">Portfolio</a><a href="../#profile">Profile</a><a href="../#topics">Topics</a><a href="../#about">About</a><a href="https://github.com/andrewkimswe">GitHub</a><a href="https://www.linkedin.com/in/jiwon-kim-867334285/">LinkedIn</a></nav>
+      <nav class="nav-links" aria-label="주요 메뉴">
+        <a href="../articles.html">Articles</a>
+        <a href="../projects.html">Projects</a>
+        <a href="../#about">About</a>
+        <span class="nav-divider" aria-hidden="true"></span>
+        <a href="https://github.com/andrewkimswe">GitHub</a>
+        <a href="https://www.linkedin.com/in/jiwon-kim-867334285/">LinkedIn</a>
+      </nav>
     </header>
 
-    <main>
+    <main id="main-content">
       <article class="article-page">
         <header class="article-hero">
-          <a class="back-link" href="../#writing">Back to writing</a>
+          <a class="back-link" href="../articles.html">All articles</a>
           <p class="eyebrow">RAG · Multi-Document Retrieval · Diversification</p>
           <h1>[RAG] Top-k를 늘렸는데 왜 필요한 문서를 못 찾을까? - Duplicate Chunk와 Retrieval Diversification</h1>
           <p class="article-summary">
@@ -80,9 +94,33 @@
             <time datetime="2026-08-13">2026.08.13</time>
             <span>RAG</span>
             <span>Retrieval</span>
-            <span>Diversification</span>
-          </div>
+            <span>Diversification</span><span class="reading-time" data-generated="true">약 8분</span></div>
         </header>
+
+        <!-- GENERATED:ARTICLE_TOC:START -->
+        <aside class="article-toc" aria-label="이 글의 목차">
+          <details open>
+            <summary>On this page</summary>
+            <ol>
+              <li><a href="#section-01">1. Hit@k가 숨기는 문제</a></li>
+              <li><a href="#section-02">2. Multi Any-Hit과 Multi All-Hit</a></li>
+              <li><a href="#section-03">3. Frozen Configuration의 결과</a></li>
+              <li><a href="#section-04">4. Top-5의 실제 다양성</a></li>
+              <li><a href="#section-05">5. 왜 Duplicate Chunk가 생기는가</a></li>
+              <li><a href="#section-06">6. Retrieval Depth와 Evidence Diversity</a></li>
+              <li><a href="#section-07">7. Duplicate-Occupancy Hypothesis</a></li>
+              <li><a href="#section-08">8. 가장 단순한 실험: Per-Document Cap</a></li>
+              <li><a href="#section-09">9. 바로 Production에 적용하지 않은 이유</a></li>
+              <li><a href="#section-10">10. Retrieval Failure를 두 단계로 나누기</a></li>
+              <li><a href="#section-11">11. MMR, Reranking, Hybrid Retrieval</a></li>
+              <li><a href="#section-12">12. Metadata-aware Retrieval</a></li>
+              <li><a href="#section-13">13. Chunking과 Diversification의 연결</a></li>
+              <li><a href="#section-14">14. Context Quality를 어떻게 볼 것인가</a></li>
+              <li><a href="#section-15">정리</a></li>
+            </ol>
+          </details>
+        </aside>
+        <!-- GENERATED:ARTICLE_TOC:END -->
 
         <div class="article-body">
           <p>
@@ -98,7 +136,7 @@ Multi All-Hit@5 = 0/3</code></pre>
             같은 문서의 여러 chunk가 Top-k 자리를 반복해서 점유하는 duplicate occupancy였다.
           </p>
 
-          <h2>1. Hit@k가 숨기는 문제</h2>
+          <h2 id="section-01">1. Hit@k가 숨기는 문제</h2>
           <p>Question이 Doc A와 Doc B를 모두 필요로 하는데 검색 결과가 다음과 같다고 해보자.</p>
           <pre><code>1. Doc A / Chunk 3
 2. Doc A / Chunk 4
@@ -110,7 +148,7 @@ Multi All-Hit@5 = 0/3</code></pre>
             없다. multi-document question에서는 metric을 분리해야 한다.
           </p>
 
-          <h2>2. Multi Any-Hit과 Multi All-Hit</h2>
+          <h2 id="section-02">2. Multi Any-Hit과 Multi All-Hit</h2>
           <table>
             <thead>
               <tr>
@@ -131,7 +169,7 @@ Multi All-Hit@5 = 0/3</code></pre>
           </table>
           <p>CloudOps troubleshooting에서는 여러 공식 문서를 함께 봐야 하는 질문이 있었기 때문에 All-Hit이 중요한 metric이었다.</p>
 
-          <h2>3. Frozen Configuration의 결과</h2>
+          <h2 id="section-03">3. Frozen Configuration의 결과</h2>
           <table>
             <thead>
               <tr>
@@ -155,7 +193,7 @@ Multi All-Hit@5 = 0/3</code></pre>
           </table>
           <p>패턴은 아예 관련 문서를 못 찾는다기보다 관련 문서 하나는 찾는데 필요한 모든 evidence를 못 모으는 쪽에 가까웠다.</p>
 
-          <h2>4. Top-5의 실제 다양성</h2>
+          <h2 id="section-04">4. Top-5의 실제 다양성</h2>
           <p>Held-out Top-5 결과를 분석하자 다음 값을 얻었다.</p>
           <pre><code>Average unique document count = 2.10
 Average duplicate chunk count = 2.90
@@ -165,7 +203,7 @@ Duplicate ratio = 0.58</code></pre>
           </blockquote>
           <p>같은 문서에서 의미가 비슷한 chunk가 여러 개 생성되면 query embedding과 모두 높은 similarity를 가질 수 있다.</p>
 
-          <h2>5. 왜 Duplicate Chunk가 생기는가</h2>
+          <h2 id="section-05">5. 왜 Duplicate Chunk가 생기는가</h2>
           <p>
             Overlap chunking은 문맥 단절을 줄이지만 서로 비슷한 chunk를 만든다. Query가 해당 주제와 강하게 관련되면
             같은 document의 여러 chunk가 상위권에 모일 수 있다.
@@ -181,13 +219,13 @@ Duplicate ratio = 0.58</code></pre>
             </div>
           </dl>
 
-          <h2>6. Retrieval Depth와 Evidence Diversity</h2>
+          <h2 id="section-06">6. Retrieval Depth와 Evidence Diversity</h2>
           <p>
             단순히 <code>k</code>를 늘리면 relevant document가 추가될 가능성은 있지만 context도 함께 커진다. 따라서
             multi-document retrieval에서는 몇 개의 chunk를 가져오는가뿐 아니라 chunk가 얼마나 다양한지도 봐야 한다.
           </p>
 
-          <h2>7. Duplicate-Occupancy Hypothesis</h2>
+          <h2 id="section-07">7. Duplicate-Occupancy Hypothesis</h2>
           <blockquote>
             <p>Multi-document All-Hit 실패의 원인 중 하나는 동일 문서의 여러 chunk가 Top-k 슬롯을 점유하는 것이다.</p>
           </blockquote>
@@ -196,7 +234,7 @@ Duplicate ratio = 0.58</code></pre>
             candidate pool 자체에 없다면 diversity 후처리로는 해결할 수 없다.
           </p>
 
-          <h2>8. 가장 단순한 실험: Per-Document Cap</h2>
+          <h2 id="section-08">8. 가장 단순한 실험: Per-Document Cap</h2>
           <p>가설을 빠르게 확인하기 위해 새로운 retriever를 처음부터 구현하기보다 간단한 post-processing을 적용했다.</p>
           <pre><code>한 document에서 최대 2개 chunk만 Top-5에 허용</code></pre>
           <p>Dense similarity order는 유지하면서 같은 document가 Top-k를 과도하게 점유하지 못하게 한다.</p>
@@ -228,7 +266,7 @@ Duplicate ratio = 0.58</code></pre>
           </table>
           <p>결과는 duplicate-occupancy hypothesis와 일치했다.</p>
 
-          <h2>9. 바로 Production에 적용하지 않은 이유</h2>
+          <h2 id="section-09">9. 바로 Production에 적용하지 않은 이유</h2>
           <p>
             이 실험은 frozen held-out evaluation을 본 이후 development set에서 수행한 post-hoc experiment다. 따라서
             <code>cap=2가 held-out 성능을 개선했다</code>고 말할 수 없다. 새로운 untouched validation set이 필요하다.
@@ -247,7 +285,7 @@ flowchart TB
     hypothesis --- posthoc
           </div>
 
-          <h2>10. Retrieval Failure를 두 단계로 나누기</h2>
+          <h2 id="section-10">10. Retrieval Failure를 두 단계로 나누기</h2>
           <table>
             <thead>
               <tr>
@@ -270,7 +308,7 @@ flowchart TB
             </tbody>
           </table>
 
-          <h2>11. MMR, Reranking, Hybrid Retrieval</h2>
+          <h2 id="section-11">11. MMR, Reranking, Hybrid Retrieval</h2>
           <p>
             Maximum Marginal Relevance는 relevance뿐 아니라 이미 선택된 결과와의 중복도 고려한다. Reranker는 query와
             candidate를 함께 보면서 더 정밀하게 relevance를 평가할 수 있다. Hybrid retrieval은 dense embedding이
@@ -291,7 +329,7 @@ flowchart TB
             </div>
           </dl>
 
-          <h2>12. Metadata-aware Retrieval</h2>
+          <h2 id="section-12">12. Metadata-aware Retrieval</h2>
           <p>
             Corpus에 provider, category, resource 같은 metadata가 있다면 검색 공간을 줄일 수 있다. 하지만 잘못된
             metadata classification은 relevant document를 검색 전에 제거할 수 있으므로 filter 정확성도 별도로 평가해야 한다.
@@ -302,7 +340,7 @@ flowchart TB
   "resource": "configmap"
 }</code></pre>
 
-          <h2>13. Chunking과 Diversification의 연결</h2>
+          <h2 id="section-13">13. Chunking과 Diversification의 연결</h2>
           <p>Duplicate 문제는 retriever만의 문제가 아니다. 앞 단계의 chunking도 영향을 준다.</p>
           <div class="mermaid diagram compact-diagram">
 flowchart TB
@@ -317,7 +355,7 @@ flowchart TB
           </div>
           <p>Small chunks와 large overlap은 비슷한 vector를 많이 만들고 duplicate retrieval probability를 높일 수 있다.</p>
 
-          <h2>14. Context Quality를 어떻게 볼 것인가</h2>
+          <h2 id="section-14">14. Context Quality를 어떻게 볼 것인가</h2>
           <p>RAG에서 context quality를 Top-k similarity score만으로 정의하면 부족하다.</p>
           <ul>
             <li>Relevance</li>
@@ -331,7 +369,7 @@ flowchart TB
             다섯 chunk보다 A/B/C를 포함하는 context가 더 유용하다.
           </p>
 
-          <h2>정리</h2>
+          <h2 id="section-15">정리</h2>
           <p>
             Top-k를 늘리는 것은 쉬운 개선처럼 보이지만 Top-5가 다섯 개의 독립 evidence source를 보장하지 않는다.
             같은 문서의 duplicate chunk가 상위 결과를 점유하면 multi-document completeness가 낮아질 수 있다.
@@ -342,18 +380,43 @@ flowchart TB
             숫자를 올리는 일만이 아니라 어떤 failure mode를 어떤 실험으로 검증했는지 분리해 설명하는 일이다.
           </p>
         </div>
+
+        <!-- GENERATED:ARTICLE_TAIL:START -->
+        <nav class="article-pagination" aria-label="발행 순서로 읽기">
+          <a href="./aws-finops-nat-gateway-cost-dashboard.html"><span>Newer</span><strong>[AWS/FinOps] NAT Gateway 비용은 어디서 발생할까? - CUR, Athena, QuickSight로 비용 대시보드 만들기</strong></a>
+          <a href="./rag-evaluation-retrieval-vs-answer-quality.html"><span>Older</span><strong>[RAG] Hit@k가 높으면 좋은 RAG일까? - Retrieval과 Answer Quality를 따로 평가해본 과정</strong></a>
+        </nav>
+        <aside class="related-notes" aria-labelledby="related-heading">
+          <h2 id="related-heading">Related notes</h2>
+          <div class="related-note-list">
+          <a href="./rag-evaluation-driven-retrieval-tuning.html">
+            <span>RAG · 2026.08.11</span>
+            <strong>[RAG] 감으로 Top-k를 정하지 않기 - Chunking, Embedding, Threshold를 실험으로 선택한 과정</strong>
+          </a>
+          <a href="./rag-evaluation-retrieval-vs-answer-quality.html">
+            <span>RAG · 2026.08.12</span>
+            <strong>[RAG] Hit@k가 높으면 좋은 RAG일까? - Retrieval과 Answer Quality를 따로 평가해본 과정</strong>
+          </a>
+          <a href="./rag-document-processing-semantic-retrieval.html">
+            <span>RAG · 2026.08.10</span>
+            <strong>[RAG] 긴 문서에서 필요한 근거를 찾는 과정 - Chunking, Embedding, Vector Store와 Semantic Retrieval</strong>
+          </a>
+          </div>
+        </aside>
+        <!-- GENERATED:ARTICLE_TAIL:END -->
       </article>
     </main>
 
     <footer class="site-footer">
-      <p>© 2026 Jiwon Kim. Technical writing, notes, and experiments.</p>
+      <p>© 2026 Jiwon Kim</p>
       <div class="footer-links">
-        <span id="visitStatus">Analytics ready</span>
-        <a href="https://github.com/andrewkimswe">github.com/andrewkimswe</a><a href="https://www.linkedin.com/in/jiwon-kim-867334285/">LinkedIn</a>
+        <span id="visitStatus">집계 중</span>
+        <a href="../articles.html">Articles</a>
+        <a href="../feed.xml">RSS</a>
       </div>
     </footer>
 
-    <script src="../script.js"></script>
+    <script src="../script.js?v=20260905-4"></script>
     <script
       data-goatcounter="https://jiwonkim-blog.goatcounter.com/count"
       async

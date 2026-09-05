@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>[AWS/Security] 취약점은 찾았는데 패치는 누가 하지? | Jiwon Kim's Blog</title>
+    <title>[AWS/Security] 취약점은 찾았는데 패치는 누가 하지? | Jiwon Kim Engineering Notes</title>
     <meta
       name="description"
       content="Amazon Inspector와 AWS Systems Manager Patch Manager를 분리해 EC2 취약점 탐지, 패치 기준, Scan/Install 흐름을 설계하는 보안 운영 노트입니다."
@@ -11,7 +11,7 @@
     <meta name="author" content="Jiwon Kim" />
     <meta name="robots" content="index, follow, max-image-preview:large" />
     <link rel="canonical" href="https://andrewkimswe.github.io/posts/aws-security-inspector-systems-manager-patch-management.html" />
-    <meta property="og:site_name" content="Jiwon Kim's Blog" />
+    <meta property="og:site_name" content="Jiwon Kim | Engineering Notes" />
     <meta
       property="og:title"
       content="[AWS/Security] 취약점은 찾았는데 패치는 누가 하지? - Amazon Inspector와 Systems Manager로 EC2 패치 관리하기"
@@ -22,9 +22,17 @@
     />
     <meta property="og:type" content="article" />
     <meta property="og:url" content="https://andrewkimswe.github.io/posts/aws-security-inspector-systems-manager-patch-management.html" />
-    <meta property="og:image" content="https://andrewkimswe.github.io/assets/social-card.svg" />
+    <meta property="og:image" content="https://andrewkimswe.github.io/assets/social-card.png" />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Jiwon Kim Engineering Notes" />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:image" content="https://andrewkimswe.github.io/assets/social-card.svg" />
+    <meta name="twitter:image" content="https://andrewkimswe.github.io/assets/social-card.png" />
+    <meta name="twitter:title" content="[AWS/Security] 취약점은 찾았는데 패치는 누가 하지? - Amazon Inspector와 Systems Manager로 EC2 패치 관리하기" />
+    <meta name="twitter:description" content="Inspector는 취약점을 찾고 Systems Manager Patch Manager는 패치 운영을 관리한다는 관점에서 EC2 보안 패치 구조를 정리합니다." />
+    <meta property="article:modified_time" content="2026-08-15T00:00:00+09:00" />
+    <meta name="twitter:image:alt" content="Jiwon Kim Engineering Notes" />
     <meta property="article:published_time" content="2026-08-15T00:00:00+09:00" />
     <meta property="article:author" content="Jiwon Kim" />
     <meta property="article:tag" content="AWS" />
@@ -32,7 +40,8 @@
     <meta property="article:tag" content="Amazon Inspector" />
     <meta property="article:tag" content="Systems Manager" />
     <meta property="article:tag" content="Patch Manager" />
-    <link rel="stylesheet" href="../styles.css" />
+    <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="../styles.css?v=20260905-4" />
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
@@ -56,21 +65,26 @@
     </script>
   </head>
   <body>
+    <a class="skip-link" href="#main-content">본문으로 바로가기</a>
     <header class="site-header">
-      <a class="brand" href="../" aria-label="Jiwon Kim's Blog 홈">
-        <span class="brand-mark">JK</span>
-        <span>
-          <strong>Jiwon Kim's Blog</strong>
-          <small>Engineering notes</small>
-        </span>
+      <a class="brand" href="../" aria-label="Jiwon Kim Engineering Notes 홈">
+        <span class="brand-mark" aria-hidden="true">JK</span>
+        <span class="brand-copy"><strong>Jiwon Kim</strong><small>Engineering Notes</small></span>
       </a>
-      <nav class="nav-links" aria-label="주요 메뉴"><a href="../#writing">Writing</a><a href="../#portfolio">Portfolio</a><a href="../#profile">Profile</a><a href="../#topics">Topics</a><a href="../#about">About</a><a href="https://github.com/andrewkimswe">GitHub</a><a href="https://www.linkedin.com/in/jiwon-kim-867334285/">LinkedIn</a></nav>
+      <nav class="nav-links" aria-label="주요 메뉴">
+        <a href="../articles.html">Articles</a>
+        <a href="../projects.html">Projects</a>
+        <a href="../#about">About</a>
+        <span class="nav-divider" aria-hidden="true"></span>
+        <a href="https://github.com/andrewkimswe">GitHub</a>
+        <a href="https://www.linkedin.com/in/jiwon-kim-867334285/">LinkedIn</a>
+      </nav>
     </header>
 
-    <main>
+    <main id="main-content">
       <article class="article-page">
         <header class="article-hero">
-          <a class="back-link" href="../#writing">Back to writing</a>
+          <a class="back-link" href="../articles.html">All articles</a>
           <p class="eyebrow">AWS · Security · Patch Management</p>
           <h1>[AWS/Security] 취약점은 찾았는데 패치는 누가 하지? - Amazon Inspector와 Systems Manager로 EC2 패치 관리하기</h1>
           <p class="article-summary">
@@ -80,9 +94,25 @@
             <time datetime="2026-08-15">2026.08.15</time>
             <span>AWS</span>
             <span>Security</span>
-            <span>Amazon Inspector</span>
-          </div>
+            <span>Amazon Inspector</span><span class="reading-time" data-generated="true">약 5분</span></div>
         </header>
+
+        <!-- GENERATED:ARTICLE_TOC:START -->
+        <aside class="article-toc" aria-label="이 글의 목차">
+          <details open>
+            <summary>On this page</summary>
+            <ol>
+              <li><a href="#section-01">1. Detection과 Remediation은 다른 문제다</a></li>
+              <li><a href="#section-02">2. Amazon Inspector의 역할</a></li>
+              <li><a href="#section-03">3. GuardDuty와 Inspector를 혼동하면 안 된다</a></li>
+              <li><a href="#section-04">4. Inspector가 취약점을 찾았다고 패치가 끝난 것은 아니다</a></li>
+              <li><a href="#section-05">5. AWS Systems Manager Patch Manager</a></li>
+              <li><a href="#section-06">6. Patch Baseline</a></li>
+              <li><a href="#section-07">7. Scan과 Install을 분리한다</a></li>
+            </ol>
+          </details>
+        </aside>
+        <!-- GENERATED:ARTICLE_TOC:END -->
 
         <div class="article-body">
           <p>수백 대의 EC2 인스턴스를 운영하고 있다고 가정해보자.</p>
@@ -119,7 +149,7 @@ Patch Management</code></pre>
             <p><strong>Inspector는 무엇이 취약한지 찾고, Patch Manager는 패치를 어떻게 관리할지를 담당한다.</strong></p>
           </blockquote>
           <p>이 글에서는 두 서비스를 중심으로 대규모 EC2 환경의 취약점 관리와 패치 운영 구조를 살펴본다.</p>
-          <h2>1. Detection과 Remediation은 다른 문제다</h2>
+          <h2 id="section-01">1. Detection과 Remediation은 다른 문제다</h2>
           <p>보안 운영에서 가장 먼저 구분해야 할 개념이다.</p>
           <h3>Detection</h3>
           <pre><code>&quot;이 서버에 취약한 패키지가 있다.&quot;</code></pre>
@@ -141,7 +171,7 @@ Patch Management</code></pre>
                         │
                         ▼
                    Compliance</code></pre>
-          <h2>2. Amazon Inspector의 역할</h2>
+          <h2 id="section-02">2. Amazon Inspector의 역할</h2>
           <p>Amazon Inspector는 AWS 워크로드를 지속적으로 스캔해 소프트웨어 취약점 등의 문제를 식별하는 vulnerability management 서비스다.</p>
           <p>EC2 관점에서 생각하면:</p>
           <pre><code>EC2
@@ -158,7 +188,7 @@ Finding</code></pre>
           <blockquote>
             <p><strong>&quot;현재 내 AWS 워크로드에서 알려진 취약점은 어디에 존재하는가?&quot;</strong></p>
           </blockquote>
-          <h2>3. GuardDuty와 Inspector를 혼동하면 안 된다</h2>
+          <h2 id="section-03">3. GuardDuty와 Inspector를 혼동하면 안 된다</h2>
           <p>AWS 보안 서비스를 공부할 때 자주 헷갈리는 부분이다.</p>
           <p>둘 다 &quot;보안 문제를 찾는 서비스&quot;처럼 보이기 때문이다.</p>
           <p>하지만 질문이 다르다.</p>
@@ -174,7 +204,7 @@ GuardDuty
 = Threat / Suspicious Activity</code></pre>
           <p>예를 들어 오래된 패키지에 알려진 CVE가 있는지 확인하려는 문제라면 Inspector의 영역이다.</p>
           <p>반면 비정상적인 API 호출이나 의심스러운 행위 등을 탐지하려는 문제는 GuardDuty 쪽에 가깝다.</p>
-          <h2>4. Inspector가 취약점을 찾았다고 패치가 끝난 것은 아니다</h2>
+          <h2 id="section-04">4. Inspector가 취약점을 찾았다고 패치가 끝난 것은 아니다</h2>
           <p>Inspector에서 Finding이 발생했다고 하자.</p>
           <pre><code>Instance: i-xxxxxxxx
 Package: example-package
@@ -192,7 +222,7 @@ Status: ACTIVE</code></pre>
           <p>확장성이 없다.</p>
           <p>더 큰 문제는 패치 결과를 일관되게 관리하기 어렵다는 것이다.</p>
           <p>그래서 Systems Manager를 사용한다.</p>
-          <h2>5. AWS Systems Manager Patch Manager</h2>
+          <h2 id="section-05">5. AWS Systems Manager Patch Manager</h2>
           <p>Patch Manager는 관리 대상 노드의 패치 작업을 자동화하는 데 사용할 수 있다.</p>
           <p>운영자가 원하는 것은 단순히:</p>
           <pre><code class="language-bash">yum update</code></pre>
@@ -209,7 +239,7 @@ Status: ACTIVE</code></pre>
 어떤 순서로</code></pre>
           <p>적용할지를 결정해야 한다.</p>
           <p>Patch Manager를 사용하면 이러한 패치 관리 프로세스를 중앙화할 수 있다.</p>
-          <h2>6. Patch Baseline</h2>
+          <h2 id="section-06">6. Patch Baseline</h2>
           <p>모든 패치를 발견 즉시 production에 설치하는 것이 항상 좋은 전략은 아니다.</p>
           <p>예를 들어 특정 업데이트가 애플리케이션과 호환되지 않을 수도 있다.</p>
           <p>따라서 패치 관리에는 <strong>기준</strong>이 필요하다.</p>
@@ -233,7 +263,7 @@ Patch Baseline
 검증 기간 이후 승인</code></pre>
           <p>같은 정책을 구성할 수 있다.</p>
           <p>핵심은 <strong>패치 작업을 단순 명령 실행이 아니라 정책 기반 관리로 바꾸는 것</strong>이다.</p>
-          <h2>7. Scan과 Install을 분리한다</h2>
+          <h2 id="section-07">7. Scan과 Install을 분리한다</h2>
           <p>패치 관리에는 두 가지 중요한 작업이 있다.</p>
           <h3>Scan</h3>
           <pre><code>현재 인스턴스가
@@ -255,18 +285,43 @@ Re-scan
 Compliance 확인</code></pre>
           <p>이렇게 하면 단순히 &quot;패치 명령을 실행했다&quot;가 아니라 <strong>실제 패치 상태를 검증하는 과정</strong>까지 포함할 수 있다.</p>
         </div>
+
+        <!-- GENERATED:ARTICLE_TAIL:START -->
+        <nav class="article-pagination" aria-label="발행 순서로 읽기">
+          <a href="./aws-security-ec2-patch-rollout-compliance.html"><span>Newer</span><strong>[AWS/Security] EC2 패치 자동화는 어디까지 자동화해야 할까? - Maintenance Window, Compliance, Staged Rollout</strong></a>
+          <a href="./aws-finops-nat-gateway-cost-dashboard.html"><span>Older</span><strong>[AWS/FinOps] NAT Gateway 비용은 어디서 발생할까? - CUR, Athena, QuickSight로 비용 대시보드 만들기</strong></a>
+        </nav>
+        <aside class="related-notes" aria-labelledby="related-heading">
+          <h2 id="related-heading">Related notes</h2>
+          <div class="related-note-list">
+          <a href="./aws-security-ec2-patch-rollout-compliance.html">
+            <span>Security · 2026.08.16</span>
+            <strong>[AWS/Security] EC2 패치 자동화는 어디까지 자동화해야 할까? - Maintenance Window, Compliance, Staged Rollout</strong>
+          </a>
+          <a href="./aws-security-identity-center-session-manager-private-ec2-access.html">
+            <span>Security · 2026.08.27</span>
+            <strong>[AWS/Security] 외부 엔지니어에게 SSH 키 없이 Private EC2 접근을 제공하기 - IAM Identity Center와 Session Manager</strong>
+          </a>
+          <a href="./aws-security-prevent-detect-remediate-config-ssm.html">
+            <span>Security · 2026.08.28</span>
+            <strong>[AWS/Security] 보안 정책은 탐지만 해서는 부족하다 - IAM, AWS Config, Systems Manager로 Prevent·Detect·Remediate 만들기</strong>
+          </a>
+          </div>
+        </aside>
+        <!-- GENERATED:ARTICLE_TAIL:END -->
       </article>
     </main>
 
     <footer class="site-footer">
-      <p>© 2026 Jiwon Kim. Technical writing, notes, and experiments.</p>
+      <p>© 2026 Jiwon Kim</p>
       <div class="footer-links">
-        <span id="visitStatus">Analytics ready</span>
-        <a href="https://github.com/andrewkimswe">github.com/andrewkimswe</a><a href="https://www.linkedin.com/in/jiwon-kim-867334285/">LinkedIn</a>
+        <span id="visitStatus">집계 중</span>
+        <a href="../articles.html">Articles</a>
+        <a href="../feed.xml">RSS</a>
       </div>
     </footer>
 
-    <script src="../script.js"></script>
+    <script src="../script.js?v=20260905-4"></script>
     <script
       data-goatcounter="https://jiwonkim-blog.goatcounter.com/count"
       async

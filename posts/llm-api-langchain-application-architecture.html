@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>[LLM] API 호출부터 LangChain까지 | Jiwon Kim's Blog</title>
+    <title>[LLM] API 호출부터 LangChain까지 | Jiwon Kim Engineering Notes</title>
     <meta
       name="description"
       content="LLM 애플리케이션을 Model API Endpoint, Serving Infrastructure, LangChain orchestration, Gradio, LangServe 계층으로 나누어 이해하는 글입니다."
@@ -11,7 +11,7 @@
     <meta name="author" content="Jiwon Kim" />
     <meta name="robots" content="index, follow, max-image-preview:large" />
     <link rel="canonical" href="https://andrewkimswe.github.io/posts/llm-api-langchain-application-architecture.html" />
-    <meta property="og:site_name" content="Jiwon Kim's Blog" />
+    <meta property="og:site_name" content="Jiwon Kim | Engineering Notes" />
     <meta
       property="og:title"
       content="[LLM] API 호출부터 LangChain까지 - LLM 애플리케이션의 구조 이해하기"
@@ -22,16 +22,25 @@
     />
     <meta property="og:type" content="article" />
     <meta property="og:url" content="https://andrewkimswe.github.io/posts/llm-api-langchain-application-architecture.html" />
-    <meta property="og:image" content="https://andrewkimswe.github.io/assets/social-card.svg" />
+    <meta property="og:image" content="https://andrewkimswe.github.io/assets/social-card.png" />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Jiwon Kim Engineering Notes" />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:image" content="https://andrewkimswe.github.io/assets/social-card.svg" />
+    <meta name="twitter:image" content="https://andrewkimswe.github.io/assets/social-card.png" />
+    <meta name="twitter:title" content="[LLM] API 호출부터 LangChain까지 - LLM 애플리케이션의 구조 이해하기" />
+    <meta name="twitter:description" content="단순한 model.invoke 호출 뒤에 있는 LLM serving layer와, 앞단의 orchestration layer를 구분해서 정리합니다." />
+    <meta property="article:modified_time" content="2026-08-08T00:00:00+09:00" />
+    <meta name="twitter:image:alt" content="Jiwon Kim Engineering Notes" />
     <meta property="article:published_time" content="2026-08-08T00:00:00+09:00" />
     <meta property="article:author" content="Jiwon Kim" />
     <meta property="article:tag" content="LLM" />
     <meta property="article:tag" content="LangChain" />
     <meta property="article:tag" content="AI Application" />
     <meta property="article:tag" content="Architecture" />
-    <link rel="stylesheet" href="../styles.css" />
+    <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="../styles.css?v=20260905-4" />
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
@@ -55,21 +64,26 @@
     </script>
   </head>
   <body>
+    <a class="skip-link" href="#main-content">본문으로 바로가기</a>
     <header class="site-header">
-      <a class="brand" href="../" aria-label="Jiwon Kim's Blog 홈">
-        <span class="brand-mark">JK</span>
-        <span>
-          <strong>Jiwon Kim's Blog</strong>
-          <small>Engineering notes</small>
-        </span>
+      <a class="brand" href="../" aria-label="Jiwon Kim Engineering Notes 홈">
+        <span class="brand-mark" aria-hidden="true">JK</span>
+        <span class="brand-copy"><strong>Jiwon Kim</strong><small>Engineering Notes</small></span>
       </a>
-      <nav class="nav-links" aria-label="주요 메뉴"><a href="../#writing">Writing</a><a href="../#portfolio">Portfolio</a><a href="../#profile">Profile</a><a href="../#topics">Topics</a><a href="../#about">About</a><a href="https://github.com/andrewkimswe">GitHub</a><a href="https://www.linkedin.com/in/jiwon-kim-867334285/">LinkedIn</a></nav>
+      <nav class="nav-links" aria-label="주요 메뉴">
+        <a href="../articles.html">Articles</a>
+        <a href="../projects.html">Projects</a>
+        <a href="../#about">About</a>
+        <span class="nav-divider" aria-hidden="true"></span>
+        <a href="https://github.com/andrewkimswe">GitHub</a>
+        <a href="https://www.linkedin.com/in/jiwon-kim-867334285/">LinkedIn</a>
+      </nav>
     </header>
 
-    <main>
+    <main id="main-content">
       <article class="article-page">
         <header class="article-hero">
-          <a class="back-link" href="../#writing">Back to writing</a>
+          <a class="back-link" href="../articles.html">All articles</a>
           <p class="eyebrow">LLM · Architecture · Orchestration</p>
           <h1>[LLM] API 호출부터 LangChain까지 - LLM 애플리케이션의 구조 이해하기</h1>
           <p class="article-summary">
@@ -80,9 +94,34 @@
             <time datetime="2026-08-08">2026.08.08</time>
             <span>LLM</span>
             <span>LangChain</span>
-            <span>Architecture</span>
-          </div>
+            <span>Architecture</span><span class="reading-time" data-generated="true">약 14분</span></div>
         </header>
+
+        <!-- GENERATED:ARTICLE_TOC:START -->
+        <aside class="article-toc" aria-label="이 글의 목차">
+          <details open>
+            <summary>On this page</summary>
+            <ol>
+              <li><a href="#section-01">1. LLM을 로컬에서 실행한다는 것</a></li>
+              <li><a href="#section-02">2. Hosted LLM Endpoint</a></li>
+              <li><a href="#section-03">3. Endpoint 뒤에서는 무엇이 일어날까?</a></li>
+              <li><a href="#section-04">4. Hosted API를 사용하는 이유</a></li>
+              <li><a href="#section-05">5. 실제 LLM 애플리케이션은 모델 호출 하나로 끝나지 않는다</a></li>
+              <li><a href="#section-06">6. LangChain은 LLM을 실행하는 서비스가 아니다</a></li>
+              <li><a href="#section-07">7. Prompt, LLM, Parser</a></li>
+              <li><a href="#section-08">8. LangChain의 Runnable</a></li>
+              <li><a href="#section-09">9. 왜 굳이 Chain으로 만드는가?</a></li>
+              <li><a href="#section-10">10. Internal Processing과 User Response를 분리할 수 있다</a></li>
+              <li><a href="#section-11">11. Streaming</a></li>
+              <li><a href="#section-12">12. Orchestration은 모델의 능력을 애플리케이션으로 확장한다</a></li>
+              <li><a href="#section-13">13. LangChain은 Serving Layer가 아니다</a></li>
+              <li><a href="#section-14">14. Gradio와 LangServe는 어디에 들어갈까?</a></li>
+              <li><a href="#section-15">15. 전체 구조</a></li>
+              <li><a href="#section-16">16. 정리</a></li>
+            </ol>
+          </details>
+        </aside>
+        <!-- GENERATED:ARTICLE_TOC:END -->
 
         <div class="article-body">
           <p>LLM을 애플리케이션에 적용한다고 하면 가장 먼저 떠올릴 수 있는 코드는 단순하다.</p>
@@ -110,7 +149,7 @@ flowchart TB
             이용해 여러 처리 단계를 하나의 파이프라인으로 구성하는 과정까지 정리한다.
           </p>
 
-          <h2>1. LLM을 로컬에서 실행한다는 것</h2>
+          <h2 id="section-01">1. LLM을 로컬에서 실행한다는 것</h2>
           <p>
             일반적인 프로그램과 달리 대규모 언어 모델을 실행하려면 상당한 컴퓨팅 자원이 필요하다. 모델의
             파라미터가 증가하면 model weight를 메모리에 올리는 데 필요한 RAM 또는 VRAM도 증가한다.
@@ -144,7 +183,7 @@ flowchart TB
             요구량을 줄여야 한다.
           </p>
 
-          <h2>2. Hosted LLM Endpoint</h2>
+          <h2 id="section-02">2. Hosted LLM Endpoint</h2>
           <p>
             모델을 직접 실행하는 대신 외부 인프라에서 실행 중인 모델에 API 요청을 보낼 수 있다. OpenAI API나
             NVIDIA가 제공하는 모델 API 등이 대표적인 예다.
@@ -177,7 +216,7 @@ flowchart TB
 )</code></pre>
           <p>복잡한 모델 실행 과정이 API 뒤로 숨겨진 것이다.</p>
 
-          <h2>3. Endpoint 뒤에서는 무엇이 일어날까?</h2>
+          <h2 id="section-03">3. Endpoint 뒤에서는 무엇이 일어날까?</h2>
           <p>
             API를 호출한다고 해서 단순히 하나의 모델 프로세스에 요청이 전달되는 것만을 의미하지 않는다.
             대규모 LLM 서비스에서는 여러 사용자의 요청을 안정적으로 처리해야 한다.
@@ -213,7 +252,7 @@ flowchart TB
             별도의 LLM Serving Infrastructure가 존재한다.
           </p>
 
-          <h2>4. Hosted API를 사용하는 이유</h2>
+          <h2 id="section-04">4. Hosted API를 사용하는 이유</h2>
           <p>
             Hosted Endpoint의 가장 큰 장점은 모델 인프라를 직접 운영하지 않아도 된다는 것이다. 개발자는 GPU
             provisioning, model deployment, inference server, scaling을 처음부터 직접 구축하지 않고
@@ -265,7 +304,7 @@ flowchart TB
             Hosted API와 Self-hosting은 어느 하나가 항상 우월하다기보다 요구사항에 따라 선택할 문제다.
           </p>
 
-          <h2>5. 실제 LLM 애플리케이션은 모델 호출 하나로 끝나지 않는다</h2>
+          <h2 id="section-05">5. 실제 LLM 애플리케이션은 모델 호출 하나로 끝나지 않는다</h2>
           <p>가장 단순한 LLM 애플리케이션은 입력을 받아 모델에 전달하고 출력하는 구조다.</p>
           <div class="mermaid diagram compact-diagram">
 flowchart TB
@@ -298,7 +337,7 @@ flowchart TB
             같은 orchestration framework가 등장한다.
           </p>
 
-          <h2>6. LangChain은 LLM을 실행하는 서비스가 아니다</h2>
+          <h2 id="section-06">6. LangChain은 LLM을 실행하는 서비스가 아니다</h2>
           <p>
             처음 LangChain을 접하면 LangChain 자체가 모델을 실행한다고 오해하기 쉽다. 하지만 LangChain의 주요
             역할은 GPU infrastructure를 제공하는 것이 아니라, LLM을 포함한 여러 구성 요소를 애플리케이션에서
@@ -321,7 +360,7 @@ flowchart TB
             <p>LLM Serving과 LLM Orchestration은 서로 다른 문제를 해결한다.</p>
           </blockquote>
 
-          <h2>7. Prompt, LLM, Parser</h2>
+          <h2 id="section-07">7. Prompt, LLM, Parser</h2>
           <p>가장 단순한 LLM pipeline을 생각해보자.</p>
           <div class="mermaid diagram compact-diagram">
 flowchart TB
@@ -342,7 +381,7 @@ flowchart TB
 Keep the explanation under five sentences.</code></pre>
           <p>그 결과를 LLM에 전달하고, 모델의 응답을 다시 Output Parser로 처리한다.</p>
 
-          <h2>8. LangChain의 Runnable</h2>
+          <h2 id="section-08">8. LangChain의 Runnable</h2>
           <p>
             LangChain에서는 이러한 실행 가능한 구성 요소들을 Runnable이라는 공통 인터페이스로 다룰 수 있다.
             LangChain Expression Language에서는 다음처럼 표현할 수 있다.
@@ -367,7 +406,7 @@ Keep the explanation under five sentences.</code></pre>
             </div>
           </dl>
 
-          <h2>9. 왜 굳이 Chain으로 만드는가?</h2>
+          <h2 id="section-09">9. 왜 굳이 Chain으로 만드는가?</h2>
           <p>
             단순한 모델 호출 하나만 있다면 <code>response = model.invoke(prompt)</code>만으로 충분할 수 있다.
             LangChain 같은 abstraction의 장점은 처리 단계가 증가하면서 나타난다.
@@ -394,7 +433,7 @@ flowchart TB
             애플리케이션의 하나의 component가 된다.
           </p>
 
-          <h2>10. Internal Processing과 User Response를 분리할 수 있다</h2>
+          <h2 id="section-10">10. Internal Processing과 User Response를 분리할 수 있다</h2>
           <p>
             모델이 생성하는 모든 결과를 사용자에게 직접 보여줄 필요는 없다. 첫 번째 모델 호출은 사용자의 질문을
             분류하는 데만 사용할 수 있고, 그 결과는 다음 chain을 선택하는 내부 판단값이 될 수 있다.
@@ -418,7 +457,7 @@ flowchart TB
             있다. 이 관점은 복잡한 LLM 애플리케이션을 설계할 때 중요하다.
           </p>
 
-          <h2>11. Streaming</h2>
+          <h2 id="section-11">11. Streaming</h2>
           <p>
             LLM은 전체 응답을 생성한 뒤 한 번에 반환할 수도 있지만, 생성되는 token을 순차적으로 전달할 수도
             있다. 실제 모델의 총 처리 시간이 같더라도 사용자가 첫 번째 결과를 보기까지의 시간을 줄일 수 있기
@@ -440,7 +479,7 @@ flowchart TB
           <pre><code>for chunk in chain.stream(input):
     print(chunk)</code></pre>
 
-          <h2>12. Orchestration은 모델의 능력을 애플리케이션으로 확장한다</h2>
+          <h2 id="section-12">12. Orchestration은 모델의 능력을 애플리케이션으로 확장한다</h2>
           <p>
             LLM 자체는 기본적으로 입력을 받아 출력을 생성한다. 하지만 실제 애플리케이션에서는 모델 주변에
             여러 기능을 구성할 수 있다.
@@ -475,7 +514,7 @@ flowchart TB
             <li>Output parsing</li>
           </ul>
 
-          <h2>13. LangChain은 Serving Layer가 아니다</h2>
+          <h2 id="section-13">13. LangChain은 Serving Layer가 아니다</h2>
           <p>전체 구조를 다시 보면 각 기술의 역할이 명확해진다.</p>
           <div class="mermaid diagram">
 flowchart TB
@@ -503,7 +542,7 @@ flowchart TB
             </div>
           </dl>
 
-          <h2>14. Gradio와 LangServe는 어디에 들어갈까?</h2>
+          <h2 id="section-14">14. Gradio와 LangServe는 어디에 들어갈까?</h2>
           <p>
             LLM pipeline을 만들었다면 이를 실제 사용자가 이용할 수 있는 형태로 노출해야 한다. Gradio는 빠르게
             사용자 인터페이스를 구성하는 데 사용할 수 있고, LangServe는 LangChain Runnable을 API 형태로
@@ -526,7 +565,7 @@ flowchart TB
           </div>
           <p>즉 모델을 호출하는 코드를 작성하는 것에서 끝나는 것이 아니라 Model, Chain, API, Application으로 발전시킬 수 있다.</p>
 
-          <h2>15. 전체 구조</h2>
+          <h2 id="section-15">15. 전체 구조</h2>
           <p>지금까지의 내용을 하나의 구조로 합치면 다음과 같다.</p>
           <div class="mermaid diagram">
 flowchart TB
@@ -547,7 +586,7 @@ flowchart TB
             단순히 LLM API를 호출한다고 생각했던 구조가 실제로는 여러 계층으로 나뉘어 있다는 것을 볼 수 있다.
           </p>
 
-          <h2>16. 정리</h2>
+          <h2 id="section-16">16. 정리</h2>
           <p>
             LLM 애플리케이션을 처음 만들 때는 보통 Prompt, LLM, Response로 시작한다. 하지만 서비스가 복잡해질수록
             prompt 구성, classification, routing, function 실행, parsing, streaming 같은 여러 단계가 필요해진다.
@@ -581,18 +620,43 @@ flowchart TB
             만들 것인지 설계하는 것까지 포함한다.
           </p>
         </div>
+
+        <!-- GENERATED:ARTICLE_TAIL:START -->
+        <nav class="article-pagination" aria-label="발행 순서로 읽기">
+          <a href="./rag-stateful-query-clarification.html"><span>Newer</span><strong>[RAG] 불완전한 질문을 바로 검색하지 않기 - Running State와 Slot Filling으로 Query Clarification 설계하기</strong></a>
+          <a href="./s3-pii-detection-macie-object-lock.html"><span>Older</span><strong>[AWS] S3에서 PII를 자동 탐지하고 삭제를 방지하기 - Macie + EventBridge + Object Lock</strong></a>
+        </nav>
+        <aside class="related-notes" aria-labelledby="related-heading">
+          <h2 id="related-heading">Related notes</h2>
+          <div class="related-note-list">
+          <a href="./rag-stateful-query-clarification.html">
+            <span>RAG · 2026.08.09</span>
+            <strong>[RAG] 불완전한 질문을 바로 검색하지 않기 - Running State와 Slot Filling으로 Query Clarification 설계하기</strong>
+          </a>
+          <a href="./aws-api-jwt-routing-http-api-cognito-alb.html">
+            <span>API · 2026.08.25</span>
+            <strong>[AWS/API] JWT 인증과 경로 기반 라우팅을 함께 구현하려면? - API Gateway HTTP API, Cognito, ALB</strong>
+          </a>
+          <a href="./s3-pii-detection-macie-object-lock.html">
+            <span>S3 · 2026.08.07</span>
+            <strong>[AWS] S3에서 PII를 자동 탐지하고 삭제를 방지하기 - Macie + EventBridge + Object Lock</strong>
+          </a>
+          </div>
+        </aside>
+        <!-- GENERATED:ARTICLE_TAIL:END -->
       </article>
     </main>
 
     <footer class="site-footer">
-      <p>© 2026 Jiwon Kim. Technical writing, notes, and experiments.</p>
+      <p>© 2026 Jiwon Kim</p>
       <div class="footer-links">
-        <span id="visitStatus">Analytics ready</span>
-        <a href="https://github.com/andrewkimswe">github.com/andrewkimswe</a><a href="https://www.linkedin.com/in/jiwon-kim-867334285/">LinkedIn</a>
+        <span id="visitStatus">집계 중</span>
+        <a href="../articles.html">Articles</a>
+        <a href="../feed.xml">RSS</a>
       </div>
     </footer>
 
-    <script src="../script.js"></script>
+    <script src="../script.js?v=20260905-4"></script>
     <script
       data-goatcounter="https://jiwonkim-blog.goatcounter.com/count"
       async

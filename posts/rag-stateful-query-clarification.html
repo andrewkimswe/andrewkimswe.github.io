@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>[RAG] 불완전한 질문을 바로 검색하지 않기 | Jiwon Kim's Blog</title>
+    <title>[RAG] 불완전한 질문을 바로 검색하지 않기 | Jiwon Kim Engineering Notes</title>
     <meta
       name="description"
       content="Running State와 Slot Filling으로 RAG 검색 전에 질문을 구조화하고 필요한 정보를 수집하는 Query Clarification Layer 설계 노트입니다."
@@ -11,7 +11,7 @@
     <meta name="author" content="Jiwon Kim" />
     <meta name="robots" content="index, follow, max-image-preview:large" />
     <link rel="canonical" href="https://andrewkimswe.github.io/posts/rag-stateful-query-clarification.html" />
-    <meta property="og:site_name" content="Jiwon Kim's Blog" />
+    <meta property="og:site_name" content="Jiwon Kim | Engineering Notes" />
     <meta
       property="og:title"
       content="[RAG] 불완전한 질문을 바로 검색하지 않기 - Running State와 Slot Filling으로 Query Clarification 설계하기"
@@ -22,16 +22,25 @@
     />
     <meta property="og:type" content="article" />
     <meta property="og:url" content="https://andrewkimswe.github.io/posts/rag-stateful-query-clarification.html" />
-    <meta property="og:image" content="https://andrewkimswe.github.io/assets/social-card.svg" />
+    <meta property="og:image" content="https://andrewkimswe.github.io/assets/social-card.png" />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Jiwon Kim Engineering Notes" />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:image" content="https://andrewkimswe.github.io/assets/social-card.svg" />
+    <meta name="twitter:image" content="https://andrewkimswe.github.io/assets/social-card.png" />
+    <meta name="twitter:title" content="[RAG] 불완전한 질문을 바로 검색하지 않기 - Running State와 Slot Filling으로 Query Clarification 설계하기" />
+    <meta name="twitter:description" content="모호한 운영 질문을 곧바로 embedding하지 않고 state, branch, slot filling으로 retrieval-ready query를 만드는 설계입니다." />
+    <meta property="article:modified_time" content="2026-08-09T00:00:00+09:00" />
+    <meta name="twitter:image:alt" content="Jiwon Kim Engineering Notes" />
     <meta property="article:published_time" content="2026-08-09T00:00:00+09:00" />
     <meta property="article:author" content="Jiwon Kim" />
     <meta property="article:tag" content="RAG" />
     <meta property="article:tag" content="LLM" />
     <meta property="article:tag" content="LangChain" />
     <meta property="article:tag" content="Query Clarification" />
-    <link rel="stylesheet" href="../styles.css" />
+    <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="../styles.css?v=20260905-4" />
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
@@ -55,21 +64,26 @@
     </script>
   </head>
   <body>
+    <a class="skip-link" href="#main-content">본문으로 바로가기</a>
     <header class="site-header">
-      <a class="brand" href="../" aria-label="Jiwon Kim's Blog 홈">
-        <span class="brand-mark">JK</span>
-        <span>
-          <strong>Jiwon Kim's Blog</strong>
-          <small>Engineering notes</small>
-        </span>
+      <a class="brand" href="../" aria-label="Jiwon Kim Engineering Notes 홈">
+        <span class="brand-mark" aria-hidden="true">JK</span>
+        <span class="brand-copy"><strong>Jiwon Kim</strong><small>Engineering Notes</small></span>
       </a>
-      <nav class="nav-links" aria-label="주요 메뉴"><a href="../#writing">Writing</a><a href="../#portfolio">Portfolio</a><a href="../#profile">Profile</a><a href="../#topics">Topics</a><a href="../#about">About</a><a href="https://github.com/andrewkimswe">GitHub</a><a href="https://www.linkedin.com/in/jiwon-kim-867334285/">LinkedIn</a></nav>
+      <nav class="nav-links" aria-label="주요 메뉴">
+        <a href="../articles.html">Articles</a>
+        <a href="../projects.html">Projects</a>
+        <a href="../#about">About</a>
+        <span class="nav-divider" aria-hidden="true"></span>
+        <a href="https://github.com/andrewkimswe">GitHub</a>
+        <a href="https://www.linkedin.com/in/jiwon-kim-867334285/">LinkedIn</a>
+      </nav>
     </header>
 
-    <main>
+    <main id="main-content">
       <article class="article-page">
         <header class="article-hero">
-          <a class="back-link" href="../#writing">Back to writing</a>
+          <a class="back-link" href="../articles.html">All articles</a>
           <p class="eyebrow">RAG · Query Clarification · State</p>
           <h1>[RAG] 불완전한 질문을 바로 검색하지 않기 - Running State와 Slot Filling으로 Query Clarification 설계하기</h1>
           <p class="article-summary">
@@ -80,9 +94,30 @@
             <time datetime="2026-08-09">2026.08.09</time>
             <span>RAG</span>
             <span>LangChain</span>
-            <span>CloudOps</span>
-          </div>
+            <span>CloudOps</span><span class="reading-time" data-generated="true">약 9분</span></div>
         </header>
+
+        <!-- GENERATED:ARTICLE_TOC:START -->
+        <aside class="article-toc" aria-label="이 글의 목차">
+          <details open>
+            <summary>On this page</summary>
+            <ol>
+              <li><a href="#section-01">1. Stateless RAG의 한계</a></li>
+              <li><a href="#section-02">2. Running State</a></li>
+              <li><a href="#section-03">3. Branch는 State에서 필요한 값을 계산한다</a></li>
+              <li><a href="#section-04">4. Slot Filling</a></li>
+              <li><a href="#section-05">5. 전체 흐름</a></li>
+              <li><a href="#section-06">6. Structured Output이 중요한 이유</a></li>
+              <li><a href="#section-07">7. 모든 Slot을 무조건 채워야 할까?</a></li>
+              <li><a href="#section-08">8. CloudOps RAG에 적용한다면</a></li>
+              <li><a href="#section-09">9. Query Rewriting과의 관계</a></li>
+              <li><a href="#section-10">10. 언제 Retrieval을 실행할 것인가</a></li>
+              <li><a href="#section-11">11. 구현 전에 측정해야 할 것</a></li>
+              <li><a href="#section-12">정리</a></li>
+            </ol>
+          </details>
+        </aside>
+        <!-- GENERATED:ARTICLE_TOC:END -->
 
         <div class="article-body">
           <p>
@@ -114,7 +149,7 @@ flowchart TB
             조건 자체가 질문에 없다면 embedding model을 바꾸는 것만으로 해결하기 어렵다.
           </p>
 
-          <h2>1. Stateless RAG의 한계</h2>
+          <h2 id="section-01">1. Stateless RAG의 한계</h2>
           <p>가장 단순한 RAG 요청은 stateless function처럼 볼 수 있다.</p>
           <pre><code>def answer(question):
     documents = retriever.invoke(question)
@@ -127,7 +162,7 @@ flowchart TB
             <p>검색 전에 질문을 더 완전하게 만드는 단계가 필요할 수 있다.</p>
           </blockquote>
 
-          <h2>2. Running State</h2>
+          <h2 id="section-02">2. Running State</h2>
           <p>대화형 시스템도 일반 프로그램처럼 실행 중 필요한 정보를 보존할 state가 필요하다.</p>
           <pre><code>state = {
     "user_input": "Pod가 계속 죽어요",
@@ -160,7 +195,7 @@ flowchart TB
     branchB --- updatedB
           </div>
 
-          <h2>3. Branch는 State에서 필요한 값을 계산한다</h2>
+          <h2 id="section-03">3. Branch는 State에서 필요한 값을 계산한다</h2>
           <p>
             Branch는 전체 state를 입력받아 특정 값을 계산하는 작은 chain으로 생각할 수 있다. 예를 들어 internal
             LLM이 질문에서 troubleshooting 정보를 추출하고, 그 결과를 기존 state에 병합한다.
@@ -175,7 +210,7 @@ flowchart TB
             LangChain 계열의 runnable abstraction에서는 passthrough와 assignment 패턴으로 이런 구조를 만들 수 있다.
           </p>
 
-          <h2>4. Slot Filling</h2>
+          <h2 id="section-04">4. Slot Filling</h2>
           <p>troubleshooting에 필요한 필드를 slot으로 정의한다.</p>
           <pre><code>required_slots = [
     "service",
@@ -196,7 +231,7 @@ flowchart TB
             query를 만들 수 있다.
           </p>
 
-          <h2>5. 전체 흐름</h2>
+          <h2 id="section-05">5. 전체 흐름</h2>
           <div class="mermaid diagram">
 flowchart TB
     input[User Input]
@@ -230,7 +265,7 @@ flowchart TB
             </div>
           </dl>
 
-          <h2>6. Structured Output이 중요한 이유</h2>
+          <h2 id="section-06">6. Structured Output이 중요한 이유</h2>
           <p>
             Internal LLM에게 자유 형식 문장을 생성하게 한 뒤 Python이 다시 해석하면 불안정하다. 가능한 경우
             명시적인 schema를 정의하는 편이 좋다.
@@ -247,7 +282,7 @@ flowchart TB
             filling은 단순 prompt engineering보다 애플리케이션 로직에 가깝다.
           </p>
 
-          <h2>7. 모든 Slot을 무조건 채워야 할까?</h2>
+          <h2 id="section-07">7. 모든 Slot을 무조건 채워야 할까?</h2>
           <p>
             그렇지는 않다. <code>Pod가 Pending 상태인데 왜 그런가요?</code>는 이미 상당히 구체적이지만
             <code>Kubernetes가 이상해요</code>는 추가 정보가 필요하다. 목표는 모든 정보를 수집하는 것이 아니라
@@ -264,7 +299,7 @@ flowchart TB
             </div>
           </dl>
 
-          <h2>8. CloudOps RAG에 적용한다면</h2>
+          <h2 id="section-08">8. CloudOps RAG에 적용한다면</h2>
           <p>기존 query path가 retrieval confidence를 generation 전에 확인하는 구조라고 해보자.</p>
           <div class="mermaid diagram">
 flowchart TB
@@ -293,7 +328,7 @@ flowchart TB
             확인한다. 두 단계는 서로 다른 문제를 해결한다.
           </p>
 
-          <h2>9. Query Rewriting과의 관계</h2>
+          <h2 id="section-09">9. Query Rewriting과의 관계</h2>
           <p>
             state에 필요한 정보가 모였다면 최종 retrieval query를 마지막 사용자 문장 그대로 사용할 필요가 없다.
             <code>Pod가 계속 죽어요</code>와 <code>CrashLoopBackOff예요</code>라는 대화가 있었다면 다음처럼
@@ -302,7 +337,7 @@ flowchart TB
           <pre><code>EKS Kubernetes Pod CrashLoopBackOff troubleshooting</code></pre>
           <p>running state는 conversational memory뿐 아니라 retrieval query construction의 입력이 된다.</p>
 
-          <h2>10. 언제 Retrieval을 실행할 것인가</h2>
+          <h2 id="section-10">10. 언제 Retrieval을 실행할 것인가</h2>
           <p>state와 conditional logic이 있다면 retrieval 자체도 선택할 수 있다.</p>
           <dl class="service-summary">
             <div>
@@ -327,7 +362,7 @@ flowchart TB
             것이 디버깅과 평가에 유리하다.
           </p>
 
-          <h2>11. 구현 전에 측정해야 할 것</h2>
+          <h2 id="section-11">11. 구현 전에 측정해야 할 것</h2>
           <p>Query Clarification을 추가했다고 RAG가 자동으로 좋아졌다고 말할 수는 없다.</p>
           <table>
             <thead>
@@ -352,7 +387,7 @@ flowchart TB
             </tbody>
           </table>
 
-          <h2>정리</h2>
+          <h2 id="section-12">정리</h2>
           <p>
             RAG 성능 문제가 보이면 embedding model이나 vector DB부터 바꾸고 싶어진다. 하지만 retrieval의 입력인
             질문 자체가 불완전하다면 검색기만 개선해서 해결할 수 없는 문제가 있다.
@@ -363,18 +398,43 @@ flowchart TB
             아니라 <strong>검색하기 좋은 질문을 만드는 과정</strong>까지 포함한다.
           </p>
         </div>
+
+        <!-- GENERATED:ARTICLE_TAIL:START -->
+        <nav class="article-pagination" aria-label="발행 순서로 읽기">
+          <a href="./rag-document-processing-semantic-retrieval.html"><span>Newer</span><strong>[RAG] 긴 문서에서 필요한 근거를 찾는 과정 - Chunking, Embedding, Vector Store와 Semantic Retrieval</strong></a>
+          <a href="./llm-api-langchain-application-architecture.html"><span>Older</span><strong>[LLM] API 호출부터 LangChain까지 - LLM 애플리케이션의 구조 이해하기</strong></a>
+        </nav>
+        <aside class="related-notes" aria-labelledby="related-heading">
+          <h2 id="related-heading">Related notes</h2>
+          <div class="related-note-list">
+          <a href="./rag-document-processing-semantic-retrieval.html">
+            <span>RAG · 2026.08.10</span>
+            <strong>[RAG] 긴 문서에서 필요한 근거를 찾는 과정 - Chunking, Embedding, Vector Store와 Semantic Retrieval</strong>
+          </a>
+          <a href="./rag-evaluation-driven-retrieval-tuning.html">
+            <span>RAG · 2026.08.11</span>
+            <strong>[RAG] 감으로 Top-k를 정하지 않기 - Chunking, Embedding, Threshold를 실험으로 선택한 과정</strong>
+          </a>
+          <a href="./rag-evaluation-retrieval-vs-answer-quality.html">
+            <span>RAG · 2026.08.12</span>
+            <strong>[RAG] Hit@k가 높으면 좋은 RAG일까? - Retrieval과 Answer Quality를 따로 평가해본 과정</strong>
+          </a>
+          </div>
+        </aside>
+        <!-- GENERATED:ARTICLE_TAIL:END -->
       </article>
     </main>
 
     <footer class="site-footer">
-      <p>© 2026 Jiwon Kim. Technical writing, notes, and experiments.</p>
+      <p>© 2026 Jiwon Kim</p>
       <div class="footer-links">
-        <span id="visitStatus">Analytics ready</span>
-        <a href="https://github.com/andrewkimswe">github.com/andrewkimswe</a><a href="https://www.linkedin.com/in/jiwon-kim-867334285/">LinkedIn</a>
+        <span id="visitStatus">집계 중</span>
+        <a href="../articles.html">Articles</a>
+        <a href="../feed.xml">RSS</a>
       </div>
     </footer>
 
-    <script src="../script.js"></script>
+    <script src="../script.js?v=20260905-4"></script>
     <script
       data-goatcounter="https://jiwonkim-blog.goatcounter.com/count"
       async

@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>[AWS] 이미지 업로드 병목 제거하기 | Jiwon Kim's Blog</title>
+    <title>[AWS] 이미지 업로드 병목 제거하기 | Jiwon Kim Engineering Notes</title>
     <meta
       name="description"
       content="S3 Presigned URL, S3 Event Notification, AWS Lambda를 이용해 이미지 업로드와 리사이징 처리를 웹 서버 요청 경로에서 분리하는 구조입니다."
@@ -11,7 +11,7 @@
     <meta name="author" content="Jiwon Kim" />
     <meta name="robots" content="index, follow, max-image-preview:large" />
     <link rel="canonical" href="https://andrewkimswe.github.io/posts/s3-presigned-url-lambda-image-processing.html" />
-    <meta property="og:site_name" content="Jiwon Kim's Blog" />
+    <meta property="og:site_name" content="Jiwon Kim | Engineering Notes" />
     <meta
       property="og:title"
       content="[AWS] 이미지 업로드 병목 제거하기 - S3 Presigned URL과 Lambda로 Event-Driven Processing 구성"
@@ -22,9 +22,17 @@
     />
     <meta property="og:type" content="article" />
     <meta property="og:url" content="https://andrewkimswe.github.io/posts/s3-presigned-url-lambda-image-processing.html" />
-    <meta property="og:image" content="https://andrewkimswe.github.io/assets/social-card.svg" />
+    <meta property="og:image" content="https://andrewkimswe.github.io/assets/social-card.png" />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Jiwon Kim Engineering Notes" />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:image" content="https://andrewkimswe.github.io/assets/social-card.svg" />
+    <meta name="twitter:image" content="https://andrewkimswe.github.io/assets/social-card.png" />
+    <meta name="twitter:title" content="[AWS] 이미지 업로드 병목 제거하기 - S3 Presigned URL과 Lambda로 Event-Driven Processing 구성" />
+    <meta name="twitter:description" content="대용량 이미지 업로드 경로에서 애플리케이션 서버를 분리하고 S3 이벤트와 Lambda로 후처리하는 구조입니다." />
+    <meta property="article:modified_time" content="2026-08-06T00:00:00+09:00" />
+    <meta name="twitter:image:alt" content="Jiwon Kim Engineering Notes" />
     <meta property="article:published_time" content="2026-08-06T00:00:00+09:00" />
     <meta property="article:author" content="Jiwon Kim" />
     <meta property="article:tag" content="AWS" />
@@ -32,7 +40,8 @@
     <meta property="article:tag" content="Presigned URL" />
     <meta property="article:tag" content="Lambda" />
     <meta property="article:tag" content="Event-Driven Architecture" />
-    <link rel="stylesheet" href="../styles.css" />
+    <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="../styles.css?v=20260905-4" />
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
@@ -56,21 +65,26 @@
     </script>
   </head>
   <body>
+    <a class="skip-link" href="#main-content">본문으로 바로가기</a>
     <header class="site-header">
-      <a class="brand" href="../" aria-label="Jiwon Kim's Blog 홈">
-        <span class="brand-mark">JK</span>
-        <span>
-          <strong>Jiwon Kim's Blog</strong>
-          <small>Engineering notes</small>
-        </span>
+      <a class="brand" href="../" aria-label="Jiwon Kim Engineering Notes 홈">
+        <span class="brand-mark" aria-hidden="true">JK</span>
+        <span class="brand-copy"><strong>Jiwon Kim</strong><small>Engineering Notes</small></span>
       </a>
-      <nav class="nav-links" aria-label="주요 메뉴"><a href="../#writing">Writing</a><a href="../#portfolio">Portfolio</a><a href="../#profile">Profile</a><a href="../#topics">Topics</a><a href="../#about">About</a><a href="https://github.com/andrewkimswe">GitHub</a><a href="https://www.linkedin.com/in/jiwon-kim-867334285/">LinkedIn</a></nav>
+      <nav class="nav-links" aria-label="주요 메뉴">
+        <a href="../articles.html">Articles</a>
+        <a href="../projects.html">Projects</a>
+        <a href="../#about">About</a>
+        <span class="nav-divider" aria-hidden="true"></span>
+        <a href="https://github.com/andrewkimswe">GitHub</a>
+        <a href="https://www.linkedin.com/in/jiwon-kim-867334285/">LinkedIn</a>
+      </nav>
     </header>
 
-    <main>
+    <main id="main-content">
       <article class="article-page">
         <header class="article-hero">
-          <a class="back-link" href="../#writing">Back to writing</a>
+          <a class="back-link" href="../articles.html">All articles</a>
           <p class="eyebrow">Cloud · Storage · Event-Driven</p>
           <h1>[AWS] 이미지 업로드 병목 제거하기 - S3 Presigned URL과 Lambda로 Event-Driven Processing 구성</h1>
           <p class="article-summary">
@@ -81,9 +95,32 @@
             <time datetime="2026-08-06">2026.08.06</time>
             <span>AWS</span>
             <span>S3</span>
-            <span>Lambda</span>
-          </div>
+            <span>Lambda</span><span class="reading-time" data-generated="true">약 11분</span></div>
         </header>
+
+        <!-- GENERATED:ARTICLE_TOC:START -->
+        <aside class="article-toc" aria-label="이 글의 목차">
+          <details open>
+            <summary>On this page</summary>
+            <ol>
+              <li><a href="#section-01">1. 기존 구조의 문제</a></li>
+              <li><a href="#section-02">2. 파일 자체는 웹 서버를 거칠 필요가 없다</a></li>
+              <li><a href="#section-03">3. Presigned URL이란?</a></li>
+              <li><a href="#section-04">4. 웹 서버의 역할을 Control Plane으로 제한한다</a></li>
+              <li><a href="#section-05">5. 이미지 리사이징도 요청 경로에서 제거한다</a></li>
+              <li><a href="#section-06">6. 이벤트 기반 이미지 처리</a></li>
+              <li><a href="#section-07">7. 왜 EventBridge Scheduler가 아니라 S3 Event인가?</a></li>
+              <li><a href="#section-08">8. Decoupling</a></li>
+              <li><a href="#section-09">9. 트래픽이 급증하면 어떻게 될까?</a></li>
+              <li><a href="#section-10">10. SQS를 추가한다면?</a></li>
+              <li><a href="#section-11">11. Presigned URL 사용 시 보안 고려사항</a></li>
+              <li><a href="#section-12">12. 최종 아키텍처</a></li>
+              <li><a href="#section-13">13. 정리</a></li>
+              <li><a href="#section-14">References</a></li>
+            </ol>
+          </details>
+        </aside>
+        <!-- GENERATED:ARTICLE_TOC:END -->
 
         <div class="article-body">
           <p>
@@ -111,7 +148,7 @@ flowchart TB
             후처리를 이벤트 기반 구조로 변경해본다.
           </p>
 
-          <h2>1. 기존 구조의 문제</h2>
+          <h2 id="section-01">1. 기존 구조의 문제</h2>
           <p>기존에는 모든 이미지가 웹 서버를 거쳐간다고 가정한다.</p>
           <div class="mermaid diagram compact-diagram">
 flowchart TB
@@ -139,7 +176,7 @@ flowchart TB
             작업이 끝날 때까지 기다려야 한다.
           </p>
 
-          <h2>2. 파일 자체는 웹 서버를 거칠 필요가 없다</h2>
+          <h2 id="section-02">2. 파일 자체는 웹 서버를 거칠 필요가 없다</h2>
           <p>
             애플리케이션 서버가 해야 할 일과 대용량 데이터를 전송하는 일을 분리할 수 있다.
             서버는 사용자의 업로드 권한만 확인하고, 실제 이미지는 브라우저가 S3로 직접 전송하도록 만든다.
@@ -159,7 +196,7 @@ flowchart TB
             수 있는 URL을 생성한다. 사용자는 이 URL을 이용해 S3로 직접 이미지를 업로드한다.
           </p>
 
-          <h2>3. Presigned URL이란?</h2>
+          <h2 id="section-03">3. Presigned URL이란?</h2>
           <p>
             S3 버킷은 일반적으로 public access를 차단한 상태로 운영하는 것이 좋다. 그렇다고 모든 사용자에게
             AWS IAM Credential을 제공할 수는 없다. Presigned URL은 이런 상황에서 사용할 수 있다.
@@ -186,7 +223,7 @@ url = s3.generate_presigned_url(
             버킷 자체를 공개할 필요도 없고 사용자에게 AWS Credential을 제공할 필요도 없다.
           </p>
 
-          <h2>4. 웹 서버의 역할을 Control Plane으로 제한한다</h2>
+          <h2 id="section-04">4. 웹 서버의 역할을 Control Plane으로 제한한다</h2>
           <p>이 구조에서 중요한 설계 포인트는 실제 파일 전송 경로에서 애플리케이션 서버가 빠진다는 것이다.</p>
           <dl class="service-summary">
             <div>
@@ -200,7 +237,7 @@ url = s3.generate_presigned_url(
           </dl>
           <p>웹 서버는 사용자 인증, 업로드 권한 확인, Object Key 결정, Presigned URL 생성에 집중한다.</p>
 
-          <h2>5. 이미지 리사이징도 요청 경로에서 제거한다</h2>
+          <h2 id="section-05">5. 이미지 리사이징도 요청 경로에서 제거한다</h2>
           <p>
             파일 업로드를 S3로 분리했더라도 이미지 리사이징을 애플리케이션 서버에서 수행한다면 여전히 서버
             부하가 남는다. 이 작업도 비동기로 분리할 수 있다. S3는 객체가 생성되었을 때 Event Notification을
@@ -222,7 +259,7 @@ flowchart TB
           </div>
           <p>이제 이미지 업로드 요청과 이미지 처리 작업이 서로 분리된다.</p>
 
-          <h2>6. 이벤트 기반 이미지 처리</h2>
+          <h2 id="section-06">6. 이벤트 기반 이미지 처리</h2>
           <p>예를 들어 다음과 같은 S3 prefix 구조를 사용할 수 있다.</p>
           <pre><code>my-image-bucket/
 
@@ -279,7 +316,7 @@ def lambda_handler(event, context):
             추가할 수 있다.
           </p>
 
-          <h2>7. 왜 EventBridge Scheduler가 아니라 S3 Event인가?</h2>
+          <h2 id="section-07">7. 왜 EventBridge Scheduler가 아니라 S3 Event인가?</h2>
           <p>이미지 업로드 자체가 이벤트이기 때문에 굳이 polling 방식으로 처리할 필요가 없다.</p>
           <dl class="service-summary">
             <div>
@@ -293,7 +330,7 @@ def lambda_handler(event, context):
           </dl>
           <p>파일이 들어왔을 때만 컴퓨팅 리소스를 사용하므로 구조가 더 단순하고 처리 지연도 줄어든다.</p>
 
-          <h2>8. Decoupling</h2>
+          <h2 id="section-08">8. Decoupling</h2>
           <p>이 구조의 핵심은 단순히 EC2 대신 Lambda를 사용했다는 것이 아니라 책임을 분리했다는 데 있다.</p>
           <dl class="service-summary">
             <div>
@@ -311,7 +348,7 @@ def lambda_handler(event, context):
           </dl>
           <p>각 컴포넌트가 독립적인 역할을 가지게 되고, 웹 서버의 트래픽과 이미지 처리 부하가 직접 연결되지 않는다.</p>
 
-          <h2>9. 트래픽이 급증하면 어떻게 될까?</h2>
+          <h2 id="section-09">9. 트래픽이 급증하면 어떻게 될까?</h2>
           <p>
             기존 구조에서는 이미지 업로드 트래픽이 웹 서버의 네트워크, CPU, 메모리를 직접 압박한다.
             Presigned URL을 사용하면 대용량 파일 전송을 S3가 처리하고, 이후 이미지 처리 또한 Lambda가
@@ -330,7 +367,7 @@ flowchart TB
           </div>
           <p>즉, 웹 서버의 Auto Scaling 여부와 이미지 처리량을 분리할 수 있다.</p>
 
-          <h2>10. SQS를 추가한다면?</h2>
+          <h2 id="section-10">10. SQS를 추가한다면?</h2>
           <p>
             더 높은 안정성이 필요한 구조라면 S3 이벤트와 이미지 처리 Lambda 사이에 SQS를 넣는 방법도 있다.
           </p>
@@ -356,7 +393,7 @@ flowchart TB
             중요하면 queue를 추가하는 것도 고려할 수 있다.
           </p>
 
-          <h2>11. Presigned URL 사용 시 보안 고려사항</h2>
+          <h2 id="section-11">11. Presigned URL 사용 시 보안 고려사항</h2>
           <h3>URL 만료 시간을 짧게 설정한다</h3>
           <p>예를 들어 <code>ExpiresIn = 300 seconds</code>처럼 필요한 시간만 허용한다.</p>
 
@@ -378,7 +415,7 @@ flowchart TB
             <p>Private Bucket + Presigned URL 구조가 기본이다.</p>
           </blockquote>
 
-          <h2>12. 최종 아키텍처</h2>
+          <h2 id="section-12">12. 최종 아키텍처</h2>
           <div class="mermaid diagram">
 flowchart TB
     browser[Browser]
@@ -417,7 +454,7 @@ flowchart TB
             </div>
           </dl>
 
-          <h2>13. 정리</h2>
+          <h2 id="section-13">13. 정리</h2>
           <p>
             기존 서버 중심 구조에서는 하나의 애플리케이션 서버가 Upload, Processing, Storage를 모두
             담당했다. 이를 AWS의 관리형 서비스를 이용해 분리할 수 있다.
@@ -458,7 +495,7 @@ flowchart TB
             <strong>대용량 파일을 웹 서버가 직접 처리할 필요가 없는 대부분의 업로드 시스템</strong>에 적용할 수 있다.
           </p>
 
-          <h2>References</h2>
+          <h2 id="section-14">References</h2>
           <ul>
             <li>AWS Documentation - Sharing objects with presigned URLs</li>
             <li>AWS Documentation - Amazon S3 Event Notifications</li>
@@ -466,18 +503,43 @@ flowchart TB
             <li>AWS Documentation - Configuring event notifications using object key name filtering</li>
           </ul>
         </div>
+
+        <!-- GENERATED:ARTICLE_TAIL:START -->
+        <nav class="article-pagination" aria-label="발행 순서로 읽기">
+          <a href="./s3-pii-detection-macie-object-lock.html"><span>Newer</span><strong>[AWS] S3에서 PII를 자동 탐지하고 삭제를 방지하기 - Macie + EventBridge + Object Lock</strong></a>
+          <a href="./global-s3-mrap-cross-region-replication.html"><span>Older</span><strong>[AWS] 글로벌 S3 아키텍처 구성하기 - Multi-Region Access Point와 Cross-Region Replication</strong></a>
+        </nav>
+        <aside class="related-notes" aria-labelledby="related-heading">
+          <h2 id="related-heading">Related notes</h2>
+          <div class="related-note-list">
+          <a href="./aws-s3-inventory-batch-operations-delete-objects.html">
+            <span>S3 · 2026.08.26</span>
+            <strong>[AWS/S3] 수백만 개의 오래된 S3 객체를 서버리스로 삭제하려면? - S3 Inventory와 Batch Operations</strong>
+          </a>
+          <a href="./s3-pii-detection-macie-object-lock.html">
+            <span>S3 · 2026.08.07</span>
+            <strong>[AWS] S3에서 PII를 자동 탐지하고 삭제를 방지하기 - Macie + EventBridge + Object Lock</strong>
+          </a>
+          <a href="./global-s3-mrap-cross-region-replication.html">
+            <span>S3 · 2026.08.05</span>
+            <strong>[AWS] 글로벌 S3 아키텍처 구성하기 - Multi-Region Access Point와 Cross-Region Replication</strong>
+          </a>
+          </div>
+        </aside>
+        <!-- GENERATED:ARTICLE_TAIL:END -->
       </article>
     </main>
 
     <footer class="site-footer">
-      <p>© 2026 Jiwon Kim. Technical writing, notes, and experiments.</p>
+      <p>© 2026 Jiwon Kim</p>
       <div class="footer-links">
-        <span id="visitStatus">Analytics ready</span>
-        <a href="https://github.com/andrewkimswe">github.com/andrewkimswe</a><a href="https://www.linkedin.com/in/jiwon-kim-867334285/">LinkedIn</a>
+        <span id="visitStatus">집계 중</span>
+        <a href="../articles.html">Articles</a>
+        <a href="../feed.xml">RSS</a>
       </div>
     </footer>
 
-    <script src="../script.js"></script>
+    <script src="../script.js?v=20260905-4"></script>
     <script
       data-goatcounter="https://jiwonkim-blog.goatcounter.com/count"
       async

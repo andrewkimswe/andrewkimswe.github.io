@@ -1,211 +1,212 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<rss version="2.0">
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>Jiwon Kim's Blog</title>
+    <title>Jiwon Kim | Engineering Notes</title>
     <link>https://andrewkimswe.github.io/</link>
-    <description>백엔드, 클라우드, 아키텍처, 운영, 트러블슈팅을 기록하는 기술 블로그입니다.</description>
+    <atom:link href="https://andrewkimswe.github.io/feed.xml" rel="self" type="application/rss+xml" />
+    <description>백엔드, 클라우드, RAG, 아키텍처와 운영 판단을 기록하는 기술 블로그입니다.</description>
     <language>ko-KR</language>
-    <lastBuildDate>Sun, 30 Aug 2026 00:00:00 +0900</lastBuildDate>
+    <lastBuildDate>Sat, 05 Sep 2026 00:00:00 +0900</lastBuildDate>
     <item>
       <title>[AWS/IAM] 외부 업체에 Access Key를 주지 않고 AWS 계정 접근을 허용하기 - Cross-Account AssumeRole과 STS</title>
       <link>https://andrewkimswe.github.io/posts/aws-iam-cross-account-assumerole-sts-vendor-access.html</link>
-      <guid>https://andrewkimswe.github.io/posts/aws-iam-cross-account-assumerole-sts-vendor-access.html</guid>
+      <guid isPermaLink="true">https://andrewkimswe.github.io/posts/aws-iam-cross-account-assumerole-sts-vendor-access.html</guid>
       <pubDate>Sun, 30 Aug 2026 00:00:00 +0900</pubDate>
       <description>외부 업체에 장기 Access Key를 넘기지 않고 접근을 위임하려면 IAM User 복제가 아니라 Cross-Account Role과 STS AssumeRole을 설계해야 합니다.</description>
     </item>
     <item>
       <title>[AWS/Networking] VPC가 1,000개라면 Peering은 왜 무너질까? - Transit Gateway와 Hub-and-Spoke 설계</title>
       <link>https://andrewkimswe.github.io/posts/aws-networking-transit-gateway-hub-spoke-vpc-scale.html</link>
-      <guid>https://andrewkimswe.github.io/posts/aws-networking-transit-gateway-hub-spoke-vpc-scale.html</guid>
+      <guid isPermaLink="true">https://andrewkimswe.github.io/posts/aws-networking-transit-gateway-hub-spoke-vpc-scale.html</guid>
       <pubDate>Sat, 29 Aug 2026 00:00:00 +0900</pubDate>
       <description>VPC 수가 늘어나면 peering connection과 route 관리가 N²에 가깝게 복잡해집니다. Transit Gateway로 중앙 routing layer와 segmentation을 설계합니다.</description>
     </item>
     <item>
       <title>[AWS/Security] 보안 정책은 탐지만 해서는 부족하다 - IAM, AWS Config, Systems Manager로 Prevent·Detect·Remediate 만들기</title>
       <link>https://andrewkimswe.github.io/posts/aws-security-prevent-detect-remediate-config-ssm.html</link>
-      <guid>https://andrewkimswe.github.io/posts/aws-security-prevent-detect-remediate-config-ssm.html</guid>
+      <guid isPermaLink="true">https://andrewkimswe.github.io/posts/aws-security-prevent-detect-remediate-config-ssm.html</guid>
       <pubDate>Fri, 28 Aug 2026 00:00:00 +0900</pubDate>
       <description>보안 정책은 탐지만으로 끝나지 않습니다. IAM으로 예방하고, AWS Config로 평가하고, Systems Manager로 안전하게 복구하는 운영 loop를 설계합니다.</description>
     </item>
     <item>
       <title>[AWS/Security] 외부 엔지니어에게 SSH 키 없이 Private EC2 접근을 제공하기 - IAM Identity Center와 Session Manager</title>
       <link>https://andrewkimswe.github.io/posts/aws-security-identity-center-session-manager-private-ec2-access.html</link>
-      <guid>https://andrewkimswe.github.io/posts/aws-security-identity-center-session-manager-private-ec2-access.html</guid>
+      <guid isPermaLink="true">https://andrewkimswe.github.io/posts/aws-security-identity-center-session-manager-private-ec2-access.html</guid>
       <pubDate>Thu, 27 Aug 2026 00:00:00 +0900</pubDate>
       <description>사람의 AWS 계정 접근은 IAM Identity Center로, EC2 OS 접근은 Session Manager로 분리해 외부 운영 인력의 접근 경계를 관리합니다.</description>
     </item>
     <item>
       <title>[AWS/DR] 글로벌 전자상거래의 데이터 복원력 설계 - Aurora Global Database와 S3 CRR</title>
       <link>https://andrewkimswe.github.io/posts/aws-dr-aurora-global-database-s3-crr.html</link>
-      <guid>https://andrewkimswe.github.io/posts/aws-dr-aurora-global-database-s3-crr.html</guid>
+      <guid isPermaLink="true">https://andrewkimswe.github.io/posts/aws-dr-aurora-global-database-s3-crr.html</guid>
       <pubDate>Thu, 27 Aug 2026 00:00:00 +0900</pubDate>
       <description>주문·결제 데이터와 상품 이미지는 같은 복제 전략을 쓰기 어렵습니다. Aurora Global Database와 S3 CRR로 데이터 유형별 DR 경계를 나눕니다.</description>
     </item>
     <item>
       <title>[AWS/S3] 수백만 개의 오래된 S3 객체를 서버리스로 삭제하려면? - S3 Inventory와 Batch Operations</title>
       <link>https://andrewkimswe.github.io/posts/aws-s3-inventory-batch-operations-delete-objects.html</link>
-      <guid>https://andrewkimswe.github.io/posts/aws-s3-inventory-batch-operations-delete-objects.html</guid>
+      <guid isPermaLink="true">https://andrewkimswe.github.io/posts/aws-s3-inventory-batch-operations-delete-objects.html</guid>
       <pubDate>Wed, 26 Aug 2026 00:00:00 +0900</pubDate>
       <description>Inventory는 대상을 찾고, Batch Operations는 대상에 작업합니다. 대규모 S3 객체 삭제를 serverless하게 처리하는 구조입니다.</description>
     </item>
     <item>
       <title>[AWS/API] JWT 인증과 경로 기반 라우팅을 함께 구현하려면? - API Gateway HTTP API, Cognito, ALB</title>
       <link>https://andrewkimswe.github.io/posts/aws-api-jwt-routing-http-api-cognito-alb.html</link>
-      <guid>https://andrewkimswe.github.io/posts/aws-api-jwt-routing-http-api-cognito-alb.html</guid>
+      <guid isPermaLink="true">https://andrewkimswe.github.io/posts/aws-api-jwt-routing-http-api-cognito-alb.html</guid>
       <pubDate>Tue, 25 Aug 2026 00:00:00 +0900</pubDate>
       <description>API Gateway HTTP API는 JWT authorizer를 담당하고, ALB는 private backend service의 Layer 7 path routing을 담당하도록 역할을 나눕니다.</description>
     </item>
     <item>
       <title>[AWS/Networking] Private EC2가 S3에 접근하는데 NAT Gateway가 꼭 필요할까? - Gateway VPC Endpoint로 비용 줄이기</title>
       <link>https://andrewkimswe.github.io/posts/aws-networking-s3-gateway-vpc-endpoint-nat-cost.html</link>
-      <guid>https://andrewkimswe.github.io/posts/aws-networking-s3-gateway-vpc-endpoint-nat-cost.html</guid>
+      <guid isPermaLink="true">https://andrewkimswe.github.io/posts/aws-networking-s3-gateway-vpc-endpoint-nat-cost.html</guid>
       <pubDate>Mon, 24 Aug 2026 00:00:00 +0900</pubDate>
       <description>S3 트래픽을 NAT Gateway에서 분리하면 비용과 네트워크 경로를 함께 최적화할 수 있습니다. Gateway VPC Endpoint와 NAT Gateway의 역할을 구분합니다.</description>
     </item>
     <item>
       <title>[AWS/Data Security] 데이터 레이크 테이블이 수천 개로 늘어나면 권한은 어떻게 관리할까? - Lake Formation LF-Tag 기반 접근 제어</title>
       <link>https://andrewkimswe.github.io/posts/aws-data-security-lake-formation-lf-tag-access-control.html</link>
-      <guid>https://andrewkimswe.github.io/posts/aws-data-security-lake-formation-lf-tag-access-control.html</guid>
+      <guid isPermaLink="true">https://andrewkimswe.github.io/posts/aws-data-security-lake-formation-lf-tag-access-control.html</guid>
       <pubDate>Sun, 23 Aug 2026 00:00:00 +0900</pubDate>
       <description>테이블 이름을 하나씩 권한 정책에 추가하는 대신 Department, Sensitivity, Domain 같은 LF-Tag로 대규모 데이터 레이크 접근 제어를 관리하는 구조입니다.</description>
     </item>
     <item>
       <title>[AWS/Auto Scaling] CPU가 99%가 된 뒤 Scale-out하면 왜 늦을까? - Reactive Scaling과 Scheduled Scaling</title>
       <link>https://andrewkimswe.github.io/posts/aws-auto-scaling-reactive-vs-scheduled-scaling.html</link>
-      <guid>https://andrewkimswe.github.io/posts/aws-auto-scaling-reactive-vs-scheduled-scaling.html</guid>
+      <guid isPermaLink="true">https://andrewkimswe.github.io/posts/aws-auto-scaling-reactive-vs-scheduled-scaling.html</guid>
       <pubDate>Sat, 22 Aug 2026 00:00:00 +0900</pubDate>
       <description>Auto Scaling의 핵심은 scale-out 속도만이 아니라 언제 capacity를 준비하느냐다. 반복되는 트래픽 spike에서는 Scheduled Scaling이 더 직접적인 해법이 될 수 있습니다.</description>
     </item>
     <item>
       <title>[AWS/Kubernetes] 온프레미스 Kubernetes를 AWS 방식으로 운영하려면? - EKS Hybrid Nodes와 EKS Anywhere 비교</title>
       <link>https://andrewkimswe.github.io/posts/aws-kubernetes-eks-hybrid-nodes-eks-anywhere.html</link>
-      <guid>https://andrewkimswe.github.io/posts/aws-kubernetes-eks-hybrid-nodes-eks-anywhere.html</guid>
+      <guid isPermaLink="true">https://andrewkimswe.github.io/posts/aws-kubernetes-eks-hybrid-nodes-eks-anywhere.html</guid>
       <pubDate>Thu, 20 Aug 2026 00:00:00 +0900</pubDate>
       <description>Control plane을 AWS에 둘 수 있는지, worker node와 network를 어디서 관리할지에 따라 EKS Hybrid Nodes와 EKS Anywhere 선택이 달라집니다.</description>
     </item>
     <item>
       <title>[RAG] 튜토리얼 RAG를 운영 가능한 CloudOps RAG로 확장하기 - 평가, Fallback, Serving, Observability</title>
       <link>https://andrewkimswe.github.io/posts/rag-cloudops-productionish-evaluation-fallback-serving-observability.html</link>
-      <guid>https://andrewkimswe.github.io/posts/rag-cloudops-productionish-evaluation-fallback-serving-observability.html</guid>
+      <guid isPermaLink="true">https://andrewkimswe.github.io/posts/rag-cloudops-productionish-evaluation-fallback-serving-observability.html</guid>
       <pubDate>Tue, 18 Aug 2026 00:00:00 +0900</pubDate>
       <description>RAG가 답을 생성한다는 것과 신뢰할 수 있게 동작한다는 것은 다르다. CloudOps RAG를 평가 가능하고 관찰 가능한 서비스로 확장한 lifecycle을 정리합니다.</description>
     </item>
     <item>
       <title>[AWS/Database] JOIN이 깊어질수록 왜 Graph DB가 유리할까? - Amazon Neptune으로 다단계 관계 탐색하기</title>
       <link>https://andrewkimswe.github.io/posts/aws-database-neptune-graph-multi-hop-traversal.html</link>
-      <guid>https://andrewkimswe.github.io/posts/aws-database-neptune-graph-multi-hop-traversal.html</guid>
+      <guid isPermaLink="true">https://andrewkimswe.github.io/posts/aws-database-neptune-graph-multi-hop-traversal.html</guid>
       <pubDate>Mon, 17 Aug 2026 00:00:00 +0900</pubDate>
       <description>사용자 100만 명과 관계 1,000만 개에서 최대 5-hop 관계 탐색이 핵심 workload라면 Graph Database를 검토해야 하는 이유를 설명합니다.</description>
     </item>
     <item>
       <title>[AWS/Security] EC2 패치 자동화는 어디까지 자동화해야 할까? - Maintenance Window, Compliance, Staged Rollout</title>
       <link>https://andrewkimswe.github.io/posts/aws-security-ec2-patch-rollout-compliance.html</link>
-      <guid>https://andrewkimswe.github.io/posts/aws-security-ec2-patch-rollout-compliance.html</guid>
+      <guid isPermaLink="true">https://andrewkimswe.github.io/posts/aws-security-ec2-patch-rollout-compliance.html</guid>
       <pubDate>Sun, 16 Aug 2026 00:00:00 +0900</pubDate>
       <description>EC2 패치는 보안 자동화이면서 production 변경 작업이므로 Maintenance Window, staged rollout, compliance 검증이 함께 필요합니다.</description>
     </item>
     <item>
       <title>[AWS/Security] 취약점은 찾았는데 패치는 누가 하지? - Amazon Inspector와 Systems Manager로 EC2 패치 관리하기</title>
       <link>https://andrewkimswe.github.io/posts/aws-security-inspector-systems-manager-patch-management.html</link>
-      <guid>https://andrewkimswe.github.io/posts/aws-security-inspector-systems-manager-patch-management.html</guid>
+      <guid isPermaLink="true">https://andrewkimswe.github.io/posts/aws-security-inspector-systems-manager-patch-management.html</guid>
       <pubDate>Sat, 15 Aug 2026 00:00:00 +0900</pubDate>
       <description>Inspector는 취약점을 찾고 Systems Manager Patch Manager는 패치 운영을 관리한다는 관점에서 EC2 보안 패치 구조를 정리합니다.</description>
     </item>
     <item>
       <title>[AWS/FinOps] NAT Gateway 비용은 어디서 발생할까? - CUR, Athena, QuickSight로 비용 대시보드 만들기</title>
       <link>https://andrewkimswe.github.io/posts/aws-finops-nat-gateway-cost-dashboard.html</link>
-      <guid>https://andrewkimswe.github.io/posts/aws-finops-nat-gateway-cost-dashboard.html</guid>
+      <guid isPermaLink="true">https://andrewkimswe.github.io/posts/aws-finops-nat-gateway-cost-dashboard.html</guid>
       <pubDate>Fri, 14 Aug 2026 00:00:00 +0900</pubDate>
       <description>NAT Gateway 비용을 월 누적, 계정, Region, 일별 추세로 나누어 분석하고 architecture optimization으로 연결하는 FinOps 구조입니다.</description>
     </item>
     <item>
       <title>[RAG] Top-k를 늘렸는데 왜 필요한 문서를 못 찾을까? - Duplicate Chunk와 Retrieval Diversification</title>
       <link>https://andrewkimswe.github.io/posts/rag-multi-document-retrieval-diversification.html</link>
-      <guid>https://andrewkimswe.github.io/posts/rag-multi-document-retrieval-diversification.html</guid>
+      <guid isPermaLink="true">https://andrewkimswe.github.io/posts/rag-multi-document-retrieval-diversification.html</guid>
       <pubDate>Thu, 13 Aug 2026 00:00:00 +0900</pubDate>
       <description>Top-5가 다섯 개의 독립 근거를 의미하지 않는 이유와 multi-document completeness를 높이기 위한 retrieval diversification 실험입니다.</description>
     </item>
     <item>
       <title>[RAG] Hit@k가 높으면 좋은 RAG일까? - Retrieval과 Answer Quality를 따로 평가해본 과정</title>
       <link>https://andrewkimswe.github.io/posts/rag-evaluation-retrieval-vs-answer-quality.html</link>
-      <guid>https://andrewkimswe.github.io/posts/rag-evaluation-retrieval-vs-answer-quality.html</guid>
+      <guid isPermaLink="true">https://andrewkimswe.github.io/posts/rag-evaluation-retrieval-vs-answer-quality.html</guid>
       <pubDate>Wed, 12 Aug 2026 00:00:00 +0900</pubDate>
       <description>좋은 retrieval과 좋은 answer는 같은 문제가 아니라는 점을 answer evaluation, LLM-as-a-Judge, human validation으로 정리합니다.</description>
     </item>
     <item>
       <title>[RAG] 감으로 Top-k를 정하지 않기 - Chunking, Embedding, Threshold를 실험으로 선택한 과정</title>
       <link>https://andrewkimswe.github.io/posts/rag-evaluation-driven-retrieval-tuning.html</link>
-      <guid>https://andrewkimswe.github.io/posts/rag-evaluation-driven-retrieval-tuning.html</guid>
+      <guid isPermaLink="true">https://andrewkimswe.github.io/posts/rag-evaluation-driven-retrieval-tuning.html</guid>
       <pubDate>Tue, 11 Aug 2026 00:00:00 +0900</pubDate>
       <description>RAG configuration을 tutorial default가 아니라 Build, Measure, Compare, Freeze, Held-out Validate 흐름으로 선택한 기록입니다.</description>
     </item>
     <item>
       <title>[RAG] 긴 문서에서 필요한 근거를 찾는 과정 - Chunking, Embedding, Vector Store와 Semantic Retrieval</title>
       <link>https://andrewkimswe.github.io/posts/rag-document-processing-semantic-retrieval.html</link>
-      <guid>https://andrewkimswe.github.io/posts/rag-document-processing-semantic-retrieval.html</guid>
+      <guid isPermaLink="true">https://andrewkimswe.github.io/posts/rag-document-processing-semantic-retrieval.html</guid>
       <pubDate>Mon, 10 Aug 2026 00:00:00 +0900</pubDate>
       <description>긴 문서를 작은 chunk로 나누고 의미 기반 검색으로 필요한 근거를 찾는 RAG retrieval pipeline입니다.</description>
     </item>
     <item>
       <title>[RAG] 불완전한 질문을 바로 검색하지 않기 - Running State와 Slot Filling으로 Query Clarification 설계하기</title>
       <link>https://andrewkimswe.github.io/posts/rag-stateful-query-clarification.html</link>
-      <guid>https://andrewkimswe.github.io/posts/rag-stateful-query-clarification.html</guid>
+      <guid isPermaLink="true">https://andrewkimswe.github.io/posts/rag-stateful-query-clarification.html</guid>
       <pubDate>Sun, 09 Aug 2026 00:00:00 +0900</pubDate>
       <description>모호한 운영 질문을 곧바로 embedding하지 않고 state, branch, slot filling으로 retrieval-ready query를 만드는 설계입니다.</description>
     </item>
     <item>
       <title>[LLM] API 호출부터 LangChain까지 - LLM 애플리케이션의 구조 이해하기</title>
       <link>https://andrewkimswe.github.io/posts/llm-api-langchain-application-architecture.html</link>
-      <guid>https://andrewkimswe.github.io/posts/llm-api-langchain-application-architecture.html</guid>
+      <guid isPermaLink="true">https://andrewkimswe.github.io/posts/llm-api-langchain-application-architecture.html</guid>
       <pubDate>Sat, 08 Aug 2026 00:00:00 +0900</pubDate>
       <description>단순한 model.invoke 호출 뒤에 있는 LLM serving layer와, 앞단의 orchestration layer를 구분해서 정리합니다.</description>
     </item>
     <item>
       <title>[AWS] S3에서 PII를 자동 탐지하고 삭제를 방지하기 - Macie + EventBridge + Object Lock</title>
       <link>https://andrewkimswe.github.io/posts/s3-pii-detection-macie-object-lock.html</link>
-      <guid>https://andrewkimswe.github.io/posts/s3-pii-detection-macie-object-lock.html</guid>
+      <guid isPermaLink="true">https://andrewkimswe.github.io/posts/s3-pii-detection-macie-object-lock.html</guid>
       <pubDate>Fri, 07 Aug 2026 00:00:00 +0900</pubDate>
       <description>Macie finding을 EventBridge와 Lambda로 처리하고 S3 Object Lock Legal Hold로 검토 대상 객체를 보호하는 구조입니다.</description>
     </item>
     <item>
       <title>[AWS] 이미지 업로드 병목 제거하기 - S3 Presigned URL과 Lambda로 Event-Driven Processing 구성</title>
       <link>https://andrewkimswe.github.io/posts/s3-presigned-url-lambda-image-processing.html</link>
-      <guid>https://andrewkimswe.github.io/posts/s3-presigned-url-lambda-image-processing.html</guid>
+      <guid isPermaLink="true">https://andrewkimswe.github.io/posts/s3-presigned-url-lambda-image-processing.html</guid>
       <pubDate>Thu, 06 Aug 2026 00:00:00 +0900</pubDate>
       <description>대용량 이미지 업로드 경로에서 애플리케이션 서버를 분리하고 S3 이벤트와 Lambda로 후처리하는 구조입니다.</description>
     </item>
     <item>
       <title>[AWS] 글로벌 S3 아키텍처 구성하기 - Multi-Region Access Point와 Cross-Region Replication</title>
       <link>https://andrewkimswe.github.io/posts/global-s3-mrap-cross-region-replication.html</link>
-      <guid>https://andrewkimswe.github.io/posts/global-s3-mrap-cross-region-replication.html</guid>
+      <guid isPermaLink="true">https://andrewkimswe.github.io/posts/global-s3-mrap-cross-region-replication.html</guid>
       <pubDate>Wed, 05 Aug 2026 00:00:00 +0900</pubDate>
       <description>MRAP는 글로벌 요청 라우팅을, CRR은 리전 간 데이터 복제를 담당한다는 관점에서 정리한 구조입니다.</description>
     </item>
     <item>
       <title>[AWS] CloudFront 뒤의 ALB를 Private하게 구성하기 - VPC Origins</title>
       <link>https://andrewkimswe.github.io/posts/cloudfront-private-alb-vpc-origins.html</link>
-      <guid>https://andrewkimswe.github.io/posts/cloudfront-private-alb-vpc-origins.html</guid>
+      <guid isPermaLink="true">https://andrewkimswe.github.io/posts/cloudfront-private-alb-vpc-origins.html</guid>
       <pubDate>Tue, 04 Aug 2026 00:00:00 +0900</pubDate>
       <description>CloudFront VPC Origins로 Internal ALB를 Origin으로 두고 Public Entry Point를 CloudFront로 집중시키는 구조입니다.</description>
     </item>
     <item>
       <title>[AWS] Lambda 반복 호출을 Step Functions Map으로 분리하기 - Serverless Orchestration 설계</title>
       <link>https://andrewkimswe.github.io/posts/lambda-step-functions-map-orchestration.html</link>
-      <guid>https://andrewkimswe.github.io/posts/lambda-step-functions-map-orchestration.html</guid>
+      <guid isPermaLink="true">https://andrewkimswe.github.io/posts/lambda-step-functions-map-orchestration.html</guid>
       <pubDate>Mon, 03 Aug 2026 00:00:00 +0900</pubDate>
       <description>반복 호출과 재시도 책임을 Lambda 코드에서 Step Functions Map 상태로 분리하는 설계입니다.</description>
     </item>
     <item>
       <title>[AWS] Multi-Tenant Data Lake에서 Tenant 데이터 격리하기 - S3와 Lake Formation Row-Level Security</title>
       <link>https://andrewkimswe.github.io/posts/s3-data-lake-lake-formation-row-level-access-control.html</link>
-      <guid>https://andrewkimswe.github.io/posts/s3-data-lake-lake-formation-row-level-access-control.html</guid>
+      <guid isPermaLink="true">https://andrewkimswe.github.io/posts/s3-data-lake-lake-formation-row-level-access-control.html</guid>
       <pubDate>Sun, 02 Aug 2026 00:00:00 +0900</pubDate>
       <description>B2B SaaS Multi-Tenant 환경에서 하나의 S3 Data Lake를 유지하면서 Tenant별 Row 접근 범위를 제한하는 패턴입니다.</description>
     </item>
     <item>
-      <title>[AWS] CloudFront 설정 변경을 실시간으로 탐지하고 알림 보내기</title>
+      <title>[AWS] CloudFront 설정 변경을 이벤트 기반으로 탐지하고 알림 보내기</title>
       <link>https://andrewkimswe.github.io/posts/cloudfront-logging-change-detection.html</link>
-      <guid>https://andrewkimswe.github.io/posts/cloudfront-logging-change-detection.html</guid>
+      <guid isPermaLink="true">https://andrewkimswe.github.io/posts/cloudfront-logging-change-detection.html</guid>
       <pubDate>Sat, 01 Aug 2026 00:00:00 +0900</pubDate>
       <description>CloudTrail, EventBridge, Lambda, SNS를 사용해 CloudFront Logging 비활성화를 탐지하는 패턴입니다.</description>
     </item>

@@ -1,61 +1,65 @@
-# Jiwon Kim's Blog
+# Jiwon Kim Engineering Notes
 
-Jiwon Kim의 기술 블로그입니다. 백엔드, 클라우드, 아키텍처, 운영, 트러블슈팅 기록을 정리합니다.
+백엔드 시스템, AWS 인프라, RAG 평가, 아키텍처 의사결정을 구현과 운영의 관점에서 기록하는 정적 기술 블로그입니다.
 
-## 구성
+## Information Architecture
 
-- `index.html`: 블로그 홈, 포스트 목록, 검색/태그 필터
-- `styles.css`: 반응형 UI 스타일
-- `script.js`: 포스트 검색과 필터링
+- `index.html`: 관점, 추천 글, 최근 글, 대표 프로젝트를 보여주는 홈
+- `articles.html`: 전체 글의 정적 검색 및 주제 필터
+- `projects.html`: 구현 범위, 검증 결과, 한계를 구분한 프로젝트 사례
 - `posts/`: HTML 포스트 원문
-- `assets/social-card.svg`: 공유 미리보기 기본 이미지
-- `scripts/generate_site.py`: 포스트 HTML에서 홈, RSS, sitemap, llms.txt 자동 생성
-- `scripts/validate_site.py`: 포스트 목록과 메타 파일 일관성 검증
-- `robots.txt`, `sitemap.xml`, `llms.txt`, `feed.xml`: 검색 엔진과 AI 크롤러를 위한 공개 메타 파일
-- `.github/workflows/pages.yml`: GitHub Pages 자동 배포
+- `404.html`: GitHub Pages용 오류 화면
+- `styles.css`: 공통 레이아웃, article typography, 반응형 스타일
+- `script.js`: 검색, 필터, TOC, 코드 복사, Mermaid, 방문 통계
+- `scripts/generate_site.py`: 목록, TOC, 읽기 시간, 글 이동, 관련 글, RSS, sitemap, `llms.txt` 생성
+- `scripts/validate_site.py`: HTML 구조, SEO, 내부 링크, 접근성 기본값, 생성 결과 일관성 검증
 
-## 새 글 발행 흐름
+## Design Principles
 
-포스트 HTML을 `posts/`에 추가하거나 수정한 뒤 아래 명령으로 공개 메타 파일을 갱신합니다.
+1. 운영 노트에 가까운 편집형 기술 출판물로 보이게 한다.
+2. 홈은 모든 콘텐츠를 쌓지 않고, 추천과 최신 항목에서 전용 목록으로 연결한다.
+3. 긴 글은 740px 안팎의 읽기 폭, 고정 목차, 명확한 코드와 다이어그램 계층을 유지한다.
+4. 프로젝트는 문제, 구현, 측정, 검증, 한계를 분리하고 확인되지 않은 성과를 만들지 않는다.
+5. 장식보다 탐색, 비교, 출처 확인, 다음 글 이동 같은 반복 작업을 우선한다.
+
+## Content Contract
+
+새 포스트는 `posts/*.html`에 추가하며 다음 정보를 포함해야 합니다.
+
+- 정확히 하나의 `h1`
+- `description`, canonical, Open Graph, Twitter metadata
+- `article:published_time`, `article:modified_time`, `article:tag`
+- `.article-body` 안의 의미 있는 `h2` 구조
+- 이미지의 설명 가능한 `alt` 텍스트
+- 구현 근거와 검증 방법, 필요한 경우 공식 문서 링크
+
+글 목록, 목차, 읽기 시간, 이전·다음 글, 관련 글은 직접 편집하지 않고 생성기로 갱신합니다.
 
 ```bash
 python3 scripts/generate_site.py
 python3 scripts/validate_site.py
+node --check script.js
+git diff --check
 ```
 
-`generate_site.py`는 각 포스트의 `og:title`, `description`, `article:published_time`, `article:tag`, 본문 요약을 읽어 `index.html`, `feed.xml`, `sitemap.xml`, `llms.txt`를 다시 생성합니다.
+생성기는 날짜와 slug를 함께 사용해 순서를 결정하므로 같은 날짜의 글도 매번 동일하게 정렬됩니다. 홈에는 최신 7개만 두고 전체 글은 `articles.html`에서 찾습니다.
 
-## 방문자 수 체크
+## Search Decision
 
-`index.html` 하단에 GoatCounter 스크립트를 연결해 두었습니다.
+현재 29개 글 규모에서는 외부 검색 서비스나 CMS보다 브라우저 내 정적 검색이 적절합니다. 제목, 요약, 태그를 대상으로 즉시 필터링하며 네트워크 의존성과 별도 인덱싱 작업이 없습니다.
 
-```html
-<script
-  data-goatcounter="https://jiwonkim-blog.goatcounter.com/count"
-  async
-  src="https://gc.zgo.at/count.js"
-></script>
-```
+## Analytics
 
-실제로 집계하려면 GoatCounter에서 `jiwonkim-blog` 사이트를 만들고 visitor counter 공개 설정을 켜거나, 원하는 분석 도구의 스크립트로 교체하면 됩니다. 홈 화면의 방문자 표시는 GoatCounter public counter API의 `TOTAL` 값을 사용합니다.
+GoatCounter 스크립트와 public counter API를 사용합니다. 설정에서 visitor counter 공개가 허용되어야 숫자가 표시되며, 차단기나 JavaScript 비활성화 환경에서는 집계 또는 화면 표시가 누락될 수 있습니다. JavaScript를 실행하지 않는 AI crawler는 일반적으로 이 카운터에 포함되지 않습니다.
 
-AI 방문은 보통 HTML만 가져가고 JavaScript를 실행하지 않으면 집계되지 않습니다. 반대로 AI 브라우저나 렌더러가 JavaScript를 실행하면 일반 방문처럼 집계될 수 있습니다.
+## Publishing
 
-## GitHub에 올리는 방법
+`main` push 시 GitHub Pages의 branch 배포가 정적 파일을 게시합니다. `.github/workflows/pages.yml`은 별도 배포를 중복 실행하지 않고, 생성기를 다시 실행한 뒤 diff가 없는지와 validator, JavaScript syntax를 확인합니다.
 
-```bash
-git init
-git add .
-git commit -m "Create AWS solutions blog"
-git branch -M main
-git remote add origin https://github.com/andrewkimswe/andrewkimswe.github.io.git
-git push -u origin main
-```
+## Known Limits
 
-저장소 이름을 `andrewkimswe.github.io`로 만들면 GitHub Pages 주소는 보통 아래처럼 됩니다.
-
-```text
-https://andrewkimswe.github.io
-```
-
-다른 저장소 이름을 쓰고 싶다면 `blog` 같은 이름으로 만들고 GitHub Pages 설정에서 `GitHub Actions` 배포를 선택하면 됩니다.
+- 포스트 원문이 HTML이라 공통 article chrome은 생성기로 동기화합니다.
+- Mermaid renderer는 CDN에 의존하므로 차단 환경에서는 원문 다이어그램 코드를 fallback으로 보여줍니다.
+- 검색은 substring 기반이며 형태소 분석, 오타 교정, 랭킹 모델은 없습니다.
+- GoatCounter 표시는 제3자 script와 public API 가용성에 영향을 받습니다.
+- 별도 CMS, dark mode, client-side router는 현재 규모에서 운영 복잡도 대비 이득이 작아 두지 않았습니다.

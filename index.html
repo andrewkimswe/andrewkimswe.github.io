@@ -3,155 +3,183 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Jiwon Kim's Blog | 기술 블로그</title>
+    <title>Jiwon Kim | Engineering Notes</title>
     <meta
       name="description"
-      content="Jiwon Kim's technical blog on backend engineering, cloud infrastructure, architecture, operations, and troubleshooting."
+      content="백엔드, 클라우드 인프라, RAG와 운영 자동화의 설계 판단과 검증 과정을 기록하는 Jiwon Kim의 기술 블로그입니다."
     />
     <meta name="author" content="Jiwon Kim" />
     <meta name="robots" content="index, follow, max-image-preview:large" />
     <link rel="canonical" href="https://andrewkimswe.github.io/" />
-    <link rel="alternate" type="application/rss+xml" title="Jiwon Kim's Blog RSS" href="./feed.xml" />
-    <meta property="og:site_name" content="Jiwon Kim's Blog" />
-    <meta property="og:title" content="Jiwon Kim's Blog | 기술 블로그" />
+    <link rel="alternate" type="application/rss+xml" title="Jiwon Kim Engineering Notes RSS" href="./feed.xml" />
+    <link rel="icon" href="./assets/favicon.svg" type="image/svg+xml" />
+    <meta property="og:site_name" content="Jiwon Kim | Engineering Notes" />
+    <meta property="og:title" content="Jiwon Kim | Engineering Notes" />
     <meta
       property="og:description"
-      content="Notes on backend engineering, cloud infrastructure, architecture, operations, and troubleshooting."
+      content="시스템을 선택한 이유, 실패 가능성, 검증 결과와 남은 한계를 함께 기록합니다."
     />
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://andrewkimswe.github.io/" />
-    <meta property="og:image" content="https://andrewkimswe.github.io/assets/social-card.svg" />
+    <meta property="og:image" content="https://andrewkimswe.github.io/assets/social-card.png" />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Jiwon Kim Engineering Notes" />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:image" content="https://andrewkimswe.github.io/assets/social-card.svg" />
-    <meta name="twitter:title" content="Jiwon Kim's Blog | 기술 블로그" />
+    <meta name="twitter:image" content="https://andrewkimswe.github.io/assets/social-card.png" />
+    <meta name="twitter:image:alt" content="Jiwon Kim Engineering Notes" />
+    <meta name="twitter:title" content="Jiwon Kim | Engineering Notes" />
     <meta
       name="twitter:description"
-      content="Notes on backend engineering, cloud infrastructure, architecture, operations, and troubleshooting."
+      content="백엔드, 클라우드 인프라, RAG와 운영 자동화의 설계 판단과 검증 기록."
     />
-    <link rel="stylesheet" href="./styles.css" />
+    <link rel="stylesheet" href="./styles.css?v=20260905-4" />
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
         "@type": "Blog",
-        "name": "Jiwon Kim's Blog",
+        "name": "Jiwon Kim | Engineering Notes",
         "url": "https://andrewkimswe.github.io/",
-        "description": "A technical blog about backend engineering, cloud infrastructure, architecture, operations, and troubleshooting.",
+        "description": "A Korean engineering blog about backend systems, cloud infrastructure, RAG, architecture decisions, and operations.",
         "author": {
           "@type": "Person",
           "name": "Jiwon Kim",
-          "url": "https://github.com/andrewkimswe",
-          "sameAs": ["https://github.com/andrewkimswe", "https://www.linkedin.com/in/jiwon-kim-867334285/"]
+          "url": "https://andrewkimswe.github.io/",
+          "sameAs": [
+            "https://github.com/andrewkimswe",
+            "https://www.linkedin.com/in/jiwon-kim-867334285/"
+          ]
         },
         "inLanguage": "ko-KR"
       }
     </script>
   </head>
   <body>
+    <a class="skip-link" href="#main-content">본문으로 바로가기</a>
     <header class="site-header">
-      <a class="brand" href="./" aria-label="Jiwon Kim's Blog 홈">
-        <span class="brand-mark">JK</span>
-        <span>
-          <strong>Jiwon Kim's Blog</strong>
-          <small>Engineering notes</small>
+      <a class="brand" href="./" aria-label="Jiwon Kim Engineering Notes 홈">
+        <span class="brand-mark" aria-hidden="true">JK</span>
+        <span class="brand-copy">
+          <strong>Jiwon Kim</strong>
+          <small>Engineering Notes</small>
         </span>
       </a>
       <nav class="nav-links" aria-label="주요 메뉴">
-        <a href="#writing">Writing</a>
-        <a href="#portfolio">Portfolio</a>
-        <a href="#profile">Profile</a>
-        <a href="#topics">Topics</a>
+        <a href="./articles.html">Articles</a>
+        <a href="./projects.html">Projects</a>
         <a href="#about">About</a>
+        <span class="nav-divider" aria-hidden="true"></span>
         <a href="https://github.com/andrewkimswe">GitHub</a>
         <a href="https://www.linkedin.com/in/jiwon-kim-867334285/">LinkedIn</a>
       </nav>
     </header>
 
-    <main>
+    <main id="main-content">
       <section class="hero">
-        <div class="hero-kicker">Backend · Cloud · Architecture · Operations</div>
+        <div class="hero-rule">
+          <span>Backend · Cloud · RAG · Operations</span>
+          <span>Seoul, KR</span>
+        </div>
         <div class="hero-layout">
           <div class="hero-copy">
+            <p class="eyebrow">Independent engineering journal</p>
             <h1>Engineering Notes</h1>
             <p class="hero-text">
-              백엔드 시스템, 클라우드 인프라, RAG, 운영 자동화에서 마주친 문제를
-              구현 근거와 검증 방법까지 남기는 기술 블로그입니다.
+              시스템이 동작하는 방법보다, 그 선택이 필요했던 조건과 실패 가능성,
+              배포 뒤 확인할 기준을 더 오래 기록합니다.
             </p>
+            <div class="hero-actions">
+              <a class="primary-link" href="#writing">선별 글부터 읽기</a>
+              <a class="text-link" href="./articles.html">전체 글 보기 <span aria-hidden="true">↗</span></a>
+            </div>
           </div>
-          <aside class="profile-panel" aria-label="블로그 소개">
-            <p class="panel-label">Current Signal</p>
-            <p>
-              구현 세부사항보다 오래 남는 것은 문제를 나누는 방식, 선택지를 버린 이유,
-              그리고 배포 후 무엇을 확인했는가입니다.
-            </p>
+          <aside class="profile-panel" aria-label="블로그 현황">
+            <p class="panel-label">At a glance</p>
+            <p>백엔드 시스템과 클라우드 운영을 문제 정의, 선택지, 검증, 한계의 순서로 정리합니다.</p>
             <dl class="signal-list">
               <div>
-                <dt>Notes</dt>
-                <dd data-post-count>24</dd>
+                <dt>Articles</dt>
+                <dd data-post-count>29</dd>
               </div>
               <div>
-                <dt>Focus</dt>
-                <dd>CloudOps</dd>
+                <dt>Projects</dt>
+                <dd>6</dd>
               </div>
               <div>
                 <dt>Visits</dt>
-                <dd data-visit-status>집계 준비 중</dd>
+                <dd data-visit-status>집계 중</dd>
               </div>
             </dl>
             <small class="signal-note">
-              GoatCounter 공개 counter API 기준입니다. JavaScript 또는 tracking pixel이 실행되는 AI crawler 방문은 집계될 수 있습니다.
-              <a data-visit-api-link href="https://jiwonkim-blog.goatcounter.com/counter/TOTAL.json">API</a>
+              방문 수는 GoatCounter의 공개 집계값입니다.
+              <a data-visit-api-link href="https://jiwonkim-blog.goatcounter.com/counter/TOTAL.json">집계 기준</a>
             </small>
           </aside>
         </div>
       </section>
 
-
-
-
-
-
-      <section class="section writing-section" id="writing">
+      <section class="section start-section" id="writing">
         <div class="section-heading">
           <div>
-            <p class="eyebrow">Writing</p>
-            <h2>최근 글</h2>
+            <p class="eyebrow">Start here</p>
+            <h2>먼저 읽을 글</h2>
           </div>
-          <p>
-            서비스 이름보다 먼저 보는 것은 요구사항, 제약, 실패 가능성, 그리고 선택지를 제거한 이유입니다.
-          </p>
+          <p>기술 이름보다 설계 판단과 검증 과정이 선명한 글 세 편을 골랐습니다.</p>
         </div>
 
-        <div class="toolbar" aria-label="포스트 필터">
-          <label class="search-box">
-            <span>Search</span>
-            <input id="postSearch" type="search" placeholder="CloudFront, VPC, 장애..." />
-          </label>
-          <div class="tag-filter" role="list" aria-label="태그 필터">
-            <button class="tag-button active" data-filter="all" type="button">All</button>
-            <button class="tag-button" data-filter="Cloud" type="button">Cloud</button>
-            <button class="tag-button" data-filter="DR" type="button">DR</button>
-            <button class="tag-button" data-filter="Networking" type="button">Networking</button>
-            <button class="tag-button" data-filter="API" type="button">API</button>
-            <button class="tag-button" data-filter="S3" type="button">S3</button>
-            <button class="tag-button" data-filter="Kubernetes" type="button">Kubernetes</button>
-            <button class="tag-button" data-filter="Auto Scaling" type="button">Auto Scaling</button>
-            <button class="tag-button" data-filter="Database" type="button">Database</button>
-            <button class="tag-button" data-filter="Data" type="button">Data</button>
-            <button class="tag-button" data-filter="Serverless" type="button">Serverless</button>
-            <button class="tag-button" data-filter="LLM" type="button">LLM</button>
-            <button class="tag-button" data-filter="RAG" type="button">RAG</button>
-            <button class="tag-button" data-filter="FinOps" type="button">FinOps</button>
-            <button class="tag-button" data-filter="Security" type="button">Security</button>
-            <button class="tag-button" data-filter="Architecture" type="button">Architecture</button>
-            <button class="tag-button" data-filter="Operations" type="button">Operations</button>
+        <div class="reading-guide">
+          <article class="featured-note featured-note-lead">
+            <a href="./posts/rag-cloudops-productionish-evaluation-fallback-serving-observability.html">
+              <span class="note-index">01 / Case study</span>
+              <span class="note-topic">RAG · Evaluation · Operations</span>
+              <h3>튜토리얼 RAG를 평가하고 관찰할 수 있는 CloudOps RAG로 확장하기</h3>
+              <p>
+                Hit@k와 MRR, threshold fallback, answer evaluation, failure taxonomy,
+                FastAPI serving, dependency timeout, regression gate를 하나의 lifecycle로 연결합니다.
+              </p>
+              <span class="note-cta">글 읽기 <span aria-hidden="true">→</span></span>
+            </a>
+          </article>
+
+          <div class="featured-note-stack">
+            <article class="featured-note">
+              <a href="./posts/aws-security-ec2-patch-rollout-compliance.html">
+                <span class="note-index">02 / Operations</span>
+                <span class="note-topic">AWS · Security</span>
+                <h3>EC2 패치 자동화는 어디까지 자동화해야 할까?</h3>
+                <p>Maintenance Window, staged rollout, compliance와 rollback 경계를 함께 봅니다.</p>
+                <span class="note-cta">글 읽기 <span aria-hidden="true">→</span></span>
+              </a>
+            </article>
+            <article class="featured-note">
+              <a href="./posts/aws-finops-nat-gateway-cost-dashboard.html">
+                <span class="note-index">03 / FinOps</span>
+                <span class="note-topic">AWS · Cost</span>
+                <h3>NAT Gateway 비용은 어디서 발생할까?</h3>
+                <p>CUR, Athena, QuickSight로 비용을 분해하고 아키텍처 변경 후보까지 연결합니다.</p>
+                <span class="note-cta">글 읽기 <span aria-hidden="true">→</span></span>
+              </a>
+            </article>
           </div>
         </div>
+      </section>
 
-        <div class="post-list" id="postGrid" tabindex="0" aria-label="글 목록">
+      <section class="section latest-section" aria-labelledby="latest-heading">
+        <div class="section-heading section-heading-inline">
+          <div>
+            <p class="eyebrow">Latest</p>
+            <h2 id="latest-heading">최근 발행</h2>
+          </div>
+          <a class="section-link" href="./articles.html">전체 <span data-post-count>29</span>개 글 보기 <span aria-hidden="true">→</span></a>
+        </div>
+        <div class="post-list home-post-list" aria-label="최근 글 목록">
+          <!-- GENERATED:RECENT_POSTS:START -->
           <article
             class="post-row"
-            data-tags="Access AssumeRole AWS Cloud Cross-Account External ID IAM Key Security STS"
+            data-tags="Access | AssumeRole | AWS | Cloud | Cross-Account | External ID | IAM | Key | Security | STS"
             data-title="[AWS/IAM] 외부 업체에 Access Key를 주지 않고 AWS 계정 접근을 허용하기 - Cross-Account AssumeRole과 STS"
+            data-summary="외부 업체에 장기 Access Key를 넘기지 않고 접근을 위임하려면 IAM User 복제가 아니라 Cross-Account Role과 STS AssumeRole을 설계해야 합니다."
           >
             <a href="./posts/aws-iam-cross-account-assumerole-sts-vendor-access.html">
               <time datetime="2026-08-30">2026.08.30</time>
@@ -162,8 +190,9 @@
           </article>
           <article
             class="post-row"
-            data-tags="Architecture AWS Gateway Hub-and-Spoke Networking Peering Transit Transit Gateway VPC"
+            data-tags="Architecture | AWS | Gateway | Hub-and-Spoke | Networking | Peering | Transit | Transit Gateway | VPC"
             data-title="[AWS/Networking] VPC가 1,000개라면 Peering은 왜 무너질까? - Transit Gateway와 Hub-and-Spoke 설계"
+            data-summary="VPC 수가 늘어나면 peering connection과 route 관리가 N²에 가깝게 복잡해집니다. Transit Gateway로 중앙 routing layer와 segmentation을 설계합니다."
           >
             <a href="./posts/aws-networking-transit-gateway-hub-spoke-vpc-scale.html">
               <time datetime="2026-08-29">2026.08.29</time>
@@ -174,8 +203,9 @@
           </article>
           <article
             class="post-row"
-            data-tags="AWS AWS Config Cloud Compliance Config Detect IAM Manager Operations Prevent Remediate Security Systems Systems Manager"
+            data-tags="AWS | AWS Config | Cloud | Compliance | Config | Detect | IAM | Manager | Operations | Prevent | Remediate | Security | Systems | Systems Manager"
             data-title="[AWS/Security] 보안 정책은 탐지만 해서는 부족하다 - IAM, AWS Config, Systems Manager로 Prevent·Detect·Remediate 만들기"
+            data-summary="보안 정책은 탐지만으로 끝나지 않습니다. IAM으로 예방하고, AWS Config로 평가하고, Systems Manager로 안전하게 복구하는 운영 loop를 설계합니다."
           >
             <a href="./posts/aws-security-prevent-detect-remediate-config-ssm.html">
               <time datetime="2026-08-28">2026.08.28</time>
@@ -186,8 +216,9 @@
           </article>
           <article
             class="post-row"
-            data-tags="AWS Center Cloud EC2 IAM IAM Identity Center Identity Manager Operations Private Security Session Session Manager SSH Systems Manager"
+            data-tags="AWS | Center | Cloud | EC2 | IAM | IAM Identity Center | Identity | Manager | Operations | Private | Security | Session | Session Manager | SSH | Systems Manager"
             data-title="[AWS/Security] 외부 엔지니어에게 SSH 키 없이 Private EC2 접근을 제공하기 - IAM Identity Center와 Session Manager"
+            data-summary="사람의 AWS 계정 접근은 IAM Identity Center로, EC2 OS 접근은 Session Manager로 분리해 외부 운영 인력의 접근 경계를 관리합니다."
           >
             <a href="./posts/aws-security-identity-center-session-manager-private-ec2-access.html">
               <time datetime="2026-08-27">2026.08.27</time>
@@ -198,8 +229,9 @@
           </article>
           <article
             class="post-row"
-            data-tags="Architecture Aurora AWS Cross-Region Replication CRR Database DR Global S3"
+            data-tags="Architecture | Aurora | AWS | Cross-Region Replication | CRR | Database | DR | Global | Operations | S3"
             data-title="[AWS/DR] 글로벌 전자상거래의 데이터 복원력 설계 - Aurora Global Database와 S3 CRR"
+            data-summary="주문·결제 데이터와 상품 이미지는 같은 복제 전략을 쓰기 어렵습니다. Aurora Global Database와 S3 CRR로 데이터 유형별 DR 경계를 나눕니다."
           >
             <a href="./posts/aws-dr-aurora-global-database-s3-crr.html">
               <time datetime="2026-08-27">2026.08.27</time>
@@ -210,8 +242,9 @@
           </article>
           <article
             class="post-row"
-            data-tags="AWS Batch Inventory Lambda Operations S3 S3 Batch Operations S3 Inventory Serverless"
+            data-tags="AWS | Batch | Inventory | Lambda | Operations | S3 | S3 Batch Operations | S3 Inventory | Serverless"
             data-title="[AWS/S3] 수백만 개의 오래된 S3 객체를 서버리스로 삭제하려면? - S3 Inventory와 Batch Operations"
+            data-summary="Inventory는 대상을 찾고, Batch Operations는 대상에 작업합니다. 대규모 S3 객체 삭제를 serverless하게 처리하는 구조입니다."
           >
             <a href="./posts/aws-s3-inventory-batch-operations-delete-objects.html">
               <time datetime="2026-08-26">2026.08.26</time>
@@ -222,8 +255,9 @@
           </article>
           <article
             class="post-row"
-            data-tags="ALB API API Gateway Architecture AWS Cognito Gateway HTTP JWT Security"
+            data-tags="ALB | API | API Gateway | Architecture | AWS | Cloud | Cognito | Gateway | HTTP | JWT | Operations | Security"
             data-title="[AWS/API] JWT 인증과 경로 기반 라우팅을 함께 구현하려면? - API Gateway HTTP API, Cognito, ALB"
+            data-summary="API Gateway HTTP API는 JWT authorizer를 담당하고, ALB는 private backend service의 Layer 7 path routing을 담당하도록 역할을 나눕니다."
           >
             <a href="./posts/aws-api-jwt-routing-http-api-cognito-alb.html">
               <time datetime="2026-08-25">2026.08.25</time>
@@ -232,558 +266,58 @@
               <p>API Gateway HTTP API는 JWT authorizer를 담당하고, ALB는 private backend service의 Layer 7 path routing을 담당하도록 역할을 나눕니다.</p>
             </a>
           </article>
-          <article
-            class="post-row"
-            data-tags="AWS EC2 Endpoint FinOps Gateway NAT NAT Gateway Networking Private S3 VPC VPC Endpoint"
-            data-title="[AWS/Networking] Private EC2가 S3에 접근하는데 NAT Gateway가 꼭 필요할까? - Gateway VPC Endpoint로 비용 줄이기"
-          >
-            <a href="./posts/aws-networking-s3-gateway-vpc-endpoint-nat-cost.html">
-              <time datetime="2026-08-24">2026.08.24</time>
-              <span class="post-topic">Networking</span>
-              <h3>[AWS/Networking] Private EC2가 S3에 접근하는데 NAT Gateway가 꼭 필요할까? - Gateway VPC Endpoint로 비용 줄이기</h3>
-              <p>S3 트래픽을 NAT Gateway에서 분리하면 비용과 네트워크 경로를 함께 최적화할 수 있습니다. Gateway VPC Endpoint와 NAT Gateway의 역할을 구분합니다.</p>
-            </a>
-          </article>
-          <article
-            class="post-row"
-            data-tags="Athena AWS Data Data Lake Data Security Formation Glue Data Catalog Lake Lake Formation LF-Tag Operations Security"
-            data-title="[AWS/Data Security] 데이터 레이크 테이블이 수천 개로 늘어나면 권한은 어떻게 관리할까? - Lake Formation LF-Tag 기반 접근 제어"
-          >
-            <a href="./posts/aws-data-security-lake-formation-lf-tag-access-control.html">
-              <time datetime="2026-08-23">2026.08.23</time>
-              <span class="post-topic">Data</span>
-              <h3>[AWS/Data Security] 데이터 레이크 테이블이 수천 개로 늘어나면 권한은 어떻게 관리할까? - Lake Formation LF-Tag 기반 접근 제어</h3>
-              <p>테이블 이름을 하나씩 권한 정책에 추가하는 대신 Department, Sensitivity, Domain 같은 LF-Tag로 대규모 데이터 레이크 접근 제어를 관리하는 구조입니다.</p>
-            </a>
-          </article>
-          <article
-            class="post-row"
-            data-tags="Auto Auto Scaling AWS Cloud CPU EC2 Operations Reactive Scale-out Scaling Scheduled Scheduled Scaling Target Tracking"
-            data-title="[AWS/Auto Scaling] CPU가 99%가 된 뒤 Scale-out하면 왜 늦을까? - Reactive Scaling과 Scheduled Scaling"
-          >
-            <a href="./posts/aws-auto-scaling-reactive-vs-scheduled-scaling.html">
-              <time datetime="2026-08-22">2026.08.22</time>
-              <span class="post-topic">Auto Scaling</span>
-              <h3>[AWS/Auto Scaling] CPU가 99%가 된 뒤 Scale-out하면 왜 늦을까? - Reactive Scaling과 Scheduled Scaling</h3>
-              <p>Auto Scaling의 핵심은 scale-out 속도만이 아니라 언제 capacity를 준비하느냐다. 반복되는 트래픽 spike에서는 Scheduled Scaling이 더 직접적인 해법이 될 수 있습니다.</p>
-            </a>
-          </article>
-          <article
-            class="post-row"
-            data-tags="Anywhere Architecture AWS Cloud EKS EKS Anywhere Hybrid Hybrid Nodes Kubernetes Nodes"
-            data-title="[AWS/Kubernetes] 온프레미스 Kubernetes를 AWS 방식으로 운영하려면? - EKS Hybrid Nodes와 EKS Anywhere 비교"
-          >
-            <a href="./posts/aws-kubernetes-eks-hybrid-nodes-eks-anywhere.html">
-              <time datetime="2026-08-20">2026.08.20</time>
-              <span class="post-topic">Kubernetes</span>
-              <h3>[AWS/Kubernetes] 온프레미스 Kubernetes를 AWS 방식으로 운영하려면? - EKS Hybrid Nodes와 EKS Anywhere 비교</h3>
-              <p>Control plane을 AWS에 둘 수 있는지, worker node와 network를 어디서 관리할지에 따라 EKS Hybrid Nodes와 EKS Anywhere 선택이 달라집니다.</p>
-            </a>
-          </article>
-          <article
-            class="post-row"
-            data-tags="AWS Cloud CloudOps Evaluation Fallback Observability RAG Serving"
-            data-title="[RAG] 튜토리얼 RAG를 운영 가능한 CloudOps RAG로 확장하기 - 평가, Fallback, Serving, Observability"
-          >
-            <a href="./posts/rag-cloudops-productionish-evaluation-fallback-serving-observability.html">
-              <time datetime="2026-08-18">2026.08.18</time>
-              <span class="post-topic">RAG</span>
-              <h3>[RAG] 튜토리얼 RAG를 운영 가능한 CloudOps RAG로 확장하기 - 평가, Fallback, Serving, Observability</h3>
-              <p>RAG가 답을 생성한다는 것과 신뢰할 수 있게 동작한다는 것은 다르다. CloudOps RAG를 평가 가능하고 관찰 가능한 서비스로 확장한 lifecycle을 정리합니다.</p>
-            </a>
-          </article>
-          <article
-            class="post-row"
-            data-tags="Amazon Amazon Neptune AWS Database DB Graph Graph Database Graph Traversal JOIN Neptune Traversal"
-            data-title="[AWS/Database] JOIN이 깊어질수록 왜 Graph DB가 유리할까? - Amazon Neptune으로 다단계 관계 탐색하기"
-          >
-            <a href="./posts/aws-database-neptune-graph-multi-hop-traversal.html">
-              <time datetime="2026-08-17">2026.08.17</time>
-              <span class="post-topic">Database</span>
-              <h3>[AWS/Database] JOIN이 깊어질수록 왜 Graph DB가 유리할까? - Amazon Neptune으로 다단계 관계 탐색하기</h3>
-              <p>사용자 100만 명과 관계 1,000만 개에서 최대 5-hop 관계 탐색이 핵심 workload라면 Graph Database를 검토해야 하는 이유를 설명합니다.</p>
-            </a>
-          </article>
-          <article
-            class="post-row"
-            data-tags="AWS Compliance EC2 Maintenance Operations Patch Manager Rollout Security Staged Systems Manager Window"
-            data-title="[AWS/Security] EC2 패치 자동화는 어디까지 자동화해야 할까? - Maintenance Window, Compliance, Staged Rollout"
-          >
-            <a href="./posts/aws-security-ec2-patch-rollout-compliance.html">
-              <time datetime="2026-08-16">2026.08.16</time>
-              <span class="post-topic">Security</span>
-              <h3>[AWS/Security] EC2 패치 자동화는 어디까지 자동화해야 할까? - Maintenance Window, Compliance, Staged Rollout</h3>
-              <p>EC2 패치는 보안 자동화이면서 production 변경 작업이므로 Maintenance Window, staged rollout, compliance 검증이 함께 필요합니다.</p>
-            </a>
-          </article>
-          <article
-            class="post-row"
-            data-tags="Amazon Amazon Inspector AWS EC2 Inspector Manager Patch Management Patch Manager Security Systems Systems Manager"
-            data-title="[AWS/Security] 취약점은 찾았는데 패치는 누가 하지? - Amazon Inspector와 Systems Manager로 EC2 패치 관리하기"
-          >
-            <a href="./posts/aws-security-inspector-systems-manager-patch-management.html">
-              <time datetime="2026-08-15">2026.08.15</time>
-              <span class="post-topic">Security</span>
-              <h3>[AWS/Security] 취약점은 찾았는데 패치는 누가 하지? - Amazon Inspector와 Systems Manager로 EC2 패치 관리하기</h3>
-              <p>Inspector는 취약점을 찾고 Systems Manager Patch Manager는 패치 운영을 관리한다는 관점에서 EC2 보안 패치 구조를 정리합니다.</p>
-            </a>
-          </article>
-          <article
-            class="post-row"
-            data-tags="Architecture Athena AWS Cloud Cost Analytics CUR FinOps Gateway NAT NAT Gateway QuickSight"
-            data-title="[AWS/FinOps] NAT Gateway 비용은 어디서 발생할까? - CUR, Athena, QuickSight로 비용 대시보드 만들기"
-          >
-            <a href="./posts/aws-finops-nat-gateway-cost-dashboard.html">
-              <time datetime="2026-08-14">2026.08.14</time>
-              <span class="post-topic">FinOps</span>
-              <h3>[AWS/FinOps] NAT Gateway 비용은 어디서 발생할까? - CUR, Athena, QuickSight로 비용 대시보드 만들기</h3>
-              <p>NAT Gateway 비용을 월 누적, 계정, Region, 일별 추세로 나누어 분석하고 architecture optimization으로 연결하는 FinOps 구조입니다.</p>
-            </a>
-          </article>
-          <article
-            class="post-row"
-            data-tags="Chunk Cloud Diversification Duplicate MMR Multi-Document Retrieval RAG Retrieval Top-k"
-            data-title="[RAG] Top-k를 늘렸는데 왜 필요한 문서를 못 찾을까? - Duplicate Chunk와 Retrieval Diversification"
-          >
-            <a href="./posts/rag-multi-document-retrieval-diversification.html">
-              <time datetime="2026-08-13">2026.08.13</time>
-              <span class="post-topic">RAG</span>
-              <h3>[RAG] Top-k를 늘렸는데 왜 필요한 문서를 못 찾을까? - Duplicate Chunk와 Retrieval Diversification</h3>
-              <p>Top-5가 다섯 개의 독립 근거를 의미하지 않는 이유와 multi-document completeness를 높이기 위한 retrieval diversification 실험입니다.</p>
-            </a>
-          </article>
-          <article
-            class="post-row"
-            data-tags="Answer Answer Evaluation Cloud Evaluation Hit@k LLM-as-a-Judge Quality RAG Retrieval"
-            data-title="[RAG] Hit@k가 높으면 좋은 RAG일까? - Retrieval과 Answer Quality를 따로 평가해본 과정"
-          >
-            <a href="./posts/rag-evaluation-retrieval-vs-answer-quality.html">
-              <time datetime="2026-08-12">2026.08.12</time>
-              <span class="post-topic">RAG</span>
-              <h3>[RAG] Hit@k가 높으면 좋은 RAG일까? - Retrieval과 Answer Quality를 따로 평가해본 과정</h3>
-              <p>좋은 retrieval과 좋은 answer는 같은 문제가 아니라는 점을 answer evaluation, LLM-as-a-Judge, human validation으로 정리합니다.</p>
-            </a>
-          </article>
-          <article
-            class="post-row"
-            data-tags="AWS Chroma Chunking Cloud Embedding Evaluation RAG Retrieval Retrieval Tuning Threshold Top-k"
-            data-title="[RAG] 감으로 Top-k를 정하지 않기 - Chunking, Embedding, Threshold를 실험으로 선택한 과정"
-          >
-            <a href="./posts/rag-evaluation-driven-retrieval-tuning.html">
-              <time datetime="2026-08-11">2026.08.11</time>
-              <span class="post-topic">RAG</span>
-              <h3>[RAG] 감으로 Top-k를 정하지 않기 - Chunking, Embedding, Threshold를 실험으로 선택한 과정</h3>
-              <p>RAG configuration을 tutorial default가 아니라 Build, Measure, Compare, Freeze, Held-out Validate 흐름으로 선택한 기록입니다.</p>
-            </a>
-          </article>
-          <article
-            class="post-row"
-            data-tags="AWS Chunking Embedding RAG Retrieval Semantic Semantic Retrieval Store Vector Vector Store"
-            data-title="[RAG] 긴 문서에서 필요한 근거를 찾는 과정 - Chunking, Embedding, Vector Store와 Semantic Retrieval"
-          >
-            <a href="./posts/rag-document-processing-semantic-retrieval.html">
-              <time datetime="2026-08-10">2026.08.10</time>
-              <span class="post-topic">RAG</span>
-              <h3>[RAG] 긴 문서에서 필요한 근거를 찾는 과정 - Chunking, Embedding, Vector Store와 Semantic Retrieval</h3>
-              <p>긴 문서를 작은 chunk로 나누고 의미 기반 검색으로 필요한 근거를 찾는 RAG retrieval pipeline입니다.</p>
-            </a>
-          </article>
-          <article
-            class="post-row"
-            data-tags="Clarification Cloud Filling LangChain LLM Query Query Clarification RAG Running Slot State"
-            data-title="[RAG] 불완전한 질문을 바로 검색하지 않기 - Running State와 Slot Filling으로 Query Clarification 설계하기"
-          >
-            <a href="./posts/rag-stateful-query-clarification.html">
-              <time datetime="2026-08-09">2026.08.09</time>
-              <span class="post-topic">RAG</span>
-              <h3>[RAG] 불완전한 질문을 바로 검색하지 않기 - Running State와 Slot Filling으로 Query Clarification 설계하기</h3>
-              <p>모호한 운영 질문을 곧바로 embedding하지 않고 state, branch, slot filling으로 retrieval-ready query를 만드는 설계입니다.</p>
-            </a>
-          </article>
-          <article
-            class="post-row"
-            data-tags="AI Application API Architecture Cloud LangChain LLM Orchestration"
-            data-title="[LLM] API 호출부터 LangChain까지 - LLM 애플리케이션의 구조 이해하기"
-          >
-            <a href="./posts/llm-api-langchain-application-architecture.html">
-              <time datetime="2026-08-08">2026.08.08</time>
-              <span class="post-topic">API</span>
-              <h3>[LLM] API 호출부터 LangChain까지 - LLM 애플리케이션의 구조 이해하기</h3>
-              <p>단순한 model.invoke 호출 뒤에 있는 LLM serving layer와, 앞단의 orchestration layer를 구분해서 정리합니다.</p>
-            </a>
-          </article>
-          <article
-            class="post-row"
-            data-tags="AWS Cloud Data Protection EventBridge Lock Macie Object Object Lock PII S3 Security Security Automation"
-            data-title="[AWS] S3에서 PII를 자동 탐지하고 삭제를 방지하기 - Macie + EventBridge + Object Lock"
-          >
-            <a href="./posts/s3-pii-detection-macie-object-lock.html">
-              <time datetime="2026-08-07">2026.08.07</time>
-              <span class="post-topic">S3</span>
-              <h3>[AWS] S3에서 PII를 자동 탐지하고 삭제를 방지하기 - Macie + EventBridge + Object Lock</h3>
-              <p>Macie finding을 EventBridge와 Lambda로 처리하고 S3 Object Lock Legal Hold로 검토 대상 객체를 보호하는 구조입니다.</p>
-            </a>
-          </article>
-          <article
-            class="post-row"
-            data-tags="Architecture AWS Cloud Event-Driven Event-Driven Architecture Lambda Presigned Presigned URL Processing S3 Storage URL"
-            data-title="[AWS] 이미지 업로드 병목 제거하기 - S3 Presigned URL과 Lambda로 Event-Driven Processing 구성"
-          >
-            <a href="./posts/s3-presigned-url-lambda-image-processing.html">
-              <time datetime="2026-08-06">2026.08.06</time>
-              <span class="post-topic">S3</span>
-              <h3>[AWS] 이미지 업로드 병목 제거하기 - S3 Presigned URL과 Lambda로 Event-Driven Processing 구성</h3>
-              <p>대용량 이미지 업로드 경로에서 애플리케이션 서버를 분리하고 S3 이벤트와 Lambda로 후처리하는 구조입니다.</p>
-            </a>
-          </article>
-          <article
-            class="post-row"
-            data-tags="Access AWS Cloud Cross-Region Cross-Region Replication Multi-Region Multi-Region Access Point Point Replication S3 Storage"
-            data-title="[AWS] 글로벌 S3 아키텍처 구성하기 - Multi-Region Access Point와 Cross-Region Replication"
-          >
-            <a href="./posts/global-s3-mrap-cross-region-replication.html">
-              <time datetime="2026-08-05">2026.08.05</time>
-              <span class="post-topic">S3</span>
-              <h3>[AWS] 글로벌 S3 아키텍처 구성하기 - Multi-Region Access Point와 Cross-Region Replication</h3>
-              <p>MRAP는 글로벌 요청 라우팅을, CRR은 리전 간 데이터 복제를 담당한다는 관점에서 정리한 구조입니다.</p>
-            </a>
-          </article>
-          <article
-            class="post-row"
-            data-tags="ALB Architecture AWS Cloud CloudFront Network Origins Private Security VPC VPC Origins"
-            data-title="[AWS] CloudFront 뒤의 ALB를 Private하게 구성하기 - VPC Origins"
-          >
-            <a href="./posts/cloudfront-private-alb-vpc-origins.html">
-              <time datetime="2026-08-04">2026.08.04</time>
-              <span class="post-topic">Security</span>
-              <h3>[AWS] CloudFront 뒤의 ALB를 Private하게 구성하기 - VPC Origins</h3>
-              <p>CloudFront VPC Origins로 Internal ALB를 Origin으로 두고 Public Entry Point를 CloudFront로 집중시키는 구조입니다.</p>
-            </a>
-          </article>
-          <article
-            class="post-row"
-            data-tags="AWS Cloud Functions Lambda Map Orchestration Serverless Step Step Functions"
-            data-title="[AWS] Lambda 반복 호출을 Step Functions Map으로 분리하기 - Serverless Orchestration 설계"
-          >
-            <a href="./posts/lambda-step-functions-map-orchestration.html">
-              <time datetime="2026-08-03">2026.08.03</time>
-              <span class="post-topic">Serverless</span>
-              <h3>[AWS] Lambda 반복 호출을 Step Functions Map으로 분리하기 - Serverless Orchestration 설계</h3>
-              <p>반복 호출과 재시도 책임을 Lambda 코드에서 Step Functions Map 상태로 분리하는 설계입니다.</p>
-            </a>
-          </article>
-          <article
-            class="post-row"
-            data-tags="Architecture AWS Cloud Data Data Governance Data Lake Formation Lake Lake Formation Multi-Tenant Row-Level S3 Security Tenant"
-            data-title="[AWS] Multi-Tenant Data Lake에서 Tenant 데이터 격리하기 - S3와 Lake Formation Row-Level Security"
-          >
-            <a href="./posts/s3-data-lake-lake-formation-row-level-access-control.html">
-              <time datetime="2026-08-02">2026.08.02</time>
-              <span class="post-topic">S3</span>
-              <h3>[AWS] Multi-Tenant Data Lake에서 Tenant 데이터 격리하기 - S3와 Lake Formation Row-Level Security</h3>
-              <p>B2B SaaS Multi-Tenant 환경에서 하나의 S3 Data Lake를 유지하면서 Tenant별 Row 접근 범위를 제한하는 패턴입니다.</p>
-            </a>
-          </article>
-          <article
-            class="post-row"
-            data-tags="Architecture AWS Cloud CloudFront Operations Security"
-            data-title="[AWS] CloudFront 설정 변경을 실시간으로 탐지하고 알림 보내기"
-          >
-            <a href="./posts/cloudfront-logging-change-detection.html">
-              <time datetime="2026-08-01">2026.08.01</time>
-              <span class="post-topic">Security</span>
-              <h3>[AWS] CloudFront 설정 변경을 실시간으로 탐지하고 알림 보내기</h3>
-              <p>CloudTrail, EventBridge, Lambda, SNS를 사용해 CloudFront Logging 비활성화를 탐지하는 패턴입니다.</p>
-            </a>
-          </article>
+          <!-- GENERATED:RECENT_POSTS:END -->
         </div>
       </section>
 
       <section class="section portfolio-section" id="portfolio">
         <div class="section-heading">
           <div>
-            <p class="eyebrow">Portfolio</p>
-            <h2>프로젝트</h2>
+            <p class="eyebrow">Selected projects</p>
+            <h2>구현과 검증</h2>
           </div>
-          <p>
-            실제 사용자, 기업 검증, 수상 경험이 있었던 작업을 중심으로 문제 정의, 설계 선택, 운영 경계, 결과를 분리해 보여줍니다.
-          </p>
+          <p>역할을 부풀리기보다, 직접 구현한 경계와 확인한 결과를 분리해 적었습니다.</p>
         </div>
 
-        <div class="portfolio-grid" tabindex="0" aria-label="프로젝트 목록">
-          <article class="portfolio-item portfolio-featured">
-            <figure class="portfolio-visual">
-              <img class="portfolio-screenshot" src="./assets/portfolio/joycrew.png" alt="JoyCrew 서비스 화면" loading="lazy" />
-            </figure>
-            <div class="portfolio-heading">
-              <span class="portfolio-type">B2B HR Tech SaaS Platform</span>
-              <h3>JoyCrew</h3>
-            </div>
+        <div class="project-highlight project-highlight-primary">
+          <figure class="project-highlight-visual">
+            <img src="./assets/portfolio/joycrew.png" alt="JoyCrew 기업용 복지·리워드 서비스 화면" loading="lazy" />
+          </figure>
+          <div class="project-highlight-copy">
+            <span class="project-number">01 · B2B SaaS</span>
+            <h3>JoyCrew</h3>
             <p>
-              JoyLab Founder로 기획부터 개발까지 주도한 기업용 포인트 기반 복지·리워드 SaaS입니다. 포인트·결제 핵심 백엔드와 EKS 기반 배포·모니터링 구조를 구현하고, 실제 기업 베타 테스트로 운영 경계를 검증했습니다.
+              JoyLab Founder로 기업용 포인트 기반 복지·리워드 SaaS를 기획하고 개발했습니다.
+              포인트·결제 백엔드와 EKS 배포·모니터링 구조를 구현하고 실제 기업 베타 테스트로
+              멀티테넌트 운영 경계를 검증했습니다.
             </p>
-            <dl class="portfolio-points">
-              <div>
-                <dt>Problem</dt>
-                <dd>기업별 사용자, 포인트, 관리자 권한, 접근 범위를 분리해야 하는 B2B SaaS 운영 요구사항이 있었습니다.</dd>
-              </div>
-              <div>
-                <dt>Solution</dt>
-                <dd>EKS 기반 서비스 운영 구조를 구성하고, Host 기반 tenant 식별과 companyId 조건을 주요 비즈니스 로직에 적용했습니다.</dd>
-              </div>
-              <div>
-                <dt>Result</dt>
-                <dd>실제 기업 베타 테스트에서 고객사별 사용자와 포인트 데이터를 분리해 운영하며 멀티테넌트 SaaS의 핵심 경계를 검증했습니다.</dd>
-              </div>
+            <dl class="project-snapshot">
+              <div><dt>Owned</dt><dd>Product, backend, cloud operations</dd></div>
+              <div><dt>Boundary</dt><dd>기업별 사용자·포인트·관리자 권한 분리</dd></div>
+              <div><dt>Validated</dt><dd>실제 기업 환경의 베타 테스트</dd></div>
             </dl>
-            <div class="portfolio-tags">
-              <span>Java 17</span>
-              <span>Spring Boot</span>
-              <span>EKS</span>
-              <span>RDS</span>
-              <span>Multi-Tenant</span>
-              <span>Pessimistic Lock</span>
-            </div>
-            <a class="portfolio-link" href="https://github.com/JoyCrew/backend">GitHub</a>
-          </article>
-
-          <article class="portfolio-item">
-            <figure class="portfolio-visual">
-              <img class="portfolio-screenshot" src="./assets/portfolio/cloudops-rag.png" alt="CloudOps RAG 평가와 관측 대시보드" loading="lazy" />
-            </figure>
-            <div class="portfolio-heading">
-              <span class="portfolio-type">CloudOps RAG System</span>
-              <h3>CloudOps RAG</h3>
-            </div>
-            <p>
-              AWS와 Kubernetes troubleshooting 문서를 대상으로 검색, 답변 생성, 평가, fallback, serving, observability까지 확장한 evaluation-driven RAG 프로젝트입니다.
-            </p>
-            <dl class="portfolio-points">
-              <div>
-                <dt>Problem</dt>
-                <dd>튜토리얼 RAG는 답을 생성할 수는 있지만, 검색이 맞았는지와 답변이 신뢰 가능한지 판단하기 어렵습니다.</dd>
-              </div>
-              <div>
-                <dt>Solution</dt>
-                <dd>Hit@k, MRR, answer evaluation, threshold fallback, failure taxonomy, FastAPI serving, Prometheus metrics, CI regression gate를 추가했습니다.</dd>
-              </div>
-              <div>
-                <dt>Result</dt>
-                <dd>Held-out retrieval에서 Hit@3 8/8, MRR 0.9375를 확인했고, low-confidence query는 LLM 호출을 건너뛰도록 분리했습니다.</dd>
-              </div>
-            </dl>
-            <div class="portfolio-tags">
-              <span>Python</span>
-              <span>FastAPI</span>
-              <span>OpenAI API</span>
-              <span>Chroma</span>
-              <span>RAG Evaluation</span>
-              <span>Prometheus</span>
-            </div>
-            <a class="portfolio-link" href="./posts/rag-cloudops-productionish-evaluation-fallback-serving-observability.html">Case Study</a>
-          </article>
-
-          <article class="portfolio-item">
-            <figure class="portfolio-visual">
-              <img class="portfolio-screenshot" src="./assets/portfolio/hongik-taste-navigator.png" alt="Hongik Taste Navigator 매칭 화면" loading="lazy" />
-            </figure>
-            <div class="portfolio-heading">
-              <span class="portfolio-type">Club Fair Project</span>
-              <h3>Hongik Taste Navigator</h3>
-            </div>
-            <p>
-              동아리 박람회 방문객을 위한 식당 추천과 식사 메이트 매칭 서비스입니다. 이틀간 약 1,000명의 실사용자가 이용했습니다.
-            </p>
-            <dl class="portfolio-points">
-              <div>
-                <dt>Focus</dt>
-                <dd>Naver Local API 검색 결과를 좌표 기반 거리 계산으로 재분류해 역 기준 조회의 일관성을 높였습니다.</dd>
-              </div>
-            </dl>
-            <div class="portfolio-tags">
-              <span>Java 21</span>
-              <span>Spring Boot</span>
-              <span>MySQL</span>
-              <span>AWS EC2</span>
-              <span>Naver Local API</span>
-            </div>
-            <a class="portfolio-link" href="https://github.com/hicc-dvp/backend">GitHub</a>
-          </article>
-
-          <article class="portfolio-item">
-            <figure class="portfolio-visual">
-              <img class="portfolio-screenshot" src="./assets/portfolio/presentalk.png" alt="PresenTalk 모바일 UI 플로우" loading="lazy" />
-            </figure>
-            <div class="portfolio-heading">
-              <span class="portfolio-type">AI Gift Recommendation</span>
-              <h3>PresenTalk</h3>
-            </div>
-            <p>
-              카카오톡 대화 로그를 분석해 상대방의 취향을 파악하고 선물을 추천하는 AI 기반 서비스입니다.
-            </p>
-            <dl class="portfolio-points">
-              <div>
-                <dt>Focus</dt>
-                <dd>쿠팡 파트너스 API의 HMAC-SHA256 인증 헤더와 sliding-window rate limiter를 직접 구현했습니다.</dd>
-              </div>
-            </dl>
-            <div class="portfolio-tags">
-              <span>Spring Boot</span>
-              <span>OpenAI API</span>
-              <span>Selenium</span>
-              <span>External API</span>
-              <span>Rate Limiting</span>
-            </div>
-            <a class="portfolio-link" href="https://github.com/HongikComputerClub/backend">GitHub</a>
-          </article>
-
-          <article class="portfolio-item">
-            <figure class="portfolio-visual">
-              <img class="portfolio-screenshot" src="./assets/portfolio/musinsaobserver.png" alt="MusinsaObserver 상품 가격 추적 화면" loading="lazy" />
-            </figure>
-            <div class="portfolio-heading">
-              <span class="portfolio-type">Data Collection Platform</span>
-              <h3>MusinsaObserver</h3>
-            </div>
-            <p>
-              패션 상품 데이터를 주기적으로 수집하고 가격 변동을 추적하는 백엔드 시스템입니다.
-            </p>
-            <dl class="portfolio-points">
-              <div>
-                <dt>Focus</dt>
-                <dd>Jsoup 기반 HTML 파싱 병목을 분석하고 ExecutorService, FixedThreadPool 기반 병렬 수집으로 처리 속도를 약 3배 개선했습니다.</dd>
-              </div>
-            </dl>
-            <div class="portfolio-tags">
-              <span>Java 21</span>
-              <span>Spring Boot</span>
-              <span>ExecutorService</span>
-              <span>Docker</span>
-              <span>GitHub Actions</span>
-            </div>
-            <a class="portfolio-link" href="https://github.com/MusinsaObserver/backend">GitHub</a>
-          </article>
-
-          <article class="portfolio-item">
-            <figure class="portfolio-visual">
-              <img class="portfolio-screenshot" src="./assets/portfolio/noise-robust-vad.png" alt="Noise-Robust VAD 아키텍처 다이어그램" loading="lazy" />
-            </figure>
-            <div class="portfolio-heading">
-              <span class="portfolio-type">ML Systems Research</span>
-              <h3>Noise-Robust VAD</h3>
-            </div>
-            <p>
-              실제 감시 환경의 노이즈와 엣지 디바이스 제약을 고려한 VAD 연구입니다.
-            </p>
-            <dl class="portfolio-points">
-              <div>
-                <dt>Focus</dt>
-                <dd>MSTF 기반 시간 축 집계와 matched filter 후처리로 AUROC를 60.05%에서 72.49%로 개선하고, Jetson Nano 병목을 분석했습니다.</dd>
-              </div>
-            </dl>
-            <div class="portfolio-tags">
-              <span>Python</span>
-              <span>PyTorch</span>
-              <span>OpenCV</span>
-              <span>TensorRT</span>
-              <span>Jetson Nano</span>
-            </div>
-          </article>
-        </div>
-
-        <div class="portfolio-additional">
-          <div>
-            <p class="eyebrow">Additional Work</p>
-            <h3>기여와 해커톤 POC</h3>
+            <a class="text-link" href="./projects.html#joycrew">프로젝트 상세 <span aria-hidden="true">→</span></a>
           </div>
-          <ul>
-            <li>
-              <span class="portfolio-link-group">
-                <a href="https://github.com/SeeATheater/CC_Frontend">SeeATheater Frontend</a>
-                <a href="https://github.com/SeeATheater/CC_Backend">SeeATheater Backend</a>
-              </span>
-              <span>중도 합류 후 frontend와 backend 양쪽 작업에 참여하며 기존 서비스 흐름에 기능을 연결한 협업 프로젝트입니다.</span>
-            </li>
-            <li>
-              <a href="https://github.com/DigiLabChallengeHackathon">DigiLab Challenge Hackathon</a>
-              <span>제주지역혁신플랫폼(RIS) 지능형서비스사업단 최우수상을 수상한 해커톤 POC입니다.</span>
-            </li>
-            <li>
-              <a href="https://github.com/Moong-Hackathon">Moong Hackathon</a>
-              <span>한국청년기업가정신재단상을 수상했으며, 제한 시간 안에 아이디어의 핵심 사용자 흐름을 검증한 POC입니다.</span>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <section class="section profile-section" id="profile">
-        <div class="section-heading">
-          <div>
-            <p class="eyebrow">Profile</p>
-            <h2>기술 이력</h2>
-          </div>
-          <p>
-            프로젝트와 글의 신뢰도를 뒷받침하는 경험, 자격, 수상만 선별했습니다.
-          </p>
         </div>
 
-        <div class="profile-grid">
-          <article class="profile-card profile-card-wide">
-            <span class="profile-kicker">Experience</span>
-            <h3>Founder, JoyLab</h3>
-            <time datetime="2025-09">Sep 2025 - Dec 2025</time>
-            <p>
-              기업용 포인트 기반 복지·리워드 SaaS를 기획하고, 포인트·결제 백엔드와 AWS EKS 기반 배포·모니터링 구조를 구현했습니다. 실제 기업 환경에서 베타 테스트를 진행하며 서비스 안정성과 멀티테넌트 운영 경계를 검증했습니다.
-            </p>
+        <div class="project-highlight-grid">
+          <article class="project-highlight-compact">
+            <img src="./assets/portfolio/cloudops-rag.png" alt="CloudOps RAG 평가와 관측 흐름" loading="lazy" />
+            <span class="project-number">02 · AI systems</span>
+            <h3>CloudOps RAG</h3>
+            <p>검색 품질과 답변 품질을 분리해 평가하고 fallback, serving, observability, CI gate까지 구현했습니다.</p>
+            <a class="text-link" href="./projects.html#cloudops-rag">프로젝트 상세 <span aria-hidden="true">→</span></a>
           </article>
-
-          <article class="profile-card">
-            <span class="profile-kicker">Education</span>
-            <h3>Hongik University</h3>
-            <p>
-              Computer Engineering 전공으로 소프트웨어공학, 운영체제, 머신러닝, 그래픽스 수업과 프로젝트를 수행했습니다.
-            </p>
-            <ul class="profile-list">
-              <li>BS, Computer Engineering</li>
-              <li>Major GPA 93.5</li>
-              <li>Mar 2020 - Aug 2026</li>
-            </ul>
+          <article class="project-highlight-compact">
+            <img src="./assets/portfolio/noise-robust-vad.png" alt="Noise-Robust VAD 처리 아키텍처" loading="lazy" />
+            <span class="project-number">03 · ML systems</span>
+            <h3>Noise-Robust VAD</h3>
+            <p>MSTF와 matched filter 후처리로 AUROC를 60.05%에서 72.49%로 개선하고 edge 병목을 분석했습니다.</p>
+            <a class="text-link" href="./projects.html#noise-robust-vad">프로젝트 상세 <span aria-hidden="true">→</span></a>
           </article>
-
-          <article class="profile-card">
-            <span class="profile-kicker">Education</span>
-            <h3>Apple Developer Academy @ POSTECH</h3>
-            <p>
-              Challenge Based Learning 기반의 프로젝트형 iOS 개발 과정을 수료하며 문제 정의, 사용자 흐름, 구현 검증을 함께 다뤘습니다.
-            </p>
-            <ul class="profile-list">
-              <li>Foundation Program</li>
-              <li>4th Cohort, 1st nationwide</li>
-              <li>Sep 2024 - Oct 2024</li>
-            </ul>
-          </article>
-
-          <article class="profile-card">
-            <span class="profile-kicker">Credentials</span>
-            <h3>자격과 인증</h3>
-            <ul class="profile-list profile-list-strong">
-              <li>NVIDIA Deep Learning Institute, Building RAG Agents with LLMs · Aug 2026</li>
-              <li>Engineer Information Processing · Jun 2026</li>
-              <li>SQLD, Korea Data Agency · Jun 2025</li>
-              <li>OPIc English, Intermediate High · Feb 2026</li>
-            </ul>
-          </article>
-
-          <article class="profile-card">
-            <span class="profile-kicker">Awards</span>
-            <h3>수상</h3>
-            <ul class="profile-list profile-list-strong">
-              <li>Hongik Computer Club Grand Prize · Aug 2025</li>
-              <li>MOONG Connecton 한국청년기업가정신재단상 · May 2025</li>
-              <li>Hongik Computer Club Grand Prize · Feb 2025</li>
-              <li>Jeju RIS 지능형서비스사업단 최우수상 · Dec 2024</li>
-            </ul>
-          </article>
+        </div>
+        <div class="section-action">
+          <a class="primary-link" href="./projects.html">모든 프로젝트 보기</a>
         </div>
       </section>
 
@@ -791,67 +325,58 @@
         <div class="section-heading">
           <div>
             <p class="eyebrow">Topics</p>
-            <h2>다룰 주제</h2>
+            <h2>지식의 경로</h2>
           </div>
+          <p>현재 글 수에서는 별도 검색 인프라보다 주제별 진입점과 정적 검색이 더 빠르고 유지하기 쉽습니다.</p>
         </div>
-        <div class="topic-grid">
-          <article>
-            <span>01</span>
-            <h3>Backend</h3>
-            <p>API 설계, 인증/인가, 데이터 모델링, 성능 개선</p>
-          </article>
-          <article>
-            <span>02</span>
-            <h3>Cloud</h3>
-            <p>배포 구조, 네트워크, 스토리지, 비용 최적화</p>
-          </article>
-          <article>
-            <span>03</span>
-            <h3>Architecture</h3>
-            <p>서비스 경계, 장애 격리, 확장성, 기술 선택의 이유</p>
-          </article>
-          <article>
-            <span>04</span>
-            <h3>Operations</h3>
-            <p>모니터링, 장애 대응, 로그 분석, 재발 방지</p>
-          </article>
-        </div>
+        <nav class="topic-index" aria-label="주제별 글 탐색">
+          <a href="./articles.html?topic=RAG"><span>01</span><strong>RAG &amp; LLM</strong><small>평가, 검색, serving</small></a>
+          <a href="./articles.html?topic=Security"><span>02</span><strong>Security</strong><small>IAM, compliance, patching</small></a>
+          <a href="./articles.html?topic=Networking"><span>03</span><strong>Networking</strong><small>VPC, routing, edge</small></a>
+          <a href="./articles.html?topic=Operations"><span>04</span><strong>Operations</strong><small>관측, 복원력, 자동화</small></a>
+          <a href="./articles.html?topic=Data"><span>05</span><strong>Data &amp; FinOps</strong><small>Lake Formation, CUR, storage</small></a>
+        </nav>
       </section>
 
       <section class="section about-section" id="about">
-        <div>
+        <div class="about-heading" id="profile">
           <p class="eyebrow">About</p>
           <h2>Jiwon Kim</h2>
+          <p class="about-role">Software Engineer · Backend / Cloud / AI Systems</p>
         </div>
         <div class="about-copy">
           <p>
-            이 블로그는 해결한 문제를 다시 설명할 수 있을 만큼 이해했는지 확인하는 공간입니다.
-            짧은 설정 메모보다 맥락, 선택지, 실패한 접근, 다시 쓸 수 있는 체크리스트를 남기는 것을 목표로 합니다.
+            구현한 기능보다 어떤 제약을 보고 경계를 나눴는지, 결과를 무엇으로 확인했는지에 관심이 많습니다.
+            JoyLab에서는 B2B SaaS의 백엔드와 EKS 운영 구조를 만들었고, 프로젝트와 기술 글에서는
+            측정한 결과와 아직 검증하지 않은 영역을 구분해 기록합니다.
           </p>
+          <dl class="profile-lines">
+            <div><dt>Experience</dt><dd>Founder, JoyLab · 2025</dd></div>
+            <div><dt>Education</dt><dd>Hongik University · Computer Engineering</dd></div>
+            <div><dt>Program</dt><dd>Apple Developer Academy @ POSTECH</dd></div>
+            <div><dt>Credentials</dt><dd>NVIDIA DLI RAG · Engineer Information Processing · SQLD</dd></div>
+          </dl>
           <div class="about-links">
             <a href="https://github.com/andrewkimswe">GitHub</a>
             <a href="https://www.linkedin.com/in/jiwon-kim-867334285/">LinkedIn</a>
+            <a href="./feed.xml">RSS</a>
             <a href="./llms.txt">llms.txt</a>
-            <a href="./sitemap.xml">sitemap.xml</a>
           </div>
         </div>
       </section>
     </main>
 
     <footer class="site-footer">
-      <p>© 2026 Jiwon Kim. Technical writing, notes, and experiments.</p>
+      <p>© 2026 Jiwon Kim</p>
       <div class="footer-links">
-        <span id="visitStatus">Analytics ready</span>
-        <a href="https://github.com/andrewkimswe">github.com/andrewkimswe</a>
-        <a href="https://www.linkedin.com/in/jiwon-kim-867334285/">LinkedIn</a>
+        <span id="visitStatus">집계 중</span>
+        <a href="./sitemap.xml">Sitemap</a>
+        <a href="./feed.xml">RSS</a>
       </div>
     </footer>
 
-    <script src="./script.js"></script>
-    <script
-      data-goatcounter="https://jiwonkim-blog.goatcounter.com/count"
-      async
-      src="https://gc.zgo.at/count.js"
-    ></script>
+    <script src="./script.js?v=20260905-4"></script>
+    <script data-goatcounter="https://jiwonkim-blog.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
+    <noscript><img class="tracking-pixel" src="https://jiwonkim-blog.goatcounter.com/count?p=/" alt="" /></noscript>
   </body>
 </html>

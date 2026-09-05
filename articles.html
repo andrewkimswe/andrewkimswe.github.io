@@ -1,0 +1,504 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Articles | Jiwon Kim Engineering Notes</title>
+    <meta
+      name="description"
+      content="AWS, backend, Kubernetes, RAG와 운영 자동화의 설계 판단과 검증 과정을 다룬 기술 글 모음입니다."
+    />
+    <meta name="author" content="Jiwon Kim" />
+    <meta name="robots" content="index, follow, max-image-preview:large" />
+    <link rel="canonical" href="https://andrewkimswe.github.io/articles.html" />
+    <link rel="icon" href="./assets/favicon.svg" type="image/svg+xml" />
+    <link rel="alternate" type="application/rss+xml" title="Jiwon Kim Engineering Notes RSS" href="./feed.xml" />
+    <meta property="og:site_name" content="Jiwon Kim | Engineering Notes" />
+    <meta property="og:title" content="Articles | Jiwon Kim Engineering Notes" />
+    <meta property="og:description" content="문제 정의, 선택지, trade-off, 검증과 운영 경계를 다룬 기술 글 모음." />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://andrewkimswe.github.io/articles.html" />
+    <meta property="og:image" content="https://andrewkimswe.github.io/assets/social-card.png" />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Jiwon Kim Engineering Notes" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://andrewkimswe.github.io/assets/social-card.png" />
+    <meta name="twitter:image:alt" content="Jiwon Kim Engineering Notes" />
+    <meta name="twitter:title" content="Articles | Jiwon Kim Engineering Notes" />
+    <meta name="twitter:description" content="AWS, backend, Kubernetes, RAG와 운영 자동화 기술 글." />
+    <link rel="stylesheet" href="./styles.css?v=20260905-4" />
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "CollectionPage",
+        "name": "Articles | Jiwon Kim Engineering Notes",
+        "url": "https://andrewkimswe.github.io/articles.html",
+        "description": "A collection of Korean engineering articles about backend systems, cloud infrastructure, RAG, and operations.",
+        "inLanguage": "ko-KR"
+      }
+    </script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main-content">본문으로 바로가기</a>
+    <header class="site-header">
+      <a class="brand" href="./" aria-label="Jiwon Kim Engineering Notes 홈">
+        <span class="brand-mark" aria-hidden="true">JK</span>
+        <span class="brand-copy"><strong>Jiwon Kim</strong><small>Engineering Notes</small></span>
+      </a>
+      <nav class="nav-links" aria-label="주요 메뉴">
+        <a class="is-current" href="./articles.html" aria-current="page">Articles</a>
+        <a href="./projects.html">Projects</a>
+        <a href="./#about">About</a>
+        <span class="nav-divider" aria-hidden="true"></span>
+        <a href="https://github.com/andrewkimswe">GitHub</a>
+        <a href="https://www.linkedin.com/in/jiwon-kim-867334285/">LinkedIn</a>
+      </nav>
+    </header>
+
+    <main id="main-content" class="listing-page">
+      <header class="page-intro">
+        <p class="eyebrow">Knowledge archive</p>
+        <div class="page-intro-grid">
+          <h1>Articles</h1>
+          <div>
+            <p>
+              서비스를 고른 이유보다 어떤 제약이 있었고, 무엇을 포기했으며,
+              성공 여부를 어떻게 판단할지에 초점을 둡니다.
+            </p>
+            <span><strong data-post-count>29</strong> published notes</span>
+          </div>
+        </div>
+      </header>
+
+      <section class="article-archive" aria-labelledby="archive-heading">
+        <h2 class="visually-hidden" id="archive-heading">전체 글</h2>
+        <div class="archive-toolbar" aria-label="글 검색과 주제 필터">
+          <label class="search-box" for="postSearch">
+            <span>Search</span>
+            <input
+              id="postSearch"
+              type="search"
+              placeholder="제목, 요약, 기술 키워드"
+              autocomplete="off"
+            />
+          </label>
+          <div class="tag-filter" role="group" aria-label="주제 필터">
+            <button class="tag-button active" data-filter="all" type="button" aria-pressed="true">All</button>
+            <button class="tag-button" data-filter="RAG" type="button" aria-pressed="false">RAG</button>
+            <button class="tag-button" data-filter="Security" type="button" aria-pressed="false">Security</button>
+            <button class="tag-button" data-filter="Networking" type="button" aria-pressed="false">Networking</button>
+            <button class="tag-button" data-filter="S3" type="button" aria-pressed="false">S3</button>
+            <button class="tag-button" data-filter="Data" type="button" aria-pressed="false">Data</button>
+            <button class="tag-button" data-filter="FinOps" type="button" aria-pressed="false">FinOps</button>
+            <button class="tag-button" data-filter="Kubernetes" type="button" aria-pressed="false">Kubernetes</button>
+            <button class="tag-button" data-filter="Architecture" type="button" aria-pressed="false">Architecture</button>
+            <button class="tag-button" data-filter="Operations" type="button" aria-pressed="false">Operations</button>
+          </div>
+        </div>
+        <div class="archive-status" aria-live="polite">
+          <span id="resultCount">전체 글을 불러오는 중입니다.</span>
+          <button class="clear-filter" id="clearFilters" type="button" hidden>검색 초기화</button>
+        </div>
+        <div class="post-list archive-post-list" id="postGrid" aria-label="전체 글 목록">
+          <!-- GENERATED:ALL_POSTS:START -->
+          <article
+            class="post-row"
+            data-tags="Access | AssumeRole | AWS | Cloud | Cross-Account | External ID | IAM | Key | Security | STS"
+            data-title="[AWS/IAM] 외부 업체에 Access Key를 주지 않고 AWS 계정 접근을 허용하기 - Cross-Account AssumeRole과 STS"
+            data-summary="외부 업체에 장기 Access Key를 넘기지 않고 접근을 위임하려면 IAM User 복제가 아니라 Cross-Account Role과 STS AssumeRole을 설계해야 합니다."
+          >
+            <a href="./posts/aws-iam-cross-account-assumerole-sts-vendor-access.html">
+              <time datetime="2026-08-30">2026.08.30</time>
+              <span class="post-topic">Security</span>
+              <h3>[AWS/IAM] 외부 업체에 Access Key를 주지 않고 AWS 계정 접근을 허용하기 - Cross-Account AssumeRole과 STS</h3>
+              <p>외부 업체에 장기 Access Key를 넘기지 않고 접근을 위임하려면 IAM User 복제가 아니라 Cross-Account Role과 STS AssumeRole을 설계해야 합니다.</p>
+            </a>
+          </article>
+          <article
+            class="post-row"
+            data-tags="Architecture | AWS | Gateway | Hub-and-Spoke | Networking | Peering | Transit | Transit Gateway | VPC"
+            data-title="[AWS/Networking] VPC가 1,000개라면 Peering은 왜 무너질까? - Transit Gateway와 Hub-and-Spoke 설계"
+            data-summary="VPC 수가 늘어나면 peering connection과 route 관리가 N²에 가깝게 복잡해집니다. Transit Gateway로 중앙 routing layer와 segmentation을 설계합니다."
+          >
+            <a href="./posts/aws-networking-transit-gateway-hub-spoke-vpc-scale.html">
+              <time datetime="2026-08-29">2026.08.29</time>
+              <span class="post-topic">Networking</span>
+              <h3>[AWS/Networking] VPC가 1,000개라면 Peering은 왜 무너질까? - Transit Gateway와 Hub-and-Spoke 설계</h3>
+              <p>VPC 수가 늘어나면 peering connection과 route 관리가 N²에 가깝게 복잡해집니다. Transit Gateway로 중앙 routing layer와 segmentation을 설계합니다.</p>
+            </a>
+          </article>
+          <article
+            class="post-row"
+            data-tags="AWS | AWS Config | Cloud | Compliance | Config | Detect | IAM | Manager | Operations | Prevent | Remediate | Security | Systems | Systems Manager"
+            data-title="[AWS/Security] 보안 정책은 탐지만 해서는 부족하다 - IAM, AWS Config, Systems Manager로 Prevent·Detect·Remediate 만들기"
+            data-summary="보안 정책은 탐지만으로 끝나지 않습니다. IAM으로 예방하고, AWS Config로 평가하고, Systems Manager로 안전하게 복구하는 운영 loop를 설계합니다."
+          >
+            <a href="./posts/aws-security-prevent-detect-remediate-config-ssm.html">
+              <time datetime="2026-08-28">2026.08.28</time>
+              <span class="post-topic">Security</span>
+              <h3>[AWS/Security] 보안 정책은 탐지만 해서는 부족하다 - IAM, AWS Config, Systems Manager로 Prevent·Detect·Remediate 만들기</h3>
+              <p>보안 정책은 탐지만으로 끝나지 않습니다. IAM으로 예방하고, AWS Config로 평가하고, Systems Manager로 안전하게 복구하는 운영 loop를 설계합니다.</p>
+            </a>
+          </article>
+          <article
+            class="post-row"
+            data-tags="AWS | Center | Cloud | EC2 | IAM | IAM Identity Center | Identity | Manager | Operations | Private | Security | Session | Session Manager | SSH | Systems Manager"
+            data-title="[AWS/Security] 외부 엔지니어에게 SSH 키 없이 Private EC2 접근을 제공하기 - IAM Identity Center와 Session Manager"
+            data-summary="사람의 AWS 계정 접근은 IAM Identity Center로, EC2 OS 접근은 Session Manager로 분리해 외부 운영 인력의 접근 경계를 관리합니다."
+          >
+            <a href="./posts/aws-security-identity-center-session-manager-private-ec2-access.html">
+              <time datetime="2026-08-27">2026.08.27</time>
+              <span class="post-topic">Security</span>
+              <h3>[AWS/Security] 외부 엔지니어에게 SSH 키 없이 Private EC2 접근을 제공하기 - IAM Identity Center와 Session Manager</h3>
+              <p>사람의 AWS 계정 접근은 IAM Identity Center로, EC2 OS 접근은 Session Manager로 분리해 외부 운영 인력의 접근 경계를 관리합니다.</p>
+            </a>
+          </article>
+          <article
+            class="post-row"
+            data-tags="Architecture | Aurora | AWS | Cross-Region Replication | CRR | Database | DR | Global | Operations | S3"
+            data-title="[AWS/DR] 글로벌 전자상거래의 데이터 복원력 설계 - Aurora Global Database와 S3 CRR"
+            data-summary="주문·결제 데이터와 상품 이미지는 같은 복제 전략을 쓰기 어렵습니다. Aurora Global Database와 S3 CRR로 데이터 유형별 DR 경계를 나눕니다."
+          >
+            <a href="./posts/aws-dr-aurora-global-database-s3-crr.html">
+              <time datetime="2026-08-27">2026.08.27</time>
+              <span class="post-topic">DR</span>
+              <h3>[AWS/DR] 글로벌 전자상거래의 데이터 복원력 설계 - Aurora Global Database와 S3 CRR</h3>
+              <p>주문·결제 데이터와 상품 이미지는 같은 복제 전략을 쓰기 어렵습니다. Aurora Global Database와 S3 CRR로 데이터 유형별 DR 경계를 나눕니다.</p>
+            </a>
+          </article>
+          <article
+            class="post-row"
+            data-tags="AWS | Batch | Inventory | Lambda | Operations | S3 | S3 Batch Operations | S3 Inventory | Serverless"
+            data-title="[AWS/S3] 수백만 개의 오래된 S3 객체를 서버리스로 삭제하려면? - S3 Inventory와 Batch Operations"
+            data-summary="Inventory는 대상을 찾고, Batch Operations는 대상에 작업합니다. 대규모 S3 객체 삭제를 serverless하게 처리하는 구조입니다."
+          >
+            <a href="./posts/aws-s3-inventory-batch-operations-delete-objects.html">
+              <time datetime="2026-08-26">2026.08.26</time>
+              <span class="post-topic">S3</span>
+              <h3>[AWS/S3] 수백만 개의 오래된 S3 객체를 서버리스로 삭제하려면? - S3 Inventory와 Batch Operations</h3>
+              <p>Inventory는 대상을 찾고, Batch Operations는 대상에 작업합니다. 대규모 S3 객체 삭제를 serverless하게 처리하는 구조입니다.</p>
+            </a>
+          </article>
+          <article
+            class="post-row"
+            data-tags="ALB | API | API Gateway | Architecture | AWS | Cloud | Cognito | Gateway | HTTP | JWT | Operations | Security"
+            data-title="[AWS/API] JWT 인증과 경로 기반 라우팅을 함께 구현하려면? - API Gateway HTTP API, Cognito, ALB"
+            data-summary="API Gateway HTTP API는 JWT authorizer를 담당하고, ALB는 private backend service의 Layer 7 path routing을 담당하도록 역할을 나눕니다."
+          >
+            <a href="./posts/aws-api-jwt-routing-http-api-cognito-alb.html">
+              <time datetime="2026-08-25">2026.08.25</time>
+              <span class="post-topic">API</span>
+              <h3>[AWS/API] JWT 인증과 경로 기반 라우팅을 함께 구현하려면? - API Gateway HTTP API, Cognito, ALB</h3>
+              <p>API Gateway HTTP API는 JWT authorizer를 담당하고, ALB는 private backend service의 Layer 7 path routing을 담당하도록 역할을 나눕니다.</p>
+            </a>
+          </article>
+          <article
+            class="post-row"
+            data-tags="AWS | EC2 | Endpoint | FinOps | Gateway | NAT | NAT Gateway | Networking | Operations | Private | S3 | VPC | VPC Endpoint"
+            data-title="[AWS/Networking] Private EC2가 S3에 접근하는데 NAT Gateway가 꼭 필요할까? - Gateway VPC Endpoint로 비용 줄이기"
+            data-summary="S3 트래픽을 NAT Gateway에서 분리하면 비용과 네트워크 경로를 함께 최적화할 수 있습니다. Gateway VPC Endpoint와 NAT Gateway의 역할을 구분합니다."
+          >
+            <a href="./posts/aws-networking-s3-gateway-vpc-endpoint-nat-cost.html">
+              <time datetime="2026-08-24">2026.08.24</time>
+              <span class="post-topic">Networking</span>
+              <h3>[AWS/Networking] Private EC2가 S3에 접근하는데 NAT Gateway가 꼭 필요할까? - Gateway VPC Endpoint로 비용 줄이기</h3>
+              <p>S3 트래픽을 NAT Gateway에서 분리하면 비용과 네트워크 경로를 함께 최적화할 수 있습니다. Gateway VPC Endpoint와 NAT Gateway의 역할을 구분합니다.</p>
+            </a>
+          </article>
+          <article
+            class="post-row"
+            data-tags="Athena | AWS | Data | Data Lake | Data Security | Formation | Glue Data Catalog | Lake | Lake Formation | LF-Tag | Operations | Security"
+            data-title="[AWS/Data Security] 데이터 레이크 테이블이 수천 개로 늘어나면 권한은 어떻게 관리할까? - Lake Formation LF-Tag 기반 접근 제어"
+            data-summary="테이블 이름을 하나씩 권한 정책에 추가하는 대신 Department, Sensitivity, Domain 같은 LF-Tag로 대규모 데이터 레이크 접근 제어를 관리하는 구조입니다."
+          >
+            <a href="./posts/aws-data-security-lake-formation-lf-tag-access-control.html">
+              <time datetime="2026-08-23">2026.08.23</time>
+              <span class="post-topic">Data</span>
+              <h3>[AWS/Data Security] 데이터 레이크 테이블이 수천 개로 늘어나면 권한은 어떻게 관리할까? - Lake Formation LF-Tag 기반 접근 제어</h3>
+              <p>테이블 이름을 하나씩 권한 정책에 추가하는 대신 Department, Sensitivity, Domain 같은 LF-Tag로 대규모 데이터 레이크 접근 제어를 관리하는 구조입니다.</p>
+            </a>
+          </article>
+          <article
+            class="post-row"
+            data-tags="Auto | Auto Scaling | AWS | Cloud | CPU | EC2 | Operations | Reactive | Scale-out | Scaling | Scheduled | Scheduled Scaling | Target Tracking"
+            data-title="[AWS/Auto Scaling] CPU가 99%가 된 뒤 Scale-out하면 왜 늦을까? - Reactive Scaling과 Scheduled Scaling"
+            data-summary="Auto Scaling의 핵심은 scale-out 속도만이 아니라 언제 capacity를 준비하느냐다. 반복되는 트래픽 spike에서는 Scheduled Scaling이 더 직접적인 해법이 될 수 있습니다."
+          >
+            <a href="./posts/aws-auto-scaling-reactive-vs-scheduled-scaling.html">
+              <time datetime="2026-08-22">2026.08.22</time>
+              <span class="post-topic">Auto Scaling</span>
+              <h3>[AWS/Auto Scaling] CPU가 99%가 된 뒤 Scale-out하면 왜 늦을까? - Reactive Scaling과 Scheduled Scaling</h3>
+              <p>Auto Scaling의 핵심은 scale-out 속도만이 아니라 언제 capacity를 준비하느냐다. 반복되는 트래픽 spike에서는 Scheduled Scaling이 더 직접적인 해법이 될 수 있습니다.</p>
+            </a>
+          </article>
+          <article
+            class="post-row"
+            data-tags="Anywhere | Architecture | AWS | Cloud | EKS | EKS Anywhere | Hybrid | Hybrid Nodes | Kubernetes | Nodes"
+            data-title="[AWS/Kubernetes] 온프레미스 Kubernetes를 AWS 방식으로 운영하려면? - EKS Hybrid Nodes와 EKS Anywhere 비교"
+            data-summary="Control plane을 AWS에 둘 수 있는지, worker node와 network를 어디서 관리할지에 따라 EKS Hybrid Nodes와 EKS Anywhere 선택이 달라집니다."
+          >
+            <a href="./posts/aws-kubernetes-eks-hybrid-nodes-eks-anywhere.html">
+              <time datetime="2026-08-20">2026.08.20</time>
+              <span class="post-topic">Kubernetes</span>
+              <h3>[AWS/Kubernetes] 온프레미스 Kubernetes를 AWS 방식으로 운영하려면? - EKS Hybrid Nodes와 EKS Anywhere 비교</h3>
+              <p>Control plane을 AWS에 둘 수 있는지, worker node와 network를 어디서 관리할지에 따라 EKS Hybrid Nodes와 EKS Anywhere 선택이 달라집니다.</p>
+            </a>
+          </article>
+          <article
+            class="post-row"
+            data-tags="AWS | Cloud | CloudOps | Evaluation | Fallback | Observability | RAG | Serving"
+            data-title="[RAG] 튜토리얼 RAG를 운영 가능한 CloudOps RAG로 확장하기 - 평가, Fallback, Serving, Observability"
+            data-summary="RAG가 답을 생성한다는 것과 신뢰할 수 있게 동작한다는 것은 다르다. CloudOps RAG를 평가 가능하고 관찰 가능한 서비스로 확장한 lifecycle을 정리합니다."
+          >
+            <a href="./posts/rag-cloudops-productionish-evaluation-fallback-serving-observability.html">
+              <time datetime="2026-08-18">2026.08.18</time>
+              <span class="post-topic">RAG</span>
+              <h3>[RAG] 튜토리얼 RAG를 운영 가능한 CloudOps RAG로 확장하기 - 평가, Fallback, Serving, Observability</h3>
+              <p>RAG가 답을 생성한다는 것과 신뢰할 수 있게 동작한다는 것은 다르다. CloudOps RAG를 평가 가능하고 관찰 가능한 서비스로 확장한 lifecycle을 정리합니다.</p>
+            </a>
+          </article>
+          <article
+            class="post-row"
+            data-tags="Amazon | Amazon Neptune | AWS | Cloud | Database | DB | Graph | Graph Database | Graph Traversal | JOIN | Neptune | Traversal"
+            data-title="[AWS/Database] JOIN이 깊어질수록 왜 Graph DB가 유리할까? - Amazon Neptune으로 다단계 관계 탐색하기"
+            data-summary="사용자 100만 명과 관계 1,000만 개에서 최대 5-hop 관계 탐색이 핵심 workload라면 Graph Database를 검토해야 하는 이유를 설명합니다."
+          >
+            <a href="./posts/aws-database-neptune-graph-multi-hop-traversal.html">
+              <time datetime="2026-08-17">2026.08.17</time>
+              <span class="post-topic">Database</span>
+              <h3>[AWS/Database] JOIN이 깊어질수록 왜 Graph DB가 유리할까? - Amazon Neptune으로 다단계 관계 탐색하기</h3>
+              <p>사용자 100만 명과 관계 1,000만 개에서 최대 5-hop 관계 탐색이 핵심 workload라면 Graph Database를 검토해야 하는 이유를 설명합니다.</p>
+            </a>
+          </article>
+          <article
+            class="post-row"
+            data-tags="AWS | Compliance | EC2 | Maintenance | Operations | Patch Manager | Rollout | Security | Staged | Systems Manager | Window"
+            data-title="[AWS/Security] EC2 패치 자동화는 어디까지 자동화해야 할까? - Maintenance Window, Compliance, Staged Rollout"
+            data-summary="EC2 패치는 보안 자동화이면서 production 변경 작업이므로 Maintenance Window, staged rollout, compliance 검증이 함께 필요합니다."
+          >
+            <a href="./posts/aws-security-ec2-patch-rollout-compliance.html">
+              <time datetime="2026-08-16">2026.08.16</time>
+              <span class="post-topic">Security</span>
+              <h3>[AWS/Security] EC2 패치 자동화는 어디까지 자동화해야 할까? - Maintenance Window, Compliance, Staged Rollout</h3>
+              <p>EC2 패치는 보안 자동화이면서 production 변경 작업이므로 Maintenance Window, staged rollout, compliance 검증이 함께 필요합니다.</p>
+            </a>
+          </article>
+          <article
+            class="post-row"
+            data-tags="Amazon | Amazon Inspector | AWS | EC2 | Inspector | Manager | Patch Management | Patch Manager | Security | Systems | Systems Manager"
+            data-title="[AWS/Security] 취약점은 찾았는데 패치는 누가 하지? - Amazon Inspector와 Systems Manager로 EC2 패치 관리하기"
+            data-summary="Inspector는 취약점을 찾고 Systems Manager Patch Manager는 패치 운영을 관리한다는 관점에서 EC2 보안 패치 구조를 정리합니다."
+          >
+            <a href="./posts/aws-security-inspector-systems-manager-patch-management.html">
+              <time datetime="2026-08-15">2026.08.15</time>
+              <span class="post-topic">Security</span>
+              <h3>[AWS/Security] 취약점은 찾았는데 패치는 누가 하지? - Amazon Inspector와 Systems Manager로 EC2 패치 관리하기</h3>
+              <p>Inspector는 취약점을 찾고 Systems Manager Patch Manager는 패치 운영을 관리한다는 관점에서 EC2 보안 패치 구조를 정리합니다.</p>
+            </a>
+          </article>
+          <article
+            class="post-row"
+            data-tags="Architecture | Athena | AWS | Cloud | Cost Analytics | CUR | FinOps | Gateway | NAT | NAT Gateway | QuickSight"
+            data-title="[AWS/FinOps] NAT Gateway 비용은 어디서 발생할까? - CUR, Athena, QuickSight로 비용 대시보드 만들기"
+            data-summary="NAT Gateway 비용을 월 누적, 계정, Region, 일별 추세로 나누어 분석하고 architecture optimization으로 연결하는 FinOps 구조입니다."
+          >
+            <a href="./posts/aws-finops-nat-gateway-cost-dashboard.html">
+              <time datetime="2026-08-14">2026.08.14</time>
+              <span class="post-topic">FinOps</span>
+              <h3>[AWS/FinOps] NAT Gateway 비용은 어디서 발생할까? - CUR, Athena, QuickSight로 비용 대시보드 만들기</h3>
+              <p>NAT Gateway 비용을 월 누적, 계정, Region, 일별 추세로 나누어 분석하고 architecture optimization으로 연결하는 FinOps 구조입니다.</p>
+            </a>
+          </article>
+          <article
+            class="post-row"
+            data-tags="AWS | Chunk | Cloud | Diversification | Duplicate | MMR | Multi-Document Retrieval | RAG | Retrieval | Top-k"
+            data-title="[RAG] Top-k를 늘렸는데 왜 필요한 문서를 못 찾을까? - Duplicate Chunk와 Retrieval Diversification"
+            data-summary="Top-5가 다섯 개의 독립 근거를 의미하지 않는 이유와 multi-document completeness를 높이기 위한 retrieval diversification 실험입니다."
+          >
+            <a href="./posts/rag-multi-document-retrieval-diversification.html">
+              <time datetime="2026-08-13">2026.08.13</time>
+              <span class="post-topic">RAG</span>
+              <h3>[RAG] Top-k를 늘렸는데 왜 필요한 문서를 못 찾을까? - Duplicate Chunk와 Retrieval Diversification</h3>
+              <p>Top-5가 다섯 개의 독립 근거를 의미하지 않는 이유와 multi-document completeness를 높이기 위한 retrieval diversification 실험입니다.</p>
+            </a>
+          </article>
+          <article
+            class="post-row"
+            data-tags="Answer | Answer Evaluation | Cloud | Evaluation | Hit@k | LLM-as-a-Judge | Quality | RAG | Retrieval"
+            data-title="[RAG] Hit@k가 높으면 좋은 RAG일까? - Retrieval과 Answer Quality를 따로 평가해본 과정"
+            data-summary="좋은 retrieval과 좋은 answer는 같은 문제가 아니라는 점을 answer evaluation, LLM-as-a-Judge, human validation으로 정리합니다."
+          >
+            <a href="./posts/rag-evaluation-retrieval-vs-answer-quality.html">
+              <time datetime="2026-08-12">2026.08.12</time>
+              <span class="post-topic">RAG</span>
+              <h3>[RAG] Hit@k가 높으면 좋은 RAG일까? - Retrieval과 Answer Quality를 따로 평가해본 과정</h3>
+              <p>좋은 retrieval과 좋은 answer는 같은 문제가 아니라는 점을 answer evaluation, LLM-as-a-Judge, human validation으로 정리합니다.</p>
+            </a>
+          </article>
+          <article
+            class="post-row"
+            data-tags="AWS | Chroma | Chunking | Cloud | Embedding | Evaluation | RAG | Retrieval | Retrieval Tuning | Threshold | Top-k"
+            data-title="[RAG] 감으로 Top-k를 정하지 않기 - Chunking, Embedding, Threshold를 실험으로 선택한 과정"
+            data-summary="RAG configuration을 tutorial default가 아니라 Build, Measure, Compare, Freeze, Held-out Validate 흐름으로 선택한 기록입니다."
+          >
+            <a href="./posts/rag-evaluation-driven-retrieval-tuning.html">
+              <time datetime="2026-08-11">2026.08.11</time>
+              <span class="post-topic">RAG</span>
+              <h3>[RAG] 감으로 Top-k를 정하지 않기 - Chunking, Embedding, Threshold를 실험으로 선택한 과정</h3>
+              <p>RAG configuration을 tutorial default가 아니라 Build, Measure, Compare, Freeze, Held-out Validate 흐름으로 선택한 기록입니다.</p>
+            </a>
+          </article>
+          <article
+            class="post-row"
+            data-tags="AWS | Chunking | Embedding | RAG | Retrieval | Semantic | Semantic Retrieval | Store | Vector | Vector Store"
+            data-title="[RAG] 긴 문서에서 필요한 근거를 찾는 과정 - Chunking, Embedding, Vector Store와 Semantic Retrieval"
+            data-summary="긴 문서를 작은 chunk로 나누고 의미 기반 검색으로 필요한 근거를 찾는 RAG retrieval pipeline입니다."
+          >
+            <a href="./posts/rag-document-processing-semantic-retrieval.html">
+              <time datetime="2026-08-10">2026.08.10</time>
+              <span class="post-topic">RAG</span>
+              <h3>[RAG] 긴 문서에서 필요한 근거를 찾는 과정 - Chunking, Embedding, Vector Store와 Semantic Retrieval</h3>
+              <p>긴 문서를 작은 chunk로 나누고 의미 기반 검색으로 필요한 근거를 찾는 RAG retrieval pipeline입니다.</p>
+            </a>
+          </article>
+          <article
+            class="post-row"
+            data-tags="Clarification | Cloud | Filling | LangChain | LLM | Query | Query Clarification | RAG | Running | Slot | State"
+            data-title="[RAG] 불완전한 질문을 바로 검색하지 않기 - Running State와 Slot Filling으로 Query Clarification 설계하기"
+            data-summary="모호한 운영 질문을 곧바로 embedding하지 않고 state, branch, slot filling으로 retrieval-ready query를 만드는 설계입니다."
+          >
+            <a href="./posts/rag-stateful-query-clarification.html">
+              <time datetime="2026-08-09">2026.08.09</time>
+              <span class="post-topic">RAG</span>
+              <h3>[RAG] 불완전한 질문을 바로 검색하지 않기 - Running State와 Slot Filling으로 Query Clarification 설계하기</h3>
+              <p>모호한 운영 질문을 곧바로 embedding하지 않고 state, branch, slot filling으로 retrieval-ready query를 만드는 설계입니다.</p>
+            </a>
+          </article>
+          <article
+            class="post-row"
+            data-tags="AI Application | API | Architecture | AWS | Cloud | LangChain | LLM | Orchestration"
+            data-title="[LLM] API 호출부터 LangChain까지 - LLM 애플리케이션의 구조 이해하기"
+            data-summary="단순한 model.invoke 호출 뒤에 있는 LLM serving layer와, 앞단의 orchestration layer를 구분해서 정리합니다."
+          >
+            <a href="./posts/llm-api-langchain-application-architecture.html">
+              <time datetime="2026-08-08">2026.08.08</time>
+              <span class="post-topic">API</span>
+              <h3>[LLM] API 호출부터 LangChain까지 - LLM 애플리케이션의 구조 이해하기</h3>
+              <p>단순한 model.invoke 호출 뒤에 있는 LLM serving layer와, 앞단의 orchestration layer를 구분해서 정리합니다.</p>
+            </a>
+          </article>
+          <article
+            class="post-row"
+            data-tags="AWS | Cloud | Data Protection | EventBridge | Lock | Macie | Object | Object Lock | Operations | PII | S3 | Security | Security Automation"
+            data-title="[AWS] S3에서 PII를 자동 탐지하고 삭제를 방지하기 - Macie + EventBridge + Object Lock"
+            data-summary="Macie finding을 EventBridge와 Lambda로 처리하고 S3 Object Lock Legal Hold로 검토 대상 객체를 보호하는 구조입니다."
+          >
+            <a href="./posts/s3-pii-detection-macie-object-lock.html">
+              <time datetime="2026-08-07">2026.08.07</time>
+              <span class="post-topic">S3</span>
+              <h3>[AWS] S3에서 PII를 자동 탐지하고 삭제를 방지하기 - Macie + EventBridge + Object Lock</h3>
+              <p>Macie finding을 EventBridge와 Lambda로 처리하고 S3 Object Lock Legal Hold로 검토 대상 객체를 보호하는 구조입니다.</p>
+            </a>
+          </article>
+          <article
+            class="post-row"
+            data-tags="Architecture | AWS | Cloud | Event-Driven | Event-Driven Architecture | Lambda | Operations | Presigned | Presigned URL | Processing | S3 | Storage | URL"
+            data-title="[AWS] 이미지 업로드 병목 제거하기 - S3 Presigned URL과 Lambda로 Event-Driven Processing 구성"
+            data-summary="대용량 이미지 업로드 경로에서 애플리케이션 서버를 분리하고 S3 이벤트와 Lambda로 후처리하는 구조입니다."
+          >
+            <a href="./posts/s3-presigned-url-lambda-image-processing.html">
+              <time datetime="2026-08-06">2026.08.06</time>
+              <span class="post-topic">S3</span>
+              <h3>[AWS] 이미지 업로드 병목 제거하기 - S3 Presigned URL과 Lambda로 Event-Driven Processing 구성</h3>
+              <p>대용량 이미지 업로드 경로에서 애플리케이션 서버를 분리하고 S3 이벤트와 Lambda로 후처리하는 구조입니다.</p>
+            </a>
+          </article>
+          <article
+            class="post-row"
+            data-tags="Access | AWS | Cloud | Cross-Region | Cross-Region Replication | Multi-Region | Multi-Region Access Point | Operations | Point | Replication | S3 | Storage"
+            data-title="[AWS] 글로벌 S3 아키텍처 구성하기 - Multi-Region Access Point와 Cross-Region Replication"
+            data-summary="MRAP는 글로벌 요청 라우팅을, CRR은 리전 간 데이터 복제를 담당한다는 관점에서 정리한 구조입니다."
+          >
+            <a href="./posts/global-s3-mrap-cross-region-replication.html">
+              <time datetime="2026-08-05">2026.08.05</time>
+              <span class="post-topic">S3</span>
+              <h3>[AWS] 글로벌 S3 아키텍처 구성하기 - Multi-Region Access Point와 Cross-Region Replication</h3>
+              <p>MRAP는 글로벌 요청 라우팅을, CRR은 리전 간 데이터 복제를 담당한다는 관점에서 정리한 구조입니다.</p>
+            </a>
+          </article>
+          <article
+            class="post-row"
+            data-tags="ALB | Architecture | AWS | Cloud | CloudFront | Network | Origins | Private | Security | VPC | VPC Origins"
+            data-title="[AWS] CloudFront 뒤의 ALB를 Private하게 구성하기 - VPC Origins"
+            data-summary="CloudFront VPC Origins로 Internal ALB를 Origin으로 두고 Public Entry Point를 CloudFront로 집중시키는 구조입니다."
+          >
+            <a href="./posts/cloudfront-private-alb-vpc-origins.html">
+              <time datetime="2026-08-04">2026.08.04</time>
+              <span class="post-topic">Security</span>
+              <h3>[AWS] CloudFront 뒤의 ALB를 Private하게 구성하기 - VPC Origins</h3>
+              <p>CloudFront VPC Origins로 Internal ALB를 Origin으로 두고 Public Entry Point를 CloudFront로 집중시키는 구조입니다.</p>
+            </a>
+          </article>
+          <article
+            class="post-row"
+            data-tags="AWS | Cloud | Functions | Lambda | Map | Operations | Orchestration | Serverless | Step | Step Functions"
+            data-title="[AWS] Lambda 반복 호출을 Step Functions Map으로 분리하기 - Serverless Orchestration 설계"
+            data-summary="반복 호출과 재시도 책임을 Lambda 코드에서 Step Functions Map 상태로 분리하는 설계입니다."
+          >
+            <a href="./posts/lambda-step-functions-map-orchestration.html">
+              <time datetime="2026-08-03">2026.08.03</time>
+              <span class="post-topic">Serverless</span>
+              <h3>[AWS] Lambda 반복 호출을 Step Functions Map으로 분리하기 - Serverless Orchestration 설계</h3>
+              <p>반복 호출과 재시도 책임을 Lambda 코드에서 Step Functions Map 상태로 분리하는 설계입니다.</p>
+            </a>
+          </article>
+          <article
+            class="post-row"
+            data-tags="Architecture | AWS | Cloud | Data | Data Governance | Data Lake | Formation | Lake | Lake Formation | Multi-Tenant | Row-Level | S3 | Security | Tenant"
+            data-title="[AWS] Multi-Tenant Data Lake에서 Tenant 데이터 격리하기 - S3와 Lake Formation Row-Level Security"
+            data-summary="B2B SaaS Multi-Tenant 환경에서 하나의 S3 Data Lake를 유지하면서 Tenant별 Row 접근 범위를 제한하는 패턴입니다."
+          >
+            <a href="./posts/s3-data-lake-lake-formation-row-level-access-control.html">
+              <time datetime="2026-08-02">2026.08.02</time>
+              <span class="post-topic">S3</span>
+              <h3>[AWS] Multi-Tenant Data Lake에서 Tenant 데이터 격리하기 - S3와 Lake Formation Row-Level Security</h3>
+              <p>B2B SaaS Multi-Tenant 환경에서 하나의 S3 Data Lake를 유지하면서 Tenant별 Row 접근 범위를 제한하는 패턴입니다.</p>
+            </a>
+          </article>
+          <article
+            class="post-row"
+            data-tags="Architecture | AWS | Cloud | CloudFront | Operations | Security"
+            data-title="[AWS] CloudFront 설정 변경을 이벤트 기반으로 탐지하고 알림 보내기"
+            data-summary="CloudTrail, EventBridge, Lambda, SNS를 사용해 CloudFront Logging 비활성화를 탐지하는 패턴입니다."
+          >
+            <a href="./posts/cloudfront-logging-change-detection.html">
+              <time datetime="2026-08-01">2026.08.01</time>
+              <span class="post-topic">Security</span>
+              <h3>[AWS] CloudFront 설정 변경을 이벤트 기반으로 탐지하고 알림 보내기</h3>
+              <p>CloudTrail, EventBridge, Lambda, SNS를 사용해 CloudFront Logging 비활성화를 탐지하는 패턴입니다.</p>
+            </a>
+          </article>
+          <!-- GENERATED:ALL_POSTS:END -->
+        </div>
+        <div class="empty-list" id="emptyPosts" hidden>
+          <p>일치하는 글이 없습니다. 검색어를 줄이거나 다른 주제를 선택해 보세요.</p>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <p>© 2026 Jiwon Kim</p>
+      <div class="footer-links">
+        <span id="visitStatus">집계 중</span>
+        <a href="./feed.xml">RSS</a>
+        <a href="./llms.txt">llms.txt</a>
+      </div>
+    </footer>
+
+    <script src="./script.js?v=20260905-4"></script>
+    <script data-goatcounter="https://jiwonkim-blog.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
+    <noscript><img class="tracking-pixel" src="https://jiwonkim-blog.goatcounter.com/count?p=/articles.html" alt="" /></noscript>
+  </body>
+</html>

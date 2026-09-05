@@ -1,25 +1,24 @@
-# Jiwon Kim's Blog
+# Jiwon Kim | Engineering Notes
 
-Jiwon Kim's Blog is a Korean technical blog about backend engineering, cloud infrastructure, architecture, operations, and troubleshooting.
+Jiwon Kim's Korean engineering journal about backend systems, cloud infrastructure, RAG, architecture decisions, and operations.
 
 ## Site
 
 - Home: https://andrewkimswe.github.io/
+- Articles: https://andrewkimswe.github.io/articles.html
+- Projects: https://andrewkimswe.github.io/projects.html
 - GitHub: https://github.com/andrewkimswe
 - LinkedIn: https://www.linkedin.com/in/jiwon-kim-867334285/
 - Sitemap: https://andrewkimswe.github.io/sitemap.xml
 - RSS: https://andrewkimswe.github.io/feed.xml
 
-## Main Topics
+## Editorial Scope
 
-- Backend API design
-- Cloud architecture
-- LLM application architecture
+- Backend API and data design
+- AWS architecture, security, networking, and FinOps
+- Kubernetes and operational reliability
 - Retrieval-augmented generation evaluation
-- AWS FinOps and cost analytics
-- AWS deployment and operations
-- Incident reviews
-- Engineering documentation
+- Architecture trade-offs and failure analysis
 
 ## Posts
 
@@ -51,4 +50,4 @@ Jiwon Kim's Blog is a Korean technical blog about backend engineering, cloud inf
 - [[AWS] CloudFront 뒤의 ALB를 Private하게 구성하기 - VPC Origins](https://andrewkimswe.github.io/posts/cloudfront-private-alb-vpc-origins.html): CloudFront VPC Origins를 사용해 Internal ALB를 Private Origin으로 구성하고, CloudFront 우회 접근을 줄이는 아키텍처입니다.
 - [[AWS] Lambda 반복 호출을 Step Functions Map으로 분리하기 - Serverless Orchestration 설계](https://andrewkimswe.github.io/posts/lambda-step-functions-map-orchestration.html): Lambda 내부 반복 호출 구조를 AWS Step Functions Map 상태로 분리해 Timeout, Retry, Error Handling, Concurrency를 관리하는 Serverless Orchestration 설계입니다.
 - [[AWS] Multi-Tenant Data Lake에서 Tenant 데이터 격리하기 - S3와 Lake Formation Row-Level Security](https://andrewkimswe.github.io/posts/s3-data-lake-lake-formation-row-level-access-control.html): B2B SaaS Multi-Tenant 환경에서 S3 Data Lake와 Lake Formation Row-Level Security로 Tenant 데이터를 격리하는 패턴입니다.
-- [[AWS] CloudFront 설정 변경을 실시간으로 탐지하고 알림 보내기](https://andrewkimswe.github.io/posts/cloudfront-logging-change-detection.html): CloudTrail, EventBridge, Lambda, SNS를 사용해 CloudFront Distribution의 Logging 비활성화를 탐지하고 알림을 보내는 구성입니다.
+- [[AWS] CloudFront 설정 변경을 이벤트 기반으로 탐지하고 알림 보내기](https://andrewkimswe.github.io/posts/cloudfront-logging-change-detection.html): CloudTrail, EventBridge, Lambda, SNS를 사용해 CloudFront Distribution의 Logging 비활성화를 탐지하고 알림을 보내는 구성입니다.
