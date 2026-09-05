@@ -22,6 +22,7 @@ Jiwon Kim's Korean engineering journal about backend systems, cloud infrastructu
 
 ## Posts
 
+- [[AWS/Security] 여러 계정의 CloudTrail 로그를 중앙화해도 감사 공백이 생기는 이유 - Organization Trail, S3 Policy, KMS, Delivery SLO](https://andrewkimswe.github.io/posts/aws-cloudtrail-organization-central-s3-governance.html): AWS Organizations 환경의 CloudTrail 로그를 중앙 S3 버킷에 수집할 때 Organization Trail, S3 Bucket Policy, KMS, 무결성 검증, 수집 SLO, 정책 회귀 테스트와 운영 책임을 하나의 통제로 설계합니다.
 - [[AWS/IAM] 외부 업체에 Access Key를 주지 않고 AWS 계정 접근을 허용하기 - Cross-Account AssumeRole과 STS](https://andrewkimswe.github.io/posts/aws-iam-cross-account-assumerole-sts-vendor-access.html): 외부 업체나 SaaS 벤더에게 장기 Access Key를 전달하지 않고 Cross-Account IAM Role, Trust Policy, AWS STS AssumeRole, External ID로 접근을 위임하는 방식을 정리합니다.
 - [[AWS/Networking] VPC가 1,000개라면 Peering은 왜 무너질까? - Transit Gateway와 Hub-and-Spoke 설계](https://andrewkimswe.github.io/posts/aws-networking-transit-gateway-hub-spoke-vpc-scale.html): VPC Peering의 full mesh 복잡도, non-transitive routing 한계, Transit Gateway 기반 hub-and-spoke 설계와 route table segmentation 기준을 정리합니다.
 - [[AWS/Security] 보안 정책은 탐지만 해서는 부족하다 - IAM, AWS Config, Systems Manager로 Prevent·Detect·Remediate 만들기](https://andrewkimswe.github.io/posts/aws-security-prevent-detect-remediate-config-ssm.html): EBS 암호화 정책을 예로 IAM, AWS Config, Systems Manager Automation을 조합해 Prevent, Detect, Remediate 보안 운영 loop를 설계하는 방법을 정리합니다.

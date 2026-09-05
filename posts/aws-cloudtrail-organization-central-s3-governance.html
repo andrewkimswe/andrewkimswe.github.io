@@ -1,0 +1,473 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>[AWS/Security] 여러 계정의 CloudTrail 로그를 중앙화해도 감사 공백이 생기는 이유 | Jiwon Kim Engineering Notes</title>
+    <meta name="description" content="AWS Organizations 환경의 CloudTrail 로그를 중앙 S3 버킷에 수집할 때 Organization Trail, S3 Bucket Policy, KMS, 무결성 검증, 수집 SLO, 정책 회귀 테스트와 운영 책임을 하나의 통제로 설계합니다." />
+    <meta name="author" content="Jiwon Kim" />
+    <meta name="robots" content="index, follow, max-image-preview:large" />
+    <link rel="canonical" href="https://andrewkimswe.github.io/posts/aws-cloudtrail-organization-central-s3-governance.html" />
+    <meta property="og:site_name" content="Jiwon Kim | Engineering Notes" />
+    <meta property="og:title" content="[AWS/Security] 여러 계정의 CloudTrail 로그를 중앙화해도 감사 공백이 생기는 이유 - Organization Trail, S3 Policy, KMS, Delivery SLO" />
+    <meta property="og:description" content="로그를 한 버킷에 모으는 구성에서 더 나아가 계정 온보딩, 최소 권한, 무결성, 수집 지연, 비용과 운영 책임까지 설계합니다." />
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="https://andrewkimswe.github.io/posts/aws-cloudtrail-organization-central-s3-governance.html" />
+    <meta property="og:image" content="https://andrewkimswe.github.io/assets/social-card.png" />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Jiwon Kim Engineering Notes" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://andrewkimswe.github.io/assets/social-card.png" />
+    <meta name="twitter:title" content="[AWS/Security] 여러 계정의 CloudTrail 로그를 중앙화해도 감사 공백이 생기는 이유 - Organization Trail, S3 Policy, KMS, Delivery SLO" />
+    <meta name="twitter:description" content="로그를 한 버킷에 모으는 구성에서 더 나아가 계정 온보딩, 최소 권한, 무결성, 수집 지연, 비용과 운영 책임까지 설계합니다." />
+    <meta property="article:modified_time" content="2026-09-05T00:00:00+09:00" />
+    <meta name="twitter:image:alt" content="Jiwon Kim Engineering Notes" />
+    <meta property="article:published_time" content="2026-09-05T00:00:00+09:00" />
+    <meta property="article:author" content="Jiwon Kim" />
+    <meta property="article:tag" content="AWS" />
+    <meta property="article:tag" content="CloudTrail" />
+    <meta property="article:tag" content="Security" />
+    <meta property="article:tag" content="AWS Organizations" />
+    <meta property="article:tag" content="Multi-Account" />
+    <meta property="article:tag" content="S3" />
+    <meta property="article:tag" content="KMS" />
+    <meta property="article:tag" content="Governance" />
+    <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="../styles.css?v=20260905-4" />
+    <script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","headline":"[AWS/Security] 여러 계정의 CloudTrail 로그를 중앙화해도 감사 공백이 생기는 이유 - Organization Trail, S3 Policy, KMS, Delivery SLO","description":"AWS Organizations 환경의 CloudTrail 로그를 중앙 S3 버킷에 수집할 때 Organization Trail, S3 Bucket Policy, KMS, 무결성 검증, 수집 SLO, 정책 회귀 테스트와 운영 책임을 하나의 통제로 설계합니다.","datePublished":"2026-09-05T00:00:00+09:00","dateModified":"2026-09-05T00:00:00+09:00","author":{"@type":"Person","name":"Jiwon Kim","url":"https://github.com/andrewkimswe"},"publisher":{"@type":"Person","name":"Jiwon Kim"},"mainEntityOfPage":"https://andrewkimswe.github.io/posts/aws-cloudtrail-organization-central-s3-governance.html","inLanguage":"ko-KR"}
+    </script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main-content">본문으로 바로가기</a>
+    <header class="site-header">
+      <a class="brand" href="../" aria-label="Jiwon Kim Engineering Notes 홈">
+        <span class="brand-mark" aria-hidden="true">JK</span>
+        <span class="brand-copy"><strong>Jiwon Kim</strong><small>Engineering Notes</small></span>
+      </a>
+      <nav class="nav-links" aria-label="주요 메뉴">
+        <a href="../articles.html">Articles</a>
+        <a href="../projects.html">Projects</a>
+        <a href="../#about">About</a>
+        <span class="nav-divider" aria-hidden="true"></span>
+        <a href="https://github.com/andrewkimswe">GitHub</a>
+        <a href="https://www.linkedin.com/in/jiwon-kim-867334285/">LinkedIn</a>
+      </nav>
+    </header>
+
+    <main id="main-content">
+      <article class="article-page">
+        <header class="article-hero">
+          <a class="back-link" href="../articles.html">All articles</a>
+          <p class="eyebrow">AWS · Security · Governance</p>
+          <h1>[AWS/Security] 여러 계정의 CloudTrail 로그를 중앙화해도 감사 공백이 생기는 이유 - Organization Trail, S3 Policy, KMS, Delivery SLO</h1>
+          <p class="article-summary">로그를 한 버킷에 모으는 구성에서 더 나아가 계정 온보딩, 최소 권한, 무결성, 수집 지연, 비용과 운영 책임까지 설계합니다.</p>
+          <div class="article-meta"><time datetime="2026-09-05">2026.09.05</time><span>AWS</span><span>CloudTrail</span><span>Security</span><span>Governance</span><span class="reading-time" data-generated="true">약 23분</span></div>
+        </header>
+
+        <!-- GENERATED:ARTICLE_TOC:START -->
+        <aside class="article-toc" aria-label="이 글의 목차">
+          <details open>
+            <summary>On this page</summary>
+            <ol>
+              <li><a href="#section-01">1. 문제를 객체 저장이 아니라 감사 연속성으로 정의한다</a></li>
+              <li><a href="#section-02">2. 요구사항과 비요구사항을 먼저 고정한다</a></li>
+              <li><a href="#section-03">3. 개별 Trail보다 Organization Trail을 선택한 이유</a></li>
+              <li><a href="#section-04">4. Service Principal만 허용해도 충분하지 않다</a></li>
+              <li><a href="#section-05">5. 실제 S3 Bucket Policy의 최소 경계</a></li>
+              <li><a href="#section-06">6. KMS 정책은 쓰기와 읽기를 분리한다</a></li>
+              <li><a href="#section-07">7. 보존은 암호화와 다른 통제다</a></li>
+              <li><a href="#section-08">8. 정책을 코드로 만들고 회귀를 CI에서 막는다</a></li>
+              <li><a href="#section-09">9. 한 번에 전환하지 않고 관측 가능한 단계로 rollout한다</a></li>
+              <li><a href="#section-10">10. Delivery SLO를 정의하고 오류와 지연을 분리한다</a></li>
+              <li><a href="#section-11">11. 모니터링은 로그 내용과 로그 파이프라인을 함께 본다</a></li>
+              <li><a href="#section-12">12. 실패 유형별 runbook을 분리한다</a></li>
+              <li><a href="#section-13">13. 비용은 계정 수보다 이벤트 사본과 보존에서 관리한다</a></li>
+              <li><a href="#section-14">14. 계정 온보딩과 예외를 governance workflow로 만든다</a></li>
+              <li><a href="#section-15">15. 운영 책임을 코드 소유권과 incident 역할로 나눈다</a></li>
+              <li><a href="#section-16">16. 배포 후 검증은 성공 테스트와 거부 테스트를 함께 한다</a></li>
+              <li><a href="#section-17">17. 아직 production-grade라고 주장하지 않는 범위</a></li>
+              <li><a href="#section-18">18. 마무리</a></li>
+            </ol>
+          </details>
+        </aside>
+        <!-- GENERATED:ARTICLE_TOC:END -->
+
+        <div class="article-body">
+          <p>멀티 계정 환경에서 CloudTrail을 중앙 S3 버킷으로 보내는 작업은 짧은 Bucket Policy 하나로 시작할 수 있습니다. 하지만 보안 감사에서 필요한 것은 "지금 객체가 들어온다"가 아니라 "앞으로 추가될 계정도 빠짐없이 들어오며, 누군가 정책을 바꾸거나 KMS 키를 비활성화해도 정해진 시간 안에 발견하고 복구할 수 있다"는 보장입니다.</p>
+          <p>이 글은 실제 프로덕션 수치를 회고하는 글이 아니라, 소규모 AWS Organizations 환경을 운영 가능한 중앙 감사 로그 체계로 전환하기 위한 설계와 검증 계획입니다. 아래의 수치는 측정 결과가 아니라 도입 전에 합의할 <strong>acceptance target</strong>이며, 구현 뒤 대시보드에서 실측값으로 교체해야 합니다.</p>
+
+          <h2 id="section-01">1. 문제를 객체 저장이 아니라 감사 연속성으로 정의한다</h2>
+          <p>Account B와 Account C의 임의 IAM Principal에게 Account A의 S3 쓰기 권한을 주고 싶은 것이 아닙니다. 각 계정의 CloudTrail이 만든 감사 로그만 Log Archive 계정에 전달하고, workload 계정의 관리자는 수집 경로와 보존 정책을 변경하지 못하게 만들고 싶습니다.</p>
+          <div class="mermaid diagram">
+flowchart LR
+    subgraph org[AWS Organization]
+      management[Management Account]
+      workloadB[Workload Account B]
+      workloadC[Workload Account C]
+    end
+    subgraph archive[Log Archive Account]
+      bucket[(Central S3 Bucket)]
+      key[KMS Key]
+      monitor[Delivery Monitor]
+    end
+    management --> trail[Organization Trail]
+    trail --> workloadB
+    trail --> workloadC
+    trail -->|Service delivery| bucket
+    key --> bucket
+    bucket --> monitor
+          </div>
+          <p>이 문제에는 네 종류의 실패가 있습니다.</p>
+          <table>
+            <thead><tr><th>실패</th><th>결과</th><th>탐지 기준</th></tr></thead>
+            <tbody>
+              <tr><td>Coverage gap</td><td>새 계정이나 Region이 Trail에 포함되지 않음</td><td>Organizations 계정 목록과 Trail 상태 비교</td></tr>
+              <tr><td>Delivery gap</td><td>S3 또는 KMS 정책 오류로 객체가 도착하지 않음</td><td><code>get-trail-status</code>와 객체 도착 지연</td></tr>
+              <tr><td>Integrity gap</td><td>전달 이후 객체가 변조 또는 삭제됨</td><td>Digest chain과 <code>validate-logs</code></td></tr>
+              <tr><td>Access gap</td><td>불필요한 Principal이 로그를 읽거나 삭제함</td><td>Access Analyzer, IAM 검토, negative test</td></tr>
+            </tbody>
+          </table>
+
+          <h2 id="section-02">2. 요구사항과 비요구사항을 먼저 고정한다</h2>
+          <p>아키텍처를 선택하기 전에 운영 계약을 먼저 고정합니다. 여기서는 다음을 요구사항으로 둡니다.</p>
+          <ul>
+            <li>현재 계정뿐 아니라 이후 Organization에 추가되는 계정도 자동으로 management event 수집 대상이 됩니다.</li>
+            <li>CloudTrail 서비스만 정해진 S3 prefix와 KMS key를 사용할 수 있습니다.</li>
+            <li>수집 권한과 열람 권한을 분리하고, workload 계정에는 기본적으로 중앙 로그 읽기 권한을 주지 않습니다.</li>
+            <li>정책 변경은 코드 리뷰와 자동 검증을 거쳐야 하며 콘솔의 수동 수정은 drift로 취급합니다.</li>
+            <li>수집 지연, 전달 오류, 무결성 검증 실패에 담당자와 대응 시간이 존재합니다.</li>
+          </ul>
+          <p>반면 모든 data event를 무조건 수집하거나 CloudTrail Lake를 즉시 도입하는 것은 비요구사항입니다. Data event는 양이 많고 첫 번째 사본부터 비용이 발생하므로, 보호할 resource와 탐지 use case가 정해진 뒤 별도 예산으로 추가합니다.</p>
+
+          <h2 id="section-03">3. 개별 Trail보다 Organization Trail을 선택한 이유</h2>
+          <p>중앙 수집에는 계정별 Trail과 Organization Trail 두 선택지가 있습니다.</p>
+          <table>
+            <thead><tr><th>기준</th><th>계정별 Trail</th><th>Organization Trail</th></tr></thead>
+            <tbody>
+              <tr><td>계정 온보딩</td><td>계정마다 생성과 정책 갱신 필요</td><td>Organization 가입 시 자동 적용</td></tr>
+              <tr><td>예외 구성</td><td>계정별로 세밀함</td><td>조직 공통 baseline에 적합</td></tr>
+              <tr><td>운영 주체</td><td>각 계정 또는 StackSets</td><td>Management 또는 delegated administrator</td></tr>
+              <tr><td>Drift surface</td><td>계정 수만큼 증가</td><td>중앙 Trail과 정책으로 축소</td></tr>
+              <tr><td>비용 위험</td><td>중복 management event 사본이 생기기 쉬움</td><td>공통 baseline을 한 사본으로 관리</td></tr>
+            </tbody>
+          </table>
+          <p>계정별로 서로 다른 이벤트 셀렉터가 반드시 필요한 환경이 아니라면 Organization Trail이 더 단순합니다. AWS는 Organization에 계정이 추가될 때 Trail 사본과 service-linked role을 추가하고 logging을 자동으로 시작합니다. Member account는 Trail을 볼 수 있지만 중지하거나 삭제할 수 없습니다.</p>
+          <p>단, opt-in Region을 사용하는 경우에는 계정과 Organization Trail의 home Region 조건을 확인해야 합니다. "multi-Region" 한 줄만으로 모든 opt-in Region이 자동 커버된다고 가정하면 coverage gap이 생길 수 있습니다.</p>
+
+          <h2 id="section-04">4. Service Principal만 허용해도 충분하지 않다</h2>
+          <p><code>cloudtrail.amazonaws.com</code>을 Principal로 지정하면 IAM User나 Role 대신 CloudTrail 서비스가 쓰도록 제한할 수 있습니다. 그러나 그 서비스는 모든 AWS 고객이 사용합니다. 따라서 "어떤 서비스인가"와 함께 "어떤 Trail인가"를 확인해야 합니다.</p>
+          <div class="mermaid diagram compact-diagram">
+flowchart TD
+    request[PutObject request] --> principal{Principal is CloudTrail?}
+    principal -->|no| deny[Deny]
+    principal -->|yes| source{SourceArn is approved Trail?}
+    source -->|no| deny
+    source -->|yes| prefix{Target is approved org prefix?}
+    prefix -->|no| deny
+    prefix -->|yes| acl{Required ACL header?}
+    acl -->|no| deny
+    acl -->|yes| allow[Allow delivery]
+          </div>
+          <p><code>aws:SourceAccount</code>도 지원되지만 Organization Trail에서는 값이 member account가 아니라 Trail 소유자인 management account입니다. 따라서 Account B와 C의 ID 배열만 넣는 정책은 Organization Trail 모델과 맞지 않습니다. 특정 Trail ARN까지 고정하는 <code>aws:SourceArn</code>을 주 경계로 사용하고, S3 object resource를 Organization prefix로 좁히는 편이 정확합니다.</p>
+
+          <h2 id="section-05">5. 실제 S3 Bucket Policy의 최소 경계</h2>
+          <p>다음 정책은 prefix를 사용하지 않는 Organization Trail의 핵심 부분입니다. 실제 적용 시 partition, home Region, management account ID, organization ID와 Trail 이름을 IaC 변수로 주입합니다.</p>
+          <pre><code class="language-json">{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "AWSCloudTrailAclCheck",
+      "Effect": "Allow",
+      "Principal": { "Service": "cloudtrail.amazonaws.com" },
+      "Action": "s3:GetBucketAcl",
+      "Resource": "arn:aws:s3:::&lt;CENTRAL_LOG_BUCKET&gt;",
+      "Condition": {
+        "StringEquals": {
+          "aws:SourceArn": "arn:aws:cloudtrail:&lt;HOME_REGION&gt;:&lt;MANAGEMENT_ACCOUNT_ID&gt;:trail/&lt;TRAIL_NAME&gt;"
+        }
+      }
+    },
+    {
+      "Sid": "AWSCloudTrailManagementAccountWrite",
+      "Effect": "Allow",
+      "Principal": { "Service": "cloudtrail.amazonaws.com" },
+      "Action": "s3:PutObject",
+      "Resource": "arn:aws:s3:::&lt;CENTRAL_LOG_BUCKET&gt;/AWSLogs/&lt;MANAGEMENT_ACCOUNT_ID&gt;/*",
+      "Condition": {
+        "StringEquals": {
+          "s3:x-amz-acl": "bucket-owner-full-control",
+          "aws:SourceArn": "arn:aws:cloudtrail:&lt;HOME_REGION&gt;:&lt;MANAGEMENT_ACCOUNT_ID&gt;:trail/&lt;TRAIL_NAME&gt;"
+        }
+      }
+    },
+    {
+      "Sid": "AWSCloudTrailOrganizationWrite",
+      "Effect": "Allow",
+      "Principal": { "Service": "cloudtrail.amazonaws.com" },
+      "Action": "s3:PutObject",
+      "Resource": "arn:aws:s3:::&lt;CENTRAL_LOG_BUCKET&gt;/AWSLogs/&lt;ORGANIZATION_ID&gt;/*",
+      "Condition": {
+        "StringEquals": {
+          "s3:x-amz-acl": "bucket-owner-full-control",
+          "aws:SourceArn": "arn:aws:cloudtrail:&lt;HOME_REGION&gt;:&lt;MANAGEMENT_ACCOUNT_ID&gt;:trail/&lt;TRAIL_NAME&gt;"
+        }
+      }
+    }
+  ]
+}</code></pre>
+          <p><code>arn:aws:s3:::bucket/*</code> 전체를 허용하지 않는 이유는 delivery identity뿐 아니라 destination scope도 최소화하기 위해서입니다. Prefix를 쓴다면 Trail 설정과 Bucket Policy의 prefix가 정확히 일치해야 합니다. 한쪽만 변경하면 CloudTrail이 로그를 전달하지 못합니다.</p>
+
+          <h2 id="section-06">6. KMS 정책은 쓰기와 읽기를 분리한다</h2>
+          <p>SSE-KMS를 켜는 순간 S3 Policy만 맞아서는 부족합니다. CloudTrail에는 <code>kms:GenerateDataKey*</code>와 <code>kms:DescribeKey</code>가 필요하고, 로그를 읽는 조사 Role에는 별도의 <code>kms:Decrypt</code>가 필요합니다. 암호화 권한을 얻었다고 복호화 권한까지 생기지 않게 분리합니다.</p>
+          <pre><code class="language-json">{
+  "Sid": "AllowCloudTrailEncryptLogs",
+  "Effect": "Allow",
+  "Principal": { "Service": "cloudtrail.amazonaws.com" },
+  "Action": "kms:GenerateDataKey*",
+  "Resource": "*",
+  "Condition": {
+    "StringEquals": {
+      "aws:SourceArn": "arn:aws:cloudtrail:&lt;HOME_REGION&gt;:&lt;MANAGEMENT_ACCOUNT_ID&gt;:trail/&lt;TRAIL_NAME&gt;"
+    },
+    "StringLike": {
+      "kms:EncryptionContext:aws:cloudtrail:arn": "arn:aws:cloudtrail:*:&lt;MANAGEMENT_ACCOUNT_ID&gt;:trail/*"
+    }
+  }
+}</code></pre>
+          <p>KMS key가 disable되거나 정책이 틀리면 CloudTrail은 로그를 전달하지 못합니다. 따라서 KMS 변경은 일반 애플리케이션 키 변경보다 높은 위험도로 분류하고, security break-glass role 외에는 key disable과 deletion schedule 권한을 주지 않습니다.</p>
+
+          <h2 id="section-07">7. 보존은 암호화와 다른 통제다</h2>
+          <p>암호화는 내용을 보호하지만 삭제를 막지 않습니다. 중앙 버킷에는 Block Public Access, versioning, lifecycle과 별도 read role을 적용합니다. 규제나 포렌식 요구가 있다면 S3 Object Lock도 검토합니다.</p>
+          <p>처음부터 compliance mode를 적용하지는 않습니다. Compliance mode에서는 root user도 보존 기간 안에 객체를 삭제할 수 없고 기간을 줄일 수 없으므로, 잘못된 retention 설정 자체가 운영 사고가 될 수 있습니다. 먼저 governance mode와 짧은 retention으로 복구 절차, lifecycle, 비용을 검증한 뒤 승인된 데이터 분류에만 compliance mode를 적용합니다.</p>
+          <div class="mermaid diagram compact-diagram">
+flowchart LR
+    delivered[Delivered log] --> hot[S3 Standard<br/>investigation window]
+    hot --> archive[S3 archive class<br/>long retention]
+    archive --> expire[Expire by policy]
+    delivered --> digest[Integrity digest]
+    digest --> validate[Scheduled validation]
+          </div>
+
+          <h2 id="section-08">8. 정책을 코드로 만들고 회귀를 CI에서 막는다</h2>
+          <p>중앙 로그 정책은 배포 한 번보다 이후 변경이 더 위험합니다. IaC와 CI에서 최소한 다음 불변 조건을 검사합니다.</p>
+          <ul>
+            <li>CloudTrail write statement의 Principal은 <code>cloudtrail.amazonaws.com</code>입니다.</li>
+            <li><code>aws:SourceArn</code>은 승인된 Organization Trail ARN과 정확히 일치합니다.</li>
+            <li><code>s3:PutObject</code> Resource는 management account 또는 Organization log prefix 밖으로 확장되지 않습니다.</li>
+            <li>와일드카드 Principal, public read, workload account의 delete 권한이 없습니다.</li>
+            <li>KMS encrypt와 investigator decrypt Principal이 분리되어 있습니다.</li>
+            <li>Multi-Region, log file validation, bucket versioning이 활성화되어 있습니다.</li>
+          </ul>
+          <pre><code class="language-yaml"># policy-regression.yml
+checks:
+  - id: cloudtrail-source-arn-required
+    resource: central_log_bucket_policy
+    assert: exact_trail_arn
+  - id: cloudtrail-prefix-bounded
+    resource: central_log_bucket_policy
+    deny_if_resource_matches: "arn:aws:s3:::central-log-bucket/*"
+  - id: investigator-cannot-delete
+    principal: SecurityInvestigatorRole
+    denied_actions:
+      - s3:DeleteObject
+      - kms:ScheduleKeyDeletion
+  - id: trail-baseline
+    assert:
+      multi_region: true
+      log_file_validation: true</code></pre>
+          <p>이 YAML은 특정 도구 문법이 아니라 검증 계약의 예시입니다. 실제 프로젝트에서는 CDK assertions, Terraform test, OPA/Conftest 또는 조직의 policy-as-code 도구 중 이미 사용하는 것을 선택합니다. 이 규모에서 검증만을 위해 별도 상시 서비스를 만들 필요는 없습니다.</p>
+
+          <h2 id="section-09">9. 한 번에 전환하지 않고 관측 가능한 단계로 rollout한다</h2>
+          <p>기존 계정별 Trail이 있다면 바로 제거하지 않습니다. 짧은 기간 동안 새 Organization Trail과 병행해 계정·Region별 객체 도착과 event selector를 비교합니다. 중복 사본은 비용을 만들 수 있으므로 이 기간에는 종료 조건과 최대 기간을 둡니다.</p>
+          <div class="mermaid diagram">
+flowchart LR
+    inventory[0. Existing trail inventory] --> sandbox[1. Sandbox account]
+    sandbox --> canary[2. Canary OU]
+    canary --> dual[3. Short dual logging]
+    dual --> verify{Coverage and delivery pass?}
+    verify -->|no| rollback[Keep old trail<br/>fix and retry]
+    verify -->|yes| expand[4. Expand to organization]
+    expand --> retire[5. Retire duplicate trails]
+          </div>
+          <p>Rollout gate는 다음과 같습니다.</p>
+          <ol>
+            <li>Sandbox에서 승인·거부 정책 테스트를 통과합니다.</li>
+            <li>Canary OU에서 모든 활성 Region의 management event가 중앙 prefix에 도착합니다.</li>
+            <li>KMS 암호화와 investigator read-only 복호화를 각각 검증합니다.</li>
+            <li>24시간 이상 SLO 위반과 delivery error가 없을 때 범위를 확대합니다.</li>
+            <li>중복 Trail 제거 전 Cost Explorer에서 paid duplicate event가 없는지 확인합니다.</li>
+          </ol>
+
+          <h2 id="section-10">10. Delivery SLO를 정의하고 오류와 지연을 분리한다</h2>
+          <p>CloudTrail은 CloudWatch Logs에 이벤트를 평균 약 5분 안에 전달하지만 이는 보장 시간이 아닙니다. 따라서 AWS 설명을 그대로 SLO로 선언하지 않고 우리 시스템의 내부 목표를 정의합니다.</p>
+          <table>
+            <thead><tr><th>Signal</th><th>Acceptance target</th><th>측정 방법</th></tr></thead>
+            <tbody>
+              <tr><td>Coverage</td><td>활성 계정·Region 100%</td><td>Organizations inventory와 Trail 상태 정기 비교</td></tr>
+              <tr><td>Delivery freshness</td><td>99.9%가 15분 이내 도착</td><td><code>eventTime</code>과 S3 관측 시각의 차이</td></tr>
+              <tr><td>Delivery error</td><td>연속 10분 오류 없음</td><td><code>get-trail-status</code>의 latest error 필드</td></tr>
+              <tr><td>Integrity</td><td>일일 검증 실패 0건</td><td><code>aws cloudtrail validate-logs</code></td></tr>
+              <tr><td>Policy drift</td><td>다음 검사 주기 안에 100% 탐지</td><td>IaC drift와 AWS Config 또는 정기 비교</td></tr>
+            </tbody>
+          </table>
+          <p>15분과 99.9%는 AWS SLA가 아니라 이 시스템의 초기 목표입니다. 실제 workload와 조사 요구가 30분을 허용한다면 더 느슨하게 잡을 수 있습니다. 반대로 보안 탐지 파이프라인이 5분 안에 반응해야 한다면 S3 archive 경로와 별도로 CloudWatch Logs 또는 EventBridge의 실시간 경로를 설계해야 합니다.</p>
+
+          <h2 id="section-11">11. 모니터링은 로그 내용과 로그 파이프라인을 함께 본다</h2>
+          <p>CloudTrail 이벤트에서 위험 API를 찾는 모니터링과 CloudTrail 자체가 정상 전달되는지 확인하는 모니터링은 다릅니다. 후자가 없으면 탐지 시스템이 조용한 이유가 "위험 이벤트가 없음"인지 "로그가 끊김"인지 구분할 수 없습니다.</p>
+          <pre><code class="language-bash">aws cloudtrail get-trail-status \
+  --name arn:aws:cloudtrail:&lt;REGION&gt;:&lt;MANAGEMENT_ACCOUNT_ID&gt;:trail/&lt;TRAIL_NAME&gt;
+
+# 확인할 핵심 필드
+# IsLogging
+# LatestDeliveryError
+# LatestDeliveryTime
+# LatestDigestDeliveryError
+# LatestDigestDeliveryTime</code></pre>
+          <div class="mermaid diagram compact-diagram">
+flowchart TD
+    poll[Scheduled status check] --> state{IsLogging?}
+    state -->|no| page[P1 page]
+    state -->|yes| error{Delivery or digest error?}
+    error -->|yes| ticket[P2 incident]
+    error -->|no| freshness{Freshness within budget?}
+    freshness -->|no| investigate[Investigate lag]
+    freshness -->|yes| healthy[Healthy]
+          </div>
+
+          <h2 id="section-12">12. 실패 유형별 runbook을 분리한다</h2>
+          <p>모든 문제를 "CloudTrail 장애"로 묶으면 복구가 느려집니다.</p>
+          <table>
+            <thead><tr><th>증상</th><th>먼저 볼 곳</th><th>복구 후 검증</th></tr></thead>
+            <tbody>
+              <tr><td><code>InsufficientEncryptionPolicyException</code></td><td>KMS key 상태, SourceArn, encryption context</td><td>새 객체의 KMS key ID와 delivery status</td></tr>
+              <tr><td>S3 <code>AccessDenied</code></td><td>Bucket Policy prefix, ACL condition, SourceArn</td><td>새 로그와 digest가 모두 도착</td></tr>
+              <tr><td>특정 계정만 누락</td><td>Organization membership, opt-in Region, Trail copy</td><td>해당 account ID prefix 생성</td></tr>
+              <tr><td>Digest chain 실패</td><td>누락·이동·변조된 digest와 log object</td><td>원래 위치에서 <code>validate-logs</code> 재실행</td></tr>
+              <tr><td>비용 급증</td><td>중복 Trail, data event selector, CloudWatch Logs ingest</td><td>usage type과 일별 event volume 안정화</td></tr>
+            </tbody>
+          </table>
+          <p>Bucket 또는 KMS 정책 오류가 나면 CloudTrail은 최대 30일 동안 재전송을 시도하고 재전송에도 표준 요금이 발생할 수 있습니다. 따라서 "언젠가 다시 들어오겠지"가 아니라 오류 발생 시각, 수정 시각, backfill 종료 시각을 incident timeline에 남깁니다.</p>
+
+          <h2 id="section-13">13. 비용은 계정 수보다 이벤트 사본과 보존에서 관리한다</h2>
+          <p>비용 모델은 다음 네 항목으로 나눕니다.</p>
+          <pre><code>Monthly cost
+  = duplicate management event delivery
+  + selected data event delivery
+  + S3 storage and lifecycle transitions
+  + optional CloudWatch Logs or query cost</code></pre>
+          <p>첫 번째 management event 사본은 Region별로 무료지만 추가 사본에는 비용이 생기며, data event는 첫 사본부터 과금됩니다. 따라서 "보안을 위해 모든 것을 수집"하기보다 threat model에 맞춰 S3 object-level, Lambda invoke 같은 data event를 선택합니다.</p>
+          <p>초기 비용 guardrail은 금액을 임의로 정하기보다 현재 7일 event volume으로 baseline을 만든 뒤 정합니다. 예를 들어 management event 유료 사본은 0을 목표로 하고, data event와 CloudWatch Logs ingest는 주간 증감률과 절대 예산을 함께 경보로 둡니다.</p>
+
+          <h2 id="section-14">14. 계정 온보딩과 예외를 governance workflow로 만든다</h2>
+          <p>Organization Trail이 새 계정을 자동 포함하더라도 "계정 생성 완료"와 "감사 준비 완료"는 같지 않습니다. Account vending workflow에 다음 검증을 포함합니다.</p>
+          <ol>
+            <li>계정이 승인된 OU와 Organization Trail에 포함되었는지 확인합니다.</li>
+            <li>활성·opt-in Region 목록을 inventory에 반영합니다.</li>
+            <li>중앙 S3에 해당 account ID 경로가 생성되는지 확인합니다.</li>
+            <li>예외 data event selector가 있다면 owner, 사유, 만료일을 기록합니다.</li>
+            <li>계정 폐쇄 시 보존 기간과 조사 접근권한을 별도 처리합니다.</li>
+          </ol>
+          <p>예외에는 반드시 만료일이 있어야 합니다. 비용 때문에 특정 data event를 끄거나 기술적 이유로 Region을 제외했다면 영구 설정으로 남기지 않고 재검토 날짜를 둡니다.</p>
+
+          <h2 id="section-15">15. 운영 책임을 코드 소유권과 incident 역할로 나눈다</h2>
+          <table>
+            <thead><tr><th>영역</th><th>Primary owner</th><th>책임</th></tr></thead>
+            <tbody>
+              <tr><td>Organization Trail baseline</td><td>Cloud Platform</td><td>IaC, Region coverage, 계정 온보딩</td></tr>
+              <tr><td>수집 정책과 보존 기준</td><td>Security</td><td>이벤트 범위, retention, 예외 승인</td></tr>
+              <tr><td>S3·KMS 운영</td><td>Log Archive owner</td><td>Bucket, key, lifecycle, access review</td></tr>
+              <tr><td>조사와 복호화</td><td>Security Incident Response</td><td>Read role 사용, evidence handling</td></tr>
+              <tr><td>비용 예산</td><td>Platform + FinOps</td><td>중복 사본과 data event volume 검토</td></tr>
+            </tbody>
+          </table>
+          <p>긴급 복구에서 누가 Bucket Policy를 바꿀 수 있는지, 누가 KMS key를 다시 enable할 수 있는지, 누가 감사 증적을 열람할 수 있는지를 미리 분리합니다. 한 명의 관리자에게 수집 중지, 로그 삭제, key 삭제와 조사 권한이 모두 모이지 않게 하는 것이 핵심입니다.</p>
+
+          <h2 id="section-16">16. 배포 후 검증은 성공 테스트와 거부 테스트를 함께 한다</h2>
+          <p>"S3에 파일 하나가 생겼다"만으로는 완료가 아닙니다. 다음 acceptance suite를 실행합니다.</p>
+          <pre><code class="language-bash"># Trail이 logging 중이고 delivery error가 없는지 확인
+aws cloudtrail get-trail-status --name &lt;TRAIL_ARN&gt;
+
+# 설정 baseline 확인
+aws cloudtrail get-trail --name &lt;TRAIL_ARN&gt;
+aws cloudtrail get-event-selectors --trail-name &lt;TRAIL_ARN&gt;
+
+# 지정 기간의 digest와 log 무결성 확인
+aws cloudtrail validate-logs \
+  --trail-arn &lt;TRAIL_ARN&gt; \
+  --start-time &lt;ISO_8601_TIME&gt; \
+  --verbose</code></pre>
+          <ul>
+            <li>허용된 Organization Trail은 management·organization prefix에 쓸 수 있습니다.</li>
+            <li>임의 IAM Role과 승인되지 않은 Trail은 같은 bucket에 쓸 수 없습니다.</li>
+            <li>Investigator role은 읽고 복호화할 수 있지만 삭제하거나 retention을 바꿀 수 없습니다.</li>
+            <li>Workload account administrator는 Organization Trail을 중지하거나 수정할 수 없습니다.</li>
+            <li>새 계정을 canary로 추가했을 때 별도 수동 정책 수정 없이 로그가 도착합니다.</li>
+            <li>KMS와 Bucket Policy의 의도적 오류를 sandbox에서 주입했을 때 경보와 runbook이 작동합니다.</li>
+          </ul>
+
+          <h2 id="section-17">17. 아직 production-grade라고 주장하지 않는 범위</h2>
+          <p>이 설계만으로 모든 감사 요구를 충족했다고 볼 수는 없습니다.</p>
+          <ul>
+            <li>실제 계정·Region 규모에서 delivery freshness 분포를 측정하지 않았습니다.</li>
+            <li>조직의 법적 보존 기간과 Object Lock mode는 compliance owner의 승인이 필요합니다.</li>
+            <li>모든 서비스의 data event를 수집하지 않으므로 threat model별 selector 검토가 남아 있습니다.</li>
+            <li>CloudTrail Lake, Security Lake, SIEM 전달은 분석 요구와 비용을 확인한 뒤 별도 결정해야 합니다.</li>
+            <li>복구 훈련과 KMS key 장애 주입을 정기적으로 실행하기 전에는 runbook의 실효성을 보장할 수 없습니다.</li>
+          </ul>
+          <p>이 한계를 적는 이유는 기술 목록을 늘리는 것보다 어디까지 검증했는지 구분하는 것이 더 중요한 운영 정보이기 때문입니다.</p>
+
+          <h2 id="section-18">18. 마무리</h2>
+          <p>CloudTrail 중앙화의 핵심은 여러 계정에 S3 쓰기 권한을 주는 것이 아닙니다. Organization이 만드는 coverage, Service Principal과 SourceArn이 만드는 delivery boundary, KMS와 보존 정책이 만드는 evidence boundary, SLO와 runbook이 만드는 운영 책임을 연결하는 것입니다.</p>
+          <blockquote><p>Central logging은 저장 위치가 아니라 통제 시스템입니다. 수집 여부뿐 아니라 누락을 언제 발견하고, 누가 복구하며, 어떤 증거로 정상화를 판단할지까지 설계해야 합니다.</p></blockquote>
+          <p><strong>참고 문서:</strong>
+            <a href="https://docs.aws.amazon.com/awscloudtrail/latest/userguide/creating-trail-organization.html">Creating a trail for an organization</a>,
+            <a href="https://docs.aws.amazon.com/awscloudtrail/latest/userguide/create-s3-bucket-policy-for-cloudtrail.html">Amazon S3 bucket policy for CloudTrail</a>,
+            <a href="https://docs.aws.amazon.com/awscloudtrail/latest/userguide/create-kms-key-policy-for-cloudtrail.html">Configure AWS KMS key policies for CloudTrail</a>,
+            <a href="https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudtrail-log-file-validation-cli.html">Validating CloudTrail log integrity</a>,
+            <a href="https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudtrail-trail-manage-costs.html">Managing CloudTrail trail costs</a>,
+            <a href="https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-lock.html">S3 Object Lock</a>
+          </p>
+        </div>
+
+        <!-- GENERATED:ARTICLE_TAIL:START -->
+        <nav class="article-pagination" aria-label="발행 순서로 읽기">
+          <span class="article-nav-empty"><span>Newer</span><strong>더 이상 글이 없습니다.</strong></span>
+          <a href="./aws-iam-cross-account-assumerole-sts-vendor-access.html"><span>Older</span><strong>[AWS/IAM] 외부 업체에 Access Key를 주지 않고 AWS 계정 접근을 허용하기 - Cross-Account AssumeRole과 STS</strong></a>
+        </nav>
+        <aside class="related-notes" aria-labelledby="related-heading">
+          <h2 id="related-heading">Related notes</h2>
+          <div class="related-note-list">
+          <a href="./aws-s3-inventory-batch-operations-delete-objects.html">
+            <span>S3 · 2026.08.26</span>
+            <strong>[AWS/S3] 수백만 개의 오래된 S3 객체를 서버리스로 삭제하려면? - S3 Inventory와 Batch Operations</strong>
+          </a>
+          <a href="./s3-pii-detection-macie-object-lock.html">
+            <span>S3 · 2026.08.07</span>
+            <strong>[AWS] S3에서 PII를 자동 탐지하고 삭제를 방지하기 - Macie + EventBridge + Object Lock</strong>
+          </a>
+          <a href="./s3-presigned-url-lambda-image-processing.html">
+            <span>S3 · 2026.08.06</span>
+            <strong>[AWS] 이미지 업로드 병목 제거하기 - S3 Presigned URL과 Lambda로 Event-Driven Processing 구성</strong>
+          </a>
+          </div>
+        </aside>
+        <!-- GENERATED:ARTICLE_TAIL:END -->
+      </article>
+    </main>
+
+    <footer class="site-footer">
+      <p>© 2026 Jiwon Kim</p>
+      <div class="footer-links">
+        <span id="visitStatus">집계 중</span>
+        <a href="../articles.html">Articles</a>
+        <a href="../feed.xml">RSS</a>
+      </div>
+    </footer>
+    <script src="../script.js?v=20260905-4"></script>
+    <script data-goatcounter="https://jiwonkim-blog.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
+    <noscript><img class="tracking-pixel" src="https://jiwonkim-blog.goatcounter.com/count?p=/posts/aws-cloudtrail-organization-central-s3-governance.html" alt="" /></noscript>
+  </body>
+</html>

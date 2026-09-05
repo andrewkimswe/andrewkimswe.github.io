@@ -49,7 +49,7 @@ Audit date: 2026-09-05
 
 ## Verification
 
-- Site validator: 29 posts and 3 indexable pages passed
+- Site validator: 30 posts and 3 indexable pages passed
 - Long-form article UI: 16 TOC links matched 16 article headings
 - Code controls: 20 code blocks matched 20 copy buttons
 - Mermaid: 36 of 36 diagrams rendered without fallback errors in the longest RAG article

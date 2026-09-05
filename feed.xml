@@ -8,6 +8,13 @@
     <language>ko-KR</language>
     <lastBuildDate>Sat, 05 Sep 2026 00:00:00 +0900</lastBuildDate>
     <item>
+      <title>[AWS/Security] 여러 계정의 CloudTrail 로그를 중앙화해도 감사 공백이 생기는 이유 - Organization Trail, S3 Policy, KMS, Delivery SLO</title>
+      <link>https://andrewkimswe.github.io/posts/aws-cloudtrail-organization-central-s3-governance.html</link>
+      <guid isPermaLink="true">https://andrewkimswe.github.io/posts/aws-cloudtrail-organization-central-s3-governance.html</guid>
+      <pubDate>Sat, 05 Sep 2026 00:00:00 +0900</pubDate>
+      <description>로그를 한 버킷에 모으는 구성에서 더 나아가 계정 온보딩, 최소 권한, 무결성, 수집 지연, 비용과 운영 책임까지 설계합니다.</description>
+    </item>
+    <item>
       <title>[AWS/IAM] 외부 업체에 Access Key를 주지 않고 AWS 계정 접근을 허용하기 - Cross-Account AssumeRole과 STS</title>
       <link>https://andrewkimswe.github.io/posts/aws-iam-cross-account-assumerole-sts-vendor-access.html</link>
       <guid isPermaLink="true">https://andrewkimswe.github.io/posts/aws-iam-cross-account-assumerole-sts-vendor-access.html</guid>
