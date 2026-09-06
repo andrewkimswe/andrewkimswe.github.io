@@ -1,0 +1,624 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>[AWS/Streaming] Consumer를 늘렸는데 Kinesis 지연이 줄지 않는 이유 - Shard, EFO, KCL | Jiwon Kim Engineering Notes</title>
+    <meta name="description" content="Amazon Kinesis Data Streams의 shard 용량, partition key, Enhanced Fan-Out, KCL lease와 checkpoint를 하나의 운영 계약으로 설계하고 resharding, 관측, 비용과 회귀 검증까지 연결합니다." />
+    <meta name="author" content="Jiwon Kim" />
+    <meta name="robots" content="index, follow, max-image-preview:large" />
+    <link rel="canonical" href="https://andrewkimswe.github.io/posts/aws-streaming-kinesis-shard-efo-kcl-checkpointing.html" />
+    <meta property="og:site_name" content="Jiwon Kim | Engineering Notes" />
+    <meta property="og:title" content="[AWS/Streaming] Consumer를 늘렸는데 Kinesis 지연이 줄지 않는 이유 - Shard, EFO, KCL" />
+    <meta property="og:description" content="Kinesis의 write, read, processing capacity를 분리하고 EFO 선택, KCL checkpoint, resharding과 운영 SLO를 함께 설계합니다." />
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="https://andrewkimswe.github.io/posts/aws-streaming-kinesis-shard-efo-kcl-checkpointing.html" />
+    <meta property="og:image" content="https://andrewkimswe.github.io/assets/social-card.png" />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Jiwon Kim Engineering Notes" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://andrewkimswe.github.io/assets/social-card.png" />
+    <meta name="twitter:title" content="[AWS/Streaming] Consumer를 늘렸는데 Kinesis 지연이 줄지 않는 이유 - Shard, EFO, KCL" />
+    <meta name="twitter:description" content="Kinesis의 write, read, processing capacity를 분리하고 EFO 선택, KCL checkpoint, resharding과 운영 SLO를 함께 설계합니다." />
+    <meta name="twitter:image:alt" content="Jiwon Kim Engineering Notes" />
+    <meta property="article:published_time" content="2026-09-22T00:00:00+09:00" />
+    <meta property="article:modified_time" content="2026-09-22T00:00:00+09:00" />
+    <meta property="article:author" content="Jiwon Kim" />
+    <meta property="article:tag" content="AWS" />
+    <meta property="article:tag" content="Streaming" />
+    <meta property="article:tag" content="Amazon Kinesis Data Streams" />
+    <meta property="article:tag" content="Enhanced Fan-Out" />
+    <meta property="article:tag" content="Kinesis Client Library" />
+    <meta property="article:tag" content="Reliability" />
+    <meta property="article:tag" content="Observability" />
+    <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="../styles.css?v=20260905-4" />
+    <script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","headline":"[AWS/Streaming] Consumer를 늘렸는데 Kinesis 지연이 줄지 않는 이유 - Shard, EFO, KCL","description":"Amazon Kinesis Data Streams의 shard 용량, partition key, Enhanced Fan-Out, KCL lease와 checkpoint를 하나의 운영 계약으로 설계하고 resharding, 관측, 비용과 회귀 검증까지 연결합니다.","datePublished":"2026-09-22T00:00:00+09:00","dateModified":"2026-09-22T00:00:00+09:00","author":{"@type":"Person","name":"Jiwon Kim","url":"https://github.com/andrewkimswe"},"publisher":{"@type":"Person","name":"Jiwon Kim"},"mainEntityOfPage":"https://andrewkimswe.github.io/posts/aws-streaming-kinesis-shard-efo-kcl-checkpointing.html","inLanguage":"ko-KR"}
+    </script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main-content">본문으로 바로가기</a>
+    <header class="site-header">
+      <a class="brand" href="../" aria-label="Jiwon Kim Engineering Notes 홈">
+        <span class="brand-mark" aria-hidden="true">JK</span>
+        <span class="brand-copy"><strong>Jiwon Kim</strong><small>Engineering Notes</small></span>
+      </a>
+      <nav class="nav-links" aria-label="주요 메뉴">
+        <a href="../articles.html">Articles</a>
+        <a href="../projects.html">Projects</a>
+        <a href="../#about">About</a>
+        <span class="nav-divider" aria-hidden="true"></span>
+        <a href="https://github.com/andrewkimswe">GitHub</a>
+        <a href="https://www.linkedin.com/in/jiwon-kim-867334285/">LinkedIn</a>
+      </nav>
+    </header>
+
+    <main id="main-content">
+      <article class="article-page">
+        <header class="article-hero">
+          <a class="back-link" href="../articles.html">All articles</a>
+          <p class="eyebrow">AWS · Streaming · Reliability</p>
+          <h1>[AWS/Streaming] Consumer를 늘렸는데 Kinesis 지연이 줄지 않는 이유 - Shard, EFO, KCL</h1>
+          <p class="article-summary">Kinesis의 write, read, processing capacity를 분리하고 EFO 선택, KCL checkpoint, resharding과 운영 SLO를 함께 설계합니다.</p>
+          <div class="article-meta"><time datetime="2026-09-22">2026.09.22</time><span>AWS</span><span>Kinesis</span><span>EFO</span><span>KCL</span></div>
+        </header>
+
+        <div class="article-body">
+          <p>주문 event를 Kinesis Data Streams에 발행하고 fraud detection, 고객 알림과 analytics가 각각 소비한다고 가정해보겠습니다. 처음에는 fraud consumer 하나뿐이라 지연이 거의 없었습니다. analytics와 notification consumer를 추가하자 <code>IteratorAge</code>가 함께 증가했고, worker 수를 두 배로 늘려도 특정 shard의 backlog는 줄지 않았습니다.</p>
+          <p>이 상황에서 "consumer instance가 부족하다"고 결론 내리면 compute 비용만 늘 수 있습니다. 병목은 producer의 write capacity, 여러 consumer가 공유하는 read capacity, partition key가 만든 hot shard, KCL worker의 처리 성능과 downstream sink 중 어디에나 있을 수 있기 때문입니다.</p>
+          <p>이 글은 실제 production incident의 성과 보고서가 아니라 <strong>주문 event stream을 운영하기 위한 설계와 검증 계획</strong>입니다. 아래 처리량, latency와 오류율은 실측 결과가 아닌 초기 acceptance target입니다. load test와 장애 실험 결과를 채우기 전까지 production-grade를 달성했다고 주장하지 않습니다.</p>
+
+          <h2>1. Stream이 아니라 end-to-end 처리 완료를 성공으로 정의한다</h2>
+          <p><code>PutRecords</code> 요청이 성공했다고 주문 projection이 갱신된 것은 아닙니다. Kinesis에 record가 저장된 시점과 consumer가 업무 효과를 commit한 시점을 분리해서 측정해야 합니다.</p>
+          <div class="mermaid diagram">
+flowchart LR
+    producer[Order producer] --> write[Write capacity]
+    write --> shard[Kinesis shards]
+    shard --> delivery[Shared read or EFO]
+    delivery --> worker[KCL workers]
+    worker --> sink[Business sink]
+    sink --> done[Observable business completion]
+          </div>
+          <table>
+            <thead><tr><th>계층</th><th>용량을 결정하는 값</th><th>대표 실패</th></tr></thead>
+            <tbody>
+              <tr><td>Write</td><td>초당 byte, record와 partition key 분포</td><td>hot shard, 부분 성공, throttling</td></tr>
+              <tr><td>Read delivery</td><td>shard별 shared throughput 또는 EFO consumer 수</td><td>consumer 간 경합, subscription 오류</td></tr>
+              <tr><td>Processing</td><td>open shard, KCL worker CPU와 sink latency</td><td>worker 포화, lease 이동, checkpoint 지연</td></tr>
+              <tr><td>Business</td><td>event 발생부터 projection commit까지의 시간</td><td>중복 side effect, poison event, 정합성 누락</td></tr>
+            </tbody>
+          </table>
+          <p>운영 SLO는 "stream이 ACTIVE"가 아니라 "정상 event의 99%가 5초 안에 모든 중요 projection에 반영"처럼 업무 완료 시점으로 정의합니다. AWS service metric은 원인 분석에 쓰고, 성공 여부는 application metric과 reconciliation 결과로 판단합니다.</p>
+
+          <h2>2. Shard 수는 write와 read 중 더 큰 요구량으로 계산한다</h2>
+          <p>Provisioned mode의 shard 하나는 최대 1 MB/s 또는 1,000 records/s의 write를 받고, shared-throughput consumer에는 shard당 합계 2 MB/s의 read를 제공합니다. 두 제한은 동시에 적용되므로 record가 작다고 byte 계산을 생략하거나, byte가 작다고 record 수를 무시하면 안 됩니다.</p>
+          <pre><code class="language-text">write_shards_by_bytes   = ceil(peak_write_MBps / 1)
+write_shards_by_records = ceil(peak_records_per_second / 1000)
+shared_read_shards      = ceil(sum(consumer_read_MBps) / 2)
+
+base_shards = max(
+  write_shards_by_bytes,
+  write_shards_by_records,
+  shared_read_shards
+)
+
+planned_shards = ceil(base_shards x headroom_ratio)</code></pre>
+          <p>peak write가 6.4 MB/s, 4,000 records/s이고 세 consumer가 모든 record를 shared 방식으로 읽는다면 write 기준은 7개와 4개지만 aggregate read는 19.2 MB/s이므로 read 기준은 10개입니다. 여기에 30% headroom을 적용하면 초기 계획은 13개 shard가 됩니다.</p>
+          <p>이 계산은 균등 분포를 전제로 한 하한선입니다. 평균 사용률이 50%여도 하나의 partition key가 shard 한 개의 한도를 넘으면 해당 shard만 throttle됩니다. 그래서 shard count와 partition key 검증은 같은 capacity review에서 다룹니다.</p>
+
+          <h2>3. Partition key는 데이터 분배와 순서 보장의 범위를 동시에 정한다</h2>
+          <p>Kinesis는 partition key를 hash key로 변환해 shard에 record를 배치합니다. 같은 partition key의 record는 같은 shard에 들어가므로 해당 key 안의 순서를 다룰 수 있지만, 낮은 cardinality key는 hot shard를 만들기 쉽습니다.</p>
+          <table>
+            <thead><tr><th>후보</th><th>장점</th><th>위험</th><th>판단</th></tr></thead>
+            <tbody>
+              <tr><td><code>tenantId</code></td><td>tenant 단위의 전체 순서</td><td>대형 tenant 하나가 shard 한도를 독점</td><td>tenant 간 크기 편차가 크면 제외</td></tr>
+              <tr><td><code>orderId</code></td><td>높은 cardinality, 주문 단위 순서</td><td>tenant 전체 순서는 제공하지 않음</td><td>주문 상태 전이가 독립적이면 선택</td></tr>
+              <tr><td><code>tenantId#bucket</code></td><td>대형 tenant traffic 분산</td><td>tenant 전체 순서를 downstream에서 복원해야 함</td><td>명시적 sequence와 병합 로직이 있을 때만 선택</td></tr>
+              <tr><td>random UUID</td><td>분배가 쉬움</td><td>업무 순서와 재현 가능한 routing을 잃음</td><td>순서가 전혀 필요 없는 telemetry에 한정</td></tr>
+            </tbody>
+          </table>
+          <p>주문 stream에서는 <code>orderId</code>를 선택합니다. 한 주문 안의 상태 순서는 유지하면서 여러 주문을 shard에 분산할 수 있기 때문입니다. tenant 전체 순서가 필요하다는 요구가 생기면 key만 바꾸지 않고, 그 순서가 정말 업무 invariant인지부터 재검토합니다.</p>
+
+          <h2>4. On-demand도 가능하지만 이 workload에서는 Provisioned를 선택한다</h2>
+          <p>On-demand mode는 shard capacity planning과 일반적인 traffic 증가 대응을 AWS에 맡길 수 있습니다. 그러나 단일 partition key가 shard의 1 MB/s 또는 1,000 records/s write 한도를 넘는 문제는 자동 scaling으로 해결되지 않습니다. 과거 peak의 두 배를 갑자기 넘는 traffic에서도 일시적인 read·write exception이 발생할 수 있으므로 retry는 여전히 필요합니다.</p>
+          <table>
+            <thead><tr><th>선택지</th><th>장점</th><th>운영 책임</th><th>적합한 조건</th></tr></thead>
+            <tbody>
+              <tr><td>On-demand</td><td>초기 sizing과 shard 증감 작업 감소</td><td>partition skew, 급격한 peak와 비용 추적</td><td>traffic 예측이 어렵고 운영 인력이 작음</td></tr>
+              <tr><td>Provisioned</td><td>capacity와 shard-level 병렬성을 명시적으로 통제</td><td>sizing, resharding과 headroom 관리</td><td>지속 부하가 예측 가능하고 검증 가능한 변경 절차가 있음</td></tr>
+            </tbody>
+          </table>
+          <p>이 설계는 일별 peak가 반복되고, consumer별 latency gate와 비용 예산을 shard 수에 직접 연결해야 하므로 Provisioned를 선택합니다. 이것이 항상 더 저렴하다는 뜻은 아닙니다. 실제 30일 traffic과 reshard 운영 비용을 비교해 On-demand가 유리하면 mode를 변경하되, 동일한 skew와 retry test를 다시 통과해야 합니다.</p>
+
+          <h2>5. Shared throughput과 EFO는 consumer 중요도에 따라 섞어 쓴다</h2>
+          <p>shared-throughput consumer는 <code>GetRecords</code>로 polling하며 shard당 2 MB/s를 모든 shared consumer가 나눠 씁니다. Enhanced Fan-Out은 등록된 consumer마다 shard당 최대 2 MB/s의 전용 read throughput을 제공하고 <code>SubscribeToShard</code>로 record를 push합니다. 대신 consumer-shard hour와 retrieval 비용이 추가됩니다.</p>
+          <div class="mermaid diagram">
+flowchart TB
+    shard[Kinesis shard]
+    shard --> shared[Shared read capacity]
+    shared --> analytics[Analytics consumer]
+    shard --> fraud[EFO pipe for fraud]
+    shard --> notify[EFO pipe for notification]
+    fraud --> fraudsink[Fraud decision store]
+    notify --> notifysink[Notification workflow]
+    analytics --> lake[Analytics lake]
+          </div>
+          <table>
+            <thead><tr><th>Consumer</th><th>Latency 요구</th><th>선택</th><th>이유</th></tr></thead>
+            <tbody>
+              <tr><td>Fraud</td><td>주문 처리 경로에서 수초 이내</td><td>EFO</td><td>다른 consumer의 read burst와 격리</td></tr>
+              <tr><td>Notification</td><td>고객 체감 지연을 제한</td><td>EFO</td><td>fraud와 독립된 전용 throughput</td></tr>
+              <tr><td>Analytics</td><td>수십 초 backlog 허용</td><td>Shared</td><td>중요도가 낮고 비용 절감 가능</td></tr>
+            </tbody>
+          </table>
+          <p>세 consumer를 모두 EFO로 바꾸지 않습니다. 중요 consumer 두 개만 read 경합에서 분리하고 analytics 하나가 shared capacity를 사용하도록 구성합니다. 이 경우 앞선 예시의 shared read 요구량은 6.4 MB/s이므로 4개 shard이고, write 7개가 더 큰 기준입니다. 30% headroom을 적용하면 10개 shard에서 시작할 수 있습니다.</p>
+
+          <h2>6. EFO는 hot shard와 느린 sink를 고치는 기능이 아니다</h2>
+          <p>EFO 전환 뒤에도 lag가 남을 수 있습니다. 전용 read pipe가 해결하는 것은 consumer 간 read throughput 경합입니다. 하나의 partition key가 write capacity를 넘거나, record processor가 database connection을 기다리거나, poison event가 checkpoint를 막는 문제는 그대로 남습니다.</p>
+          <table>
+            <thead><tr><th>관찰</th><th>가능한 원인</th><th>먼저 할 일</th></tr></thead>
+            <tbody>
+              <tr><td>write throttle이 한 shard에 집중</td><td>partition skew</td><td>key별 traffic 분포와 업무 순서 요구 확인</td></tr>
+              <tr><td>shared consumer만 lag 증가</td><td><code>GetRecords</code> 경합</td><td>EFO 또는 consumer 통합 검토</td></tr>
+              <tr><td>EFO consumer 하나만 lag 증가</td><td>processor 또는 sink 병목</td><td>process time, CPU와 dependency latency 확인</td></tr>
+              <tr><td>모든 consumer가 같은 shard에서 지연</td><td>hot key 또는 큰 record</td><td>shard-level metric과 partition sample 분석</td></tr>
+              <tr><td>worker 추가 뒤에도 동일 shard 지연</td><td>shard당 단일 processing lane</td><td>reshard 또는 handler 최적화</td></tr>
+            </tbody>
+          </table>
+
+          <h2>7. Stream과 EFO consumer identity를 IaC로 고정한다</h2>
+          <p>runtime이 매번 다른 consumer name을 등록하게 두면 배포 version마다 비용과 quota가 누적되고 IAM resource도 추적하기 어려워집니다. 중요 consumer는 IaC에서 이름과 lifecycle을 관리하고, runtime에는 승인된 consumer identity만 주입합니다.</p>
+          <pre><code class="language-yaml">Resources:
+  OrderEventsStream:
+    Type: AWS::Kinesis::Stream
+    Properties:
+      Name: order-events
+      ShardCount: 10
+      RetentionPeriodHours: 72
+      StreamModeDetails:
+        StreamMode: PROVISIONED
+      StreamEncryption:
+        EncryptionType: KMS
+        KeyId: alias/aws/kinesis
+      Tags:
+        - Key: Owner
+          Value: order-platform
+        - Key: DataClass
+          Value: internal
+
+  FraudConsumer:
+    Type: AWS::Kinesis::StreamConsumer
+    Properties:
+      ConsumerName: order-fraud-v1
+      StreamARN: !GetAtt OrderEventsStream.Arn
+
+  NotificationConsumer:
+    Type: AWS::Kinesis::StreamConsumer
+    Properties:
+      ConsumerName: order-notification-v1
+      StreamARN: !GetAtt OrderEventsStream.Arn</code></pre>
+          <p>72시간 retention은 24시간을 넘는 consumer 장애와 주말 대응을 흡수하기 위한 초기 recovery budget입니다. 장기 보관 목적은 S3 archive가 담당하고, Kinesis retention은 replay 가능한 운영 시간만 포함합니다. 배포는 EFO consumer가 <code>ACTIVE</code>인지 확인한 뒤 KCL worker를 시작합니다.</p>
+          <p>KCL이 consumer를 runtime에 직접 등록하도록 둘 수도 있지만 그 경우에만 <code>RegisterStreamConsumer</code> 권한을 부여합니다. IaC가 등록을 소유한다면 consumer ARN을 runtime 설정에 명시하고 등록 권한을 제거해 소유권을 한쪽으로 정합니다.</p>
+
+          <h2>8. PutRecords의 HTTP 200을 batch 전체 성공으로 해석하지 않는다</h2>
+          <p><code>PutRecords</code>는 한 요청 안에서 성공 record와 실패 record를 함께 반환할 수 있습니다. 하나가 성공해도 API 응답 자체는 HTTP 200일 수 있으므로 <code>FailedRecordCount</code>와 각 result의 <code>ErrorCode</code>를 검사해야 합니다.</p>
+          <pre><code class="language-python">def put_with_bounded_retry(client, stream_arn, entries, max_attempts=5):
+    pending = entries
+
+    for attempt in range(max_attempts):
+        response = client.put_records(
+            StreamARN=stream_arn,
+            Records=pending,
+        )
+
+        failed = [
+            original
+            for original, result in zip(pending, response["Records"])
+            if "ErrorCode" in result
+        ]
+        if not failed:
+            return
+
+        pending = failed
+        sleep_with_full_jitter(attempt)
+
+    raise PublishIncomplete(pending)</code></pre>
+          <p>성공 record까지 batch 전체를 다시 보내면 duplicate를 불필요하게 늘립니다. 실패 항목만 bounded exponential backoff와 jitter로 재시도하고, 예산을 소진한 event는 durable outbox에 남겨 별도 relay가 복구합니다. <code>PutRecords</code>는 batch 안의 엄격한 순서를 보장하지 않으므로 반드시 같은 key의 write 순서가 필요하다면 순차적인 <code>PutRecord</code> 경로를 검토합니다.</p>
+
+          <h2>9. Event contract에는 replay와 중복 처리를 위한 식별자를 넣는다</h2>
+          <pre><code class="language-json">{
+  "eventId": "01K5R8VDF4T2N6Q9W7C3M1P0AZ",
+  "eventType": "OrderStatusChanged.v2",
+  "aggregateId": "ord-20260922-004821",
+  "aggregateVersion": 7,
+  "partitionKey": "ord-20260922-004821",
+  "occurredAt": "2026-09-22T00:15:21.204Z",
+  "producer": "order-api@4f8c1d2",
+  "traceId": "1-68d0...",
+  "payload": {
+    "previousStatus": "PAID",
+    "currentStatus": "FULFILLING"
+  }
+}</code></pre>
+          <ul>
+            <li><code>eventId</code>는 consumer idempotency key와 quarantine key로 사용합니다.</li>
+            <li><code>aggregateVersion</code>은 오래된 상태가 최신 projection을 덮지 못하게 합니다.</li>
+            <li><code>occurredAt</code>은 Kinesis iterator lag와 별도로 업무 end-to-end lag를 계산합니다.</li>
+            <li><code>producer</code>와 schema version은 incompatible producer를 추적하는 근거입니다.</li>
+            <li>partition key와 payload에는 불필요한 개인정보를 넣지 않습니다.</li>
+          </ul>
+          <p>schema 변경은 additive change부터 적용하고, consumer가 이전과 새 version을 함께 읽는 기간을 둡니다. required field 삭제나 의미 변경은 새 event type으로 분리하고 compatibility fixture를 CI에 고정합니다.</p>
+
+          <h2>10. KCL application name은 배포 이름이 아니라 durable consumer identity다</h2>
+          <p>KCL은 application name을 기준으로 DynamoDB lease와 checkpoint state를 관리합니다. 같은 business consumer의 pod가 여러 개여도 application name은 같아야 shard를 나눠 처리합니다. 반대로 fraud와 notification이 같은 application name을 쓰면 서로의 lease를 빼앗아 각 event를 한쪽만 처리할 수 있습니다.</p>
+          <pre><code class="language-yaml">stream_name: order-events
+
+consumers:
+  fraud:
+    kcl_application_name: order-fraud-v1
+    delivery: enhanced-fan-out
+    registered_consumer_name: order-fraud-v1
+    initial_position: TRIM_HORIZON
+  notification:
+    kcl_application_name: order-notification-v1
+    delivery: enhanced-fan-out
+    registered_consumer_name: order-notification-v1
+    initial_position: TRIM_HORIZON
+  analytics:
+    kcl_application_name: order-analytics-v1
+    delivery: polling
+    initial_position: TRIM_HORIZON</code></pre>
+          <p><code>initial_position</code>은 lease table에 checkpoint가 없는 최초 bootstrap에서만 기대한 시작점을 결정합니다. 기존 application name의 lease가 남아 있다면 설정을 바꿔도 과거 checkpoint에서 재개할 수 있습니다. replay가 필요할 때 production application name을 재사용하지 않고 별도 replay identity와 sink namespace를 사용합니다.</p>
+
+          <h2>11. KCL 3.x metadata table도 application resource로 운영한다</h2>
+          <p>KCL 3.x는 기본적으로 application마다 lease table, worker metrics table과 coordinator state table을 DynamoDB에 만듭니다. lease table에는 shard owner, checkpoint와 parent-child lineage가 저장됩니다. 이 table은 임시 cache가 아니라 consumer의 처리 위치를 가진 운영 state입니다.</p>
+          <table>
+            <thead><tr><th>Resource</th><th>역할</th><th>운영 정책</th></tr></thead>
+            <tbody>
+              <tr><td>Lease table</td><td>shard lease와 checkpoint 저장</td><td>on-demand billing, PITR·backup 요구 검토, 삭제 승인</td></tr>
+              <tr><td>Worker metrics table</td><td>KCL 3.x worker utilization 기반 balancing</td><td>library version과 migration 상태 추적</td></tr>
+              <tr><td>Coordinator state table</td><td>leader와 migration coordination</td><td>일반 업무 table과 분리된 ownership</td></tr>
+              <tr><td>KCL custom metrics</td><td>lease, processing과 lag 관측</td><td>namespace, detail level과 비용 예산 설정</td></tr>
+            </tbody>
+          </table>
+          <p>KCL은 application을 폐기해도 metadata table을 자동으로 모두 삭제하지 않습니다. decommission checklist에 consumer deregistration, table snapshot 필요 여부, retention 기간, 삭제 승인과 IAM 제거를 포함합니다. KCL 3.5의 single-table format을 도입한다면 별도 migration과 rollback gate를 거치며 단순한 비용 최적화 변경으로 취급하지 않습니다.</p>
+
+          <h2>12. Worker를 shard보다 많이 늘려도 한 shard는 더 빨라지지 않는다</h2>
+          <p>KCL에서 하나의 shard lease는 한 시점에 한 worker가 소유하고, 해당 shard의 record processor가 순차적인 처리 위치를 관리합니다. open shard가 10개라면 processing parallelism의 상한도 기본적으로 10개입니다. standby 목적이 아니라면 worker를 20개로 늘려도 나머지는 처리할 shard가 없습니다.</p>
+          <div class="mermaid diagram compact-diagram">
+flowchart TB
+    leases[(KCL lease table)]
+    leases --> w1[Worker A]
+    leases --> w2[Worker B]
+    leases --> w3[Worker C]
+    w1 --> s1[Shard 1 processor]
+    w1 --> s2[Shard 2 processor]
+    w2 --> s3[Shard 3 processor]
+    w2 --> s4[Shard 4 processor]
+    w3 --> s5[Shard 5 processor]
+    w3 --> s6[Shard 6 processor]
+          </div>
+          <p>lag가 늘면 worker 수부터 올리지 않습니다. <code>MillisBehindLatest</code>, <code>RecordProcessor.processRecords.Time</code>, CPU, memory, <code>CurrentLeases</code>, <code>LostLeases</code>와 downstream latency를 함께 봅니다. 모든 worker가 CPU 포화라면 instance와 worker를 늘리고, 특정 shard만 느리면 hot key 또는 해당 shard의 slow event를 찾습니다.</p>
+
+          <h2>13. Checkpoint는 읽은 위치가 아니라 durable side effect가 끝난 위치다</h2>
+          <p>KCL checkpoint는 마지막으로 안전하게 처리한 sequence number를 DynamoDB lease table에 기록합니다. checkpoint를 먼저 쓰고 sink commit에 실패하면 record를 건너뛰어 data loss가 생깁니다. sink를 먼저 commit하고 checkpoint 전에 worker가 죽으면 같은 record가 replay됩니다.</p>
+          <div class="mermaid diagram">
+sequenceDiagram
+    participant K as Kinesis shard
+    participant W as KCL worker
+    participant S as Idempotent sink
+    participant L as Lease table
+    K->>W: Deliver record batch
+    W->>S: Validate and apply events
+    S-->>W: Durable commit
+    W->>L: Checkpoint last committed record
+    Note over W,L: Crash before checkpoint causes replay
+    L-->>W: Resume after checkpoint on restart
+          </div>
+          <p>따라서 KCL은 at-least-once processing으로 보고 sink를 idempotent하게 만듭니다. batch checkpoint 간격을 길게 잡으면 DynamoDB write와 overhead는 줄지만 crash 시 replay 범위가 커집니다. 간격은 비용보다 허용 가능한 duplicate replay window와 recovery time을 기준으로 결정합니다.</p>
+
+          <h2>14. Record processor는 permanent failure와 retryable failure를 분리한다</h2>
+          <pre><code class="language-java">@Override
+public void processRecords(ProcessRecordsInput input) {
+    for (KinesisClientRecord record : input.records()) {
+        try {
+            OrderEvent event = decoder.decode(record.data());
+            contractValidator.validate(event);
+
+            projectionStore.applyIdempotently(
+                event.eventId(),
+                event.aggregateId(),
+                event.aggregateVersion(),
+                event.payload()
+            );
+        } catch (UnsupportedEventException permanent) {
+            quarantineStore.putIfAbsent(
+                record.sequenceNumber(),
+                record.partitionKey(),
+                record.data(),
+                permanent.getClass().getSimpleName()
+            );
+        } catch (RetryableDependencyException retryable) {
+            throw retryable;
+        }
+    }
+
+    input.checkpointer().checkpoint();
+}</code></pre>
+          <p>schema가 잘못된 permanent failure는 원문을 암호화된 quarantine에 durable하게 저장한 뒤 처리 완료로 간주할 수 있습니다. quarantine write 자체가 실패하면 checkpoint하지 않습니다. dependency timeout 같은 retryable failure는 batch를 실패시켜 이전 checkpoint부터 재처리합니다. 이미 성공한 record도 다시 올 수 있으므로 projection의 conditional write가 중복을 흡수해야 합니다.</p>
+          <p>예외를 log만 남기고 계속 진행하면 event 유실이 되고, 모든 예외를 무한 재시도하면 poison event 하나가 shard 전체를 막습니다. 실패 분류, 격리 저장소와 replay 승인 절차가 record processor 계약의 일부입니다.</p>
+
+          <h2>15. Idempotent sink는 event ID와 aggregate version을 함께 확인한다</h2>
+          <p><code>eventId</code>만 저장하면 동일 event의 재실행은 막을 수 있지만, 서로 다른 event가 오래된 상태를 덮는 문제는 막지 못합니다. projection row에 마지막 aggregate version을 함께 저장하고 더 큰 version만 적용합니다.</p>
+          <pre><code class="language-sql">UPDATE order_projection
+SET status = :status,
+    last_event_id = :event_id,
+    aggregate_version = :version,
+    updated_at = CURRENT_TIMESTAMP
+WHERE order_id = :order_id
+  AND aggregate_version &lt; :version;</code></pre>
+          <p>영향 row가 0이라면 이미 같은 또는 더 최신 version이 적용됐는지 조회합니다. payload가 같은 duplicate면 성공으로 반환하고, 같은 version에 다른 payload가 들어왔다면 producer contract violation으로 격리합니다. 외부 API 호출은 해당 서비스가 제공하는 idempotency key를 함께 사용하며, 결과가 불명확한 timeout은 조회와 reconciliation 대상으로 남깁니다.</p>
+
+          <h2>16. Resharding과 KCL worker scaling은 서로 다른 작업이다</h2>
+          <p>KCL은 shard split과 merge를 발견해 lease를 만들고 worker에 재배치하지만, stream의 shard 수를 스스로 바꾸지는 않습니다. KCL worker scaling은 이미 존재하는 shard를 처리할 compute를 늘리고, resharding은 stream throughput과 병렬 처리 lane을 늘립니다.</p>
+          <div class="mermaid diagram">
+flowchart LR
+    alarm[Capacity or lag alarm] --> classify{Bottleneck classification}
+    classify --> capacity[Write or read capacity]
+    classify --> compute[Worker CPU or memory]
+    classify --> dependency[Slow dependency]
+    classify --> hotkey[Single hot key]
+    capacity --> reshard[Update shard count]
+    compute --> workers[Scale KCL workers]
+    dependency --> protectsink[Protect or scale sink]
+    hotkey --> keydesign[Redesign partition contract]
+    reshard --> lineage[Parent and child shard lineage]
+    lineage --> checkpoint[Finish parent and checkpoint]
+    checkpoint --> children[Process child shards]
+          </div>
+          <p>KCL은 특정 partition key의 순서를 보존하기 위해 parent shard의 기존 record를 모두 처리한 뒤 child shard를 처리합니다. reshard 직후 worker 수를 늘렸는데도 child가 바로 처리되지 않는다면 장애로 단정하지 않고 <code>BlockOnParentTask</code>, parent lag와 checkpoint 상태를 확인합니다.</p>
+
+          <h2>17. Resharding은 alarm의 자동 반응이 아니라 승인된 변경으로 시작한다</h2>
+          <pre><code class="language-bash">aws kinesis update-shard-count \
+  --stream-name order-events \
+  --target-shard-count 16 \
+  --scaling-type UNIFORM_SCALING
+
+aws kinesis describe-stream-summary \
+  --stream-name order-events \
+  --query 'StreamDescriptionSummary.{
+    Status:StreamStatus,
+    OpenShards:OpenShardCount,
+    Mode:StreamModeDetails.StreamMode
+  }'</code></pre>
+          <p><code>UNIFORM_SCALING</code>은 전체 hash range를 균등하게 다시 나누는 운영에 적합하지만 하나의 고정 partition key는 여전히 한 shard에만 매핑됩니다. 단일 key가 1 MB/s를 넘는다면 shard 수 증가를 반복하지 않고 event contract를 분할해야 합니다.</p>
+          <p>변경 전에는 account와 stream의 reshard quota, retention 안의 replay 여유, KCL worker headroom과 DynamoDB metadata table 상태를 확인합니다. 변경 후에는 open shard 수뿐 아니라 parent drain, lease reassignment, 모든 consumer의 lag와 sink 오류율이 안정화될 때까지 다음 변경을 금지합니다.</p>
+
+          <h2>18. IAM은 producer, consumer runtime과 stream operator를 분리한다</h2>
+          <p>producer는 특정 stream의 write만, consumer는 특정 stream과 자신의 EFO consumer·KCL table만, operator는 resharding과 consumer lifecycle만 담당합니다. application runtime에 <code>UpdateShardCount</code>나 광범위한 <code>kinesis:*</code>를 주지 않습니다.</p>
+          <pre><code class="language-json">{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "ReadOrderStream",
+      "Effect": "Allow",
+      "Action": [
+        "kinesis:DescribeStream",
+        "kinesis:DescribeStreamSummary",
+        "kinesis:ListShards",
+        "kinesis:GetShardIterator",
+        "kinesis:GetRecords"
+      ],
+      "Resource": "arn:aws:kinesis:ap-northeast-2:123456789012:stream/order-events"
+    },
+    {
+      "Sid": "SubscribeOnlyToFraudConsumer",
+      "Effect": "Allow",
+      "Action": [
+        "kinesis:DescribeStreamConsumer",
+        "kinesis:SubscribeToShard"
+      ],
+      "Resource": "arn:aws:kinesis:ap-northeast-2:123456789012:stream/order-events/consumer/order-fraud-v1:*"
+    },
+    {
+      "Sid": "ManageOnlyFraudKclState",
+      "Effect": "Allow",
+      "Action": [
+        "dynamodb:DescribeTable",
+        "dynamodb:Scan",
+        "dynamodb:Query",
+        "dynamodb:GetItem",
+        "dynamodb:PutItem",
+        "dynamodb:UpdateItem",
+        "dynamodb:DeleteItem"
+      ],
+      "Resource": [
+        "arn:aws:dynamodb:ap-northeast-2:123456789012:table/order-fraud-v1*",
+        "arn:aws:dynamodb:ap-northeast-2:123456789012:table/order-fraud-v1*/index/*"
+      ]
+    },
+    {
+      "Sid": "PublishKclMetrics",
+      "Effect": "Allow",
+      "Action": "cloudwatch:PutMetricData",
+      "Resource": "*"
+    }
+  ]
+}</code></pre>
+          <p>이 예시는 metadata table을 별도 bootstrap 단계에서 미리 준비한 runtime role입니다. KCL이 table 또는 EFO consumer를 직접 만들게 한다면 필요한 create·update·register 권한을 bootstrap role에만 추가합니다. 실제 KCL version과 table naming을 고정한 뒤 IAM policy test로 누락과 과다 권한을 함께 검사합니다.</p>
+
+          <h2>19. Stream-level 평균만 보면 hot shard와 느린 consumer가 숨는다</h2>
+          <table>
+            <thead><tr><th>계층</th><th>지표</th><th>판단</th></tr></thead>
+            <tbody>
+              <tr><td>Producer</td><td><code>PutRecords.TotalRecords</code>, <code>SuccessfulRecords</code>, <code>FailedRecords</code>, <code>ThrottledRecords</code></td><td>HTTP 성공 안의 부분 실패를 찾음</td></tr>
+              <tr><td>Stream write</td><td><code>IncomingBytes</code>, <code>IncomingRecords</code>, <code>WriteProvisionedThroughputExceeded</code></td><td>write capacity와 skew를 분리</td></tr>
+              <tr><td>Shared read</td><td><code>GetRecords.IteratorAgeMilliseconds</code>, <code>ReadProvisionedThroughputExceeded</code></td><td>shared capacity 경합 확인</td></tr>
+              <tr><td>EFO read</td><td><code>SubscribeToShardEvent.MillisBehindLatest</code>, <code>SubscribeToShard.RateExceeded</code></td><td>consumer별 lag와 subscription 상태 확인</td></tr>
+              <tr><td>KCL</td><td><code>MillisBehindLatest</code>, <code>RecordsProcessed</code>, <code>RecordProcessor.processRecords.Time</code></td><td>processor와 sink 병목 확인</td></tr>
+              <tr><td>Lease</td><td><code>CurrentLeases</code>, <code>LostLeases</code>, <code>ExpiredLeases</code></td><td>worker churn과 미할당 shard 확인</td></tr>
+              <tr><td>Business</td><td>event-to-projection p50·p95·p99, duplicate와 version gap</td><td>사용자 영향과 정합성 확인</td></tr>
+            </tbody>
+          </table>
+          <p><code>PutRecords.Success</code>는 request 안에서 최소 한 record가 성공해도 성공으로 잡힐 수 있어 단독 성공률로 사용하지 않습니다. shard-level enhanced monitoring은 기본으로 켜져 있지 않고 추가 비용이 있으므로, 핵심 stream에는 capacity와 throttle 지표를 상시 켜고 나머지는 incident 진단 중 제한적으로 활성화하는 정책을 둘 수 있습니다.</p>
+          <p>metric label에 <code>orderId</code>, <code>eventId</code>나 partition key 원문을 넣지 않습니다. high-cardinality 식별자는 trace와 구조화 log에서 제한된 기간만 찾고, metric은 stream, consumer, shard와 error class 수준으로 제한합니다.</p>
+
+          <h2>20. Failure taxonomy가 있어야 같은 lag에 다른 runbook을 적용할 수 있다</h2>
+          <table>
+            <thead><tr><th>Failure class</th><th>증거</th><th>대응</th></tr></thead>
+            <tbody>
+              <tr><td>Producer partial failure</td><td>failed·throttled record 증가</td><td>실패 entry만 bounded retry, outbox 확인</td></tr>
+              <tr><td>Hot shard</td><td>특정 shard의 incoming과 write throttle 집중</td><td>partition contract 수정 또는 targeted split 검토</td></tr>
+              <tr><td>Shared read contention</td><td>read throttle과 shared consumer lag 동시 증가</td><td>consumer 통합, shard 증가 또는 EFO</td></tr>
+              <tr><td>Worker saturation</td><td>CPU, process time과 모든 owned shard lag 증가</td><td>worker size·수 조정, handler 최적화</td></tr>
+              <tr><td>Dependency failure</td><td>sink timeout·429와 consumer lag 상관</td><td>concurrency 제한, retry budget과 circuit breaker</td></tr>
+              <tr><td>Poison event</td><td>같은 sequence에서 반복 실패</td><td>durable quarantine 후 schema owner 호출</td></tr>
+              <tr><td>Lease churn</td><td>lost·expired lease와 restart 증가</td><td>worker health, DynamoDB와 failover 설정 확인</td></tr>
+              <tr><td>Reshard drain</td><td>parent lag와 child block 관찰</td><td>parent 완료·checkpoint 확인, 추가 변경 중지</td></tr>
+            </tbody>
+          </table>
+          <p>"IteratorAge가 높다"는 page 문구만으로는 조치할 수 없습니다. alert에는 consumer identity, 최대 lag shard, read·write throttle, worker health와 최근 reshard event를 함께 연결합니다.</p>
+
+          <h2>21. 정상 부하보다 실패 창을 재현하는 검증이 먼저다</h2>
+          <table>
+            <thead><tr><th>실험</th><th>주입 방법</th><th>통과 조건</th></tr></thead>
+            <tbody>
+              <tr><td>균등 peak</td><td>6.4 MB/s와 4,000 records/s를 30분 유지</td><td>throttle 0, 중요 consumer p99 lag 5초 이하</td></tr>
+              <tr><td>Hot key</td><td>한 key에 1 MB/s 초과 traffic 집중</td><td>alert 2분 이내, 원인 shard와 key class 식별</td></tr>
+              <tr><td>Consumer contention</td><td>shared consumer를 3개까지 추가</td><td>lag 증가 재현, EFO consumer는 영향 격리</td></tr>
+              <tr><td>Post-commit crash</td><td>sink commit 직후 worker 종료</td><td>replay 발생, projection은 한 번만 변경</td></tr>
+              <tr><td>Poison event</td><td>지원하지 않는 schema version 투입</td><td>quarantine 성공, 뒤 record 처리 지속</td></tr>
+              <tr><td>Dependency outage</td><td>sink 429와 timeout을 10분간 주입</td><td>bounded retry, retention budget 안에서 복구</td></tr>
+              <tr><td>Worker churn</td><td>worker 절반을 반복 종료</td><td>lease 재배치 후 중복 안전, lag SLO 회복</td></tr>
+              <tr><td>Reshard</td><td>10개에서 16개 shard로 변경</td><td>parent 선처리, child 활성화, 순서 invariant 유지</td></tr>
+              <tr><td>Replay</td><td>별도 application identity로 시간 구간 재처리</td><td>production checkpoint 불변, 결과 비교 가능</td></tr>
+            </tbody>
+          </table>
+          <p>각 run에는 producer commit, KCL version, stream mode와 shard count, application name, test seed, partition 분포, sink fixture와 CloudWatch dashboard snapshot을 저장합니다. 그래야 개선 전후의 차이가 EFO 때문인지 worker 변경 때문인지 설명할 수 있습니다.</p>
+
+          <h2>22. SLO와 regression gate를 stream 설정 변경에 연결한다</h2>
+          <pre><code class="language-yaml"># order-stream-gate.yml - 도구 독립적인 운영 계약 예시
+order_events:
+  stream:
+    mode: provisioned
+    shards: 10
+    retention_hours: 72
+    peak_headroom_ratio: ">= 1.30"
+    partition_key: orderId
+  consumers:
+    fraud:
+      delivery: enhanced_fan_out
+      event_to_projection_p99_seconds: "&lt;= 5"
+    notification:
+      delivery: enhanced_fan_out
+      event_to_projection_p99_seconds: "&lt;= 5"
+    analytics:
+      delivery: shared
+      event_to_projection_p99_seconds: "&lt;= 60"
+  correctness:
+    duplicate_projection_updates: 0
+    version_regressions: 0
+    poison_event_quarantine: pass
+    post_commit_crash_replay: pass
+  operations:
+    write_throttled_records: 0
+    important_consumer_expired_leases: 0
+    reshard_parent_child_order: pass
+  block_on:
+    - partition_key_contract_change
+    - kcl_application_name_change_without_migration
+    - checkpoint_before_sink_commit
+    - efo_consumer_not_active
+    - load_test_missing
+    - replay_using_production_identity</code></pre>
+          <p>개발 환경에서 평균 latency가 좋아졌다는 이유만으로 바로 배포하지 않습니다. 고정 fixture와 partition 분포를 가진 held-out test에서 기존 release와 비교하고, p99 lag, duplicate, throttle과 비용 예측 중 하나라도 budget을 넘으면 차단합니다. application name, checkpoint 정책과 partition key 변경은 일반 설정 변경이 아니라 data migration으로 review합니다.</p>
+
+          <h2>23. 비용 예산은 shard뿐 아니라 consumer와 운영 state까지 포함한다</h2>
+          <pre><code class="language-text">Monthly stream cost
+  = provisioned shard hours
+  + PUT payload units
+  + extended retention
+  + EFO consumer-shard hours
+  + EFO data retrieval
+  + KCL DynamoDB metadata reads, writes and storage
+  + CloudWatch shard-level metrics and logs
+  + worker compute
+  + replay and quarantine storage</code></pre>
+          <p>EFO 비용은 등록 consumer 수와 shard 수의 곱에 민감합니다. shard를 10개에서 16개로 늘리면 stream capacity뿐 아니라 EFO consumer-shard hour와 KCL 처리 parallelism에 필요한 worker 비용도 함께 변합니다. 사용하지 않는 EFO consumer를 등록 상태로 방치하지 않고 decommission gate에서 제거합니다.</p>
+          <p>비용 최적화는 중요 consumer를 shared로 되돌리는 단일 결정이 아닙니다. 소비 목적이 겹치는 application을 하나로 합칠 수 있는지, analytics를 S3 delivery로 분리할 수 있는지, retention을 줄여도 recovery SLO가 유지되는지부터 확인합니다.</p>
+
+          <h2>24. Rollout과 ownership을 consumer lifecycle에 맞춰 나눈다</h2>
+          <table>
+            <thead><tr><th>영역</th><th>Primary owner</th><th>승인과 운영 책임</th></tr></thead>
+            <tbody>
+              <tr><td>Event contract</td><td>Order domain</td><td>schema, partition key, version과 개인정보</td></tr>
+              <tr><td>Stream capacity</td><td>Cloud platform</td><td>mode, shard, retention, encryption과 reshard</td></tr>
+              <tr><td>KCL runtime</td><td>Consumer team</td><td>application identity, checkpoint, worker와 dependency</td></tr>
+              <tr><td>EFO lifecycle</td><td>Cloud platform과 consumer owner</td><td>등록, ACTIVE 확인, 비용과 deregistration</td></tr>
+              <tr><td>Projection correctness</td><td>Domain data owner</td><td>idempotency, version invariant와 reconciliation</td></tr>
+              <tr><td>Incident</td><td>Service owner 또는 SRE</td><td>SLO, on-call, replay와 quarantine 승인</td></tr>
+              <tr><td>Data governance</td><td>Security 또는 Privacy</td><td>retention, access, encryption과 audit</td></tr>
+            </tbody>
+          </table>
+          <ol>
+            <li>새 consumer는 별도 application name과 shadow sink로 <code>TRIM_HORIZON</code> 또는 승인된 timestamp부터 검증합니다.</li>
+            <li>production write 없이 기존 consumer 결과와 projection을 비교합니다.</li>
+            <li>importance에 따라 shared 또는 EFO를 선택하고 capacity test를 통과합니다.</li>
+            <li>canary worker에서 lag, duplicate, lease churn과 sink 오류를 관찰합니다.</li>
+            <li>전체 rollout 뒤 recovery window 동안 이전 consumer와 checkpoint state를 보존합니다.</li>
+            <li>decommission 승인 후 EFO registration, KCL table, IAM과 alarm을 순서대로 정리합니다.</li>
+          </ol>
+
+          <h2>25. 아직 production-grade라고 주장하지 않는 범위</h2>
+          <ul>
+            <li>이 글의 6.4 MB/s, shard 10개, 30% headroom과 latency target은 실제 traffic 측정값이 아닙니다.</li>
+            <li>CloudFormation과 record processor 예시는 전체 배포 가능한 repository가 아니라 핵심 계약을 설명하는 부분 구현입니다.</li>
+            <li>실제 tenant 분포에서 partition key entropy와 단일 key peak를 측정하지 않았습니다.</li>
+            <li>KCL version upgrade와 2.x에서 3.x로의 metadata migration을 rehearsal하지 않았습니다.</li>
+            <li>10개에서 16개 shard로 reshard하는 동안 모든 consumer의 parent-child 처리를 부하 환경에서 검증하지 않았습니다.</li>
+            <li>downstream database 장애가 retention 72시간을 넘는 재해 복구 절차를 구현하지 않았습니다.</li>
+            <li>Multi-Region stream replication, active-active producer와 global ordering은 다루지 않았습니다.</li>
+            <li>EFO와 worker compute를 포함한 실제 월 비용을 Cost and Usage Report로 검증하지 않았습니다.</li>
+          </ul>
+          <p>이 상태에서 말할 수 있는 것은 "Kinesis consumer scaling의 운영 계약을 설계했다"까지입니다. 실제 peak load, hot key, worker crash, dependency outage, reshard와 replay 결과가 release evidence로 채워져야 production-grade라는 주장이 완성됩니다.</p>
+
+          <h2>26. 마무리</h2>
+          <p>Kinesis의 lag는 consumer instance 수 하나로 설명되지 않습니다. shard가 write와 read capacity를 만들고, partition key가 부하와 순서 범위를 정하며, EFO가 중요 consumer를 read 경합에서 분리하고, KCL lease와 checkpoint가 처리 위치와 장애 복구를 관리합니다.</p>
+          <blockquote><p>Stream 운영의 핵심은 shard를 많이 만드는 것이 아니라 write, delivery, processing과 business completion의 예산을 분리하고, 어느 경계가 실패했는지 증명할 수 있게 만드는 것입니다.</p></blockquote>
+          <p><strong>참고 문서:</strong>
+            <a href="https://docs.aws.amazon.com/streams/latest/dev/service-sizes-and-limits.html">Kinesis Data Streams quotas and limits</a>,
+            <a href="https://docs.aws.amazon.com/streams/latest/dev/how-do-i-size-a-stream.html">Choosing a stream capacity mode</a>,
+            <a href="https://docs.aws.amazon.com/streams/latest/dev/enhanced-consumers.html">Enhanced Fan-Out consumers</a>,
+            <a href="https://docs.aws.amazon.com/kinesis/latest/APIReference/API_PutRecords.html">PutRecords API</a>,
+            <a href="https://docs.aws.amazon.com/streams/latest/dev/kcl.html">Kinesis Client Library</a>,
+            <a href="https://docs.aws.amazon.com/streams/latest/dev/kcl-concepts.html">KCL concepts</a>,
+            <a href="https://docs.aws.amazon.com/streams/latest/dev/kcl-dynamoDB.html">KCL DynamoDB metadata tables</a>,
+            <a href="https://docs.aws.amazon.com/streams/latest/dev/develop-kcl-consumers-java.html">Developing KCL consumers in Java</a>,
+            <a href="https://docs.aws.amazon.com/streams/latest/dev/kinesis-record-processor-duplicates.html">Handling duplicate records</a>,
+            <a href="https://docs.aws.amazon.com/streams/latest/dev/kinesis-record-processor-scaling.html">KCL resharding and scaling</a>,
+            <a href="https://docs.aws.amazon.com/streams/latest/dev/monitoring-with-cloudwatch.html">Monitoring Kinesis with CloudWatch</a>,
+            <a href="https://docs.aws.amazon.com/streams/latest/dev/monitoring-with-kcl.html">Monitoring KCL with CloudWatch</a>,
+            <a href="https://docs.aws.amazon.com/streams/latest/dev/kcl-iam-permissions.html">IAM permissions for KCL consumers</a>,
+            <a href="https://docs.aws.amazon.com/AWSCloudFormation/latest/TemplateReference/aws-resource-kinesis-streamconsumer.html">AWS::Kinesis::StreamConsumer</a>,
+            <a href="https://aws.amazon.com/kinesis/data-streams/pricing/">Kinesis Data Streams pricing</a>
+          </p>
+        </div>
+      </article>
+    </main>
+
+    <footer class="site-footer">
+      <p>© 2026 Jiwon Kim</p>
+      <div class="footer-links">
+        <span id="visitStatus">집계 중</span>
+        <a href="../articles.html">Articles</a>
+        <a href="../feed.xml">RSS</a>
+      </div>
+    </footer>
+    <script src="../script.js?v=20260905-4"></script>
+    <script data-goatcounter="https://jiwonkim-blog.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
+    <noscript><img class="tracking-pixel" src="https://jiwonkim-blog.goatcounter.com/count?p=/posts/aws-streaming-kinesis-shard-efo-kcl-checkpointing.html" alt="" /></noscript>
+  </body>
+</html>
