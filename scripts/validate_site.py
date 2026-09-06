@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from collections import Counter
+from datetime import datetime, timezone
 from html.parser import HTMLParser
 from pathlib import Path
 import sys
@@ -282,9 +283,22 @@ def main() -> int:
         if link.startswith("./posts/")
     ]
     dated_posts = []
+    now = datetime.now(timezone.utc)
     for path in post_paths:
         published = meta_values(parsed_pages[path.resolve()]).get("article:published_time", [""])[0]
         dated_posts.append((published, path.name))
+        try:
+            published_at = datetime.fromisoformat(published.replace("Z", "+00:00"))
+        except ValueError:
+            fail(f"{path.relative_to(ROOT)} has an invalid publication timestamp", errors)
+            continue
+        if published_at.tzinfo is None or published_at.utcoffset() is None:
+            fail(f"{path.relative_to(ROOT)} publication timestamp must include a timezone", errors)
+        elif published_at.astimezone(timezone.utc) > now:
+            fail(
+                f"{path.relative_to(ROOT)} is future-dated; move it to scheduled/ until publication",
+                errors,
+            )
     expected_recent = [name for _, name in sorted(dated_posts, reverse=True)[:HOME_RECENT_LIMIT]]
     if home_links != expected_recent:
         fail(f"index.html recent posts are stale: expected {expected_recent}, found {home_links}", errors)

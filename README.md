@@ -8,6 +8,7 @@
 - `articles.html`: 전체 글의 정적 검색 및 주제 필터
 - `projects.html`: 구현 범위, 검증 결과, 한계를 구분한 프로젝트 사례
 - `posts/`: HTML 포스트 원문
+- `scheduled/`: 공개 시각 전까지 목록과 배포에서 제외되는 예약 포스트
 - `404.html`: GitHub Pages용 오류 화면
 - `styles.css`: 공통 레이아웃, article typography, 반응형 스타일
 - `script.js`: 검색, 필터, TOC, 코드 복사, Mermaid, 방문 통계
@@ -55,6 +56,37 @@ GoatCounter 스크립트와 public counter API를 사용합니다. 설정에서 
 ## Publishing
 
 `main` push 시 GitHub Pages의 branch 배포가 정적 파일을 게시합니다. `.github/workflows/pages.yml`은 별도 배포를 중복 실행하지 않고, 생성기를 다시 실행한 뒤 diff가 없는지와 validator, JavaScript syntax를 확인합니다.
+
+### Scheduled Publishing
+
+예약 포스트는 완성된 HTML을 `posts/` 대신 `scheduled/`에 둡니다. 파일 안의 canonical과 `og:url`은 처음부터 최종 `/posts/<slug>.html` 주소를 사용하고, 다음 세 날짜는 같은 예약 시각과 날짜를 가리켜야 합니다.
+
+- `article:published_time`: timezone offset을 포함한 ISO-8601 시각
+- JSON-LD `datePublished`: `article:published_time`과 같은 시각
+- 본문 `<time datetime="YYYY-MM-DD">`: 예약 시각의 달력 날짜
+
+예를 들어 한국 시각 2026년 9월 10일 오전 9시에 공개할 글은 다음처럼 지정합니다.
+
+```html
+<meta property="article:published_time" content="2026-09-10T09:00:00+09:00" />
+<script type="application/ld+json">
+{"datePublished":"2026-09-10T09:00:00+09:00"}
+</script>
+<time datetime="2026-09-10">2026.09.10</time>
+```
+
+예약 상태와 특정 시각의 발행 대상을 로컬에서 확인할 수 있습니다.
+
+```bash
+python3 scripts/publish_scheduled.py --check
+python3 scripts/publish_scheduled.py --dry-run --now 2026-09-10T09:00:00+09:00
+```
+
+Preflight는 예약 시각과 최종 URL뿐 아니라 description, Open Graph, article tag, JSON-LD 날짜, 단일 `h1`, `.article-body`와 `h2`도 검사합니다. 공개 `posts/`에 미래 날짜 파일을 직접 넣으면 site validator가 실패합니다.
+
+`.github/workflows/publish-scheduled.yml`은 매시 17분과 47분에 실행됩니다. 예약 시각이 지난 파일을 `scheduled/`에서 `posts/`로 이동하고, 생성기와 전체 검증을 통과한 경우에만 `main`에 커밋한 뒤 Pages build API를 직접 요청합니다. 자동 workflow의 `GITHUB_TOKEN`으로 만든 commit은 다른 workflow나 Pages build를 다시 실행하지 않는 GitHub의 재귀 실행 방지 규칙이 있기 때문입니다. 글의 발행일은 예약 시각으로 유지되며 자동 발행 커밋의 날짜는 실제 공개 시각으로 남습니다. GitHub Actions 스케줄은 지연될 수 있으므로 분 단위의 정확한 공개가 필요한 시스템으로 간주하지 않습니다. 필요하면 Actions 화면에서 workflow를 수동 실행할 수 있습니다.
+
+예약 파일은 정적 사이트에는 노출되지 않지만 public GitHub repository의 source에서는 읽을 수 있습니다. 공개 전 내용 자체가 기밀이라면 별도 private content repository나 CMS가 필요합니다.
 
 ## Known Limits
 

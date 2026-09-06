@@ -1,0 +1,67 @@
+name: Publish scheduled posts
+
+on:
+  schedule:
+    - cron: "17,47 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pages: write
+
+concurrency:
+  group: publish-scheduled-main
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v5
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Publish posts whose time has arrived
+        id: publish
+        shell: bash
+        run: |
+          python3 scripts/publish_scheduled.py
+          if [[ -n "$(git status --porcelain)" ]]; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Regenerate and validate the site
+        if: steps.publish.outputs.changed == 'true'
+        run: |
+          python3 scripts/generate_site.py
+          python3 scripts/validate_site.py
+          python3 scripts/publish_scheduled.py --check
+          python3 -m unittest discover -s tests -p 'test_*.py'
+          node --check script.js
+          git diff --check
+
+      - name: Commit and push published posts
+        if: steps.publish.outputs.changed == 'true'
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "Publish scheduled posts"
+          git push origin HEAD:main
+
+      - name: Request a GitHub Pages build
+        if: steps.publish.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          curl --fail-with-body --location --retry 3 --retry-all-errors --retry-delay 5 --request POST \
+            --header "Accept: application/vnd.github+json" \
+            --header "Authorization: Bearer $GH_TOKEN" \
+            --header "X-GitHub-Api-Version: 2026-03-10" \
+            "https://api.github.com/repos/$GITHUB_REPOSITORY/pages/builds"
