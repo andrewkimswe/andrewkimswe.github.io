@@ -1,0 +1,513 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>[AWS/Messaging] 주문 처리 Lambda가 재시도될 때 결제가 두 번 되지 않게 하려면? - SQS Idempotency, Partial Batch, DLQ | Jiwon Kim Engineering Notes</title>
+    <meta name="description" content="Amazon SQS와 Lambda 기반 주문 처리에서 중복 전달, visibility timeout, partial batch failure와 DLQ redrive를 멱등성 저장소, transactional outbox, 운영 SLO로 통제하는 방법을 설계합니다." />
+    <meta name="author" content="Jiwon Kim" />
+    <meta name="robots" content="index, follow, max-image-preview:large" />
+    <link rel="canonical" href="https://andrewkimswe.github.io/posts/aws-messaging-sqs-order-idempotency-dlq-redrive.html" />
+    <meta property="og:site_name" content="Jiwon Kim | Engineering Notes" />
+    <meta property="og:title" content="[AWS/Messaging] 주문 처리 Lambda가 재시도될 때 결제가 두 번 되지 않게 하려면? - SQS Idempotency, Partial Batch, DLQ" />
+    <meta property="og:description" content="SQS를 붙이는 구성에서 더 나아가 주문의 멱등성 경계, 부분 실패, visibility budget, DLQ 분석과 안전한 redrive를 운영 계약으로 만듭니다." />
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="https://andrewkimswe.github.io/posts/aws-messaging-sqs-order-idempotency-dlq-redrive.html" />
+    <meta property="og:image" content="https://andrewkimswe.github.io/assets/social-card.png" />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Jiwon Kim Engineering Notes" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://andrewkimswe.github.io/assets/social-card.png" />
+    <meta name="twitter:title" content="[AWS/Messaging] 주문 처리 Lambda가 재시도될 때 결제가 두 번 되지 않게 하려면? - SQS Idempotency, Partial Batch, DLQ" />
+    <meta name="twitter:description" content="SQS를 붙이는 구성에서 더 나아가 주문의 멱등성 경계, 부분 실패, visibility budget, DLQ 분석과 안전한 redrive를 운영 계약으로 만듭니다." />
+    <meta name="twitter:image:alt" content="Jiwon Kim Engineering Notes" />
+    <meta property="article:published_time" content="2026-09-19T00:00:00+09:00" />
+    <meta property="article:modified_time" content="2026-09-19T00:00:00+09:00" />
+    <meta property="article:author" content="Jiwon Kim" />
+    <meta property="article:tag" content="AWS" />
+    <meta property="article:tag" content="Messaging" />
+    <meta property="article:tag" content="Amazon SQS" />
+    <meta property="article:tag" content="AWS Lambda" />
+    <meta property="article:tag" content="Idempotency" />
+    <meta property="article:tag" content="DLQ" />
+    <meta property="article:tag" content="Reliability" />
+    <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="../styles.css?v=20260905-4" />
+    <script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","headline":"[AWS/Messaging] 주문 처리 Lambda가 재시도될 때 결제가 두 번 되지 않게 하려면? - SQS Idempotency, Partial Batch, DLQ","description":"Amazon SQS와 Lambda 기반 주문 처리에서 중복 전달, visibility timeout, partial batch failure와 DLQ redrive를 멱등성 저장소, transactional outbox, 운영 SLO로 통제하는 방법을 설계합니다.","datePublished":"2026-09-19T00:00:00+09:00","dateModified":"2026-09-19T00:00:00+09:00","author":{"@type":"Person","name":"Jiwon Kim","url":"https://github.com/andrewkimswe"},"publisher":{"@type":"Person","name":"Jiwon Kim"},"mainEntityOfPage":"https://andrewkimswe.github.io/posts/aws-messaging-sqs-order-idempotency-dlq-redrive.html","inLanguage":"ko-KR"}
+    </script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main-content">본문으로 바로가기</a>
+    <header class="site-header">
+      <a class="brand" href="../" aria-label="Jiwon Kim Engineering Notes 홈">
+        <span class="brand-mark" aria-hidden="true">JK</span>
+        <span class="brand-copy"><strong>Jiwon Kim</strong><small>Engineering Notes</small></span>
+      </a>
+      <nav class="nav-links" aria-label="주요 메뉴">
+        <a href="../articles.html">Articles</a>
+        <a href="../projects.html">Projects</a>
+        <a href="../#about">About</a>
+        <span class="nav-divider" aria-hidden="true"></span>
+        <a href="https://github.com/andrewkimswe">GitHub</a>
+        <a href="https://www.linkedin.com/in/jiwon-kim-867334285/">LinkedIn</a>
+      </nav>
+    </header>
+
+    <main id="main-content">
+      <article class="article-page">
+        <header class="article-hero">
+          <a class="back-link" href="../articles.html">All articles</a>
+          <p class="eyebrow">AWS · Messaging · Reliability</p>
+          <h1>[AWS/Messaging] 주문 처리 Lambda가 재시도될 때 결제가 두 번 되지 않게 하려면? - SQS Idempotency, Partial Batch, DLQ</h1>
+          <p class="article-summary">SQS를 붙이는 구성에서 더 나아가 주문의 멱등성 경계, 부분 실패, visibility budget, DLQ 분석과 안전한 redrive를 운영 계약으로 만듭니다.</p>
+          <div class="article-meta"><time datetime="2026-09-19">2026.09.19</time><span>AWS</span><span>SQS</span><span>Lambda</span><span>Reliability</span></div>
+        </header>
+
+        <div class="article-body">
+          <p>주문 API가 주문을 저장한 뒤 SQS에 <code>OrderCreated</code> 메시지를 보내고, Lambda가 결제 승인과 재고 차감을 수행한다고 가정해보겠습니다. 어느 날 결제는 두 번 승인됐는데 주문 상태는 한 번만 변경됐습니다. Lambda 로그에는 같은 주문이 몇 분 간격으로 두 번 처리된 기록이 남았습니다.</p>
+          <p>이것은 SQS의 오류라기보다 비동기 시스템의 기본 실패 모델을 애플리케이션이 흡수하지 못한 결과입니다. Standard queue는 at-least-once delivery를 제공하므로 메시지가 중복 전달될 수 있습니다. Lambda가 side effect를 완료하고 응답하기 전에 종료되거나 visibility timeout이 지나도 같은 메시지가 다시 처리될 수 있습니다.</p>
+          <p>이 글은 실제 production incident 회고가 아니라 <strong>주문 처리 pipeline의 설계와 검증 계획</strong>입니다. 아래 수치는 실측 결과가 아닌 초기 acceptance target입니다. 중복 주입과 장애 실험 결과를 기록하기 전까지 exactly-once business processing을 달성했다고 주장하지 않습니다.</p>
+
+          <h2>1. 성공을 메시지 삭제가 아니라 업무 효과의 단 한 번 적용으로 정의한다</h2>
+          <p>SQS message가 한 번만 보였는지보다 중요한 것은 같은 주문 명령이 여러 번 도착해도 결제, 재고와 주문 상태가 한 번만 바뀌는가입니다. 전송, 전달과 업무 처리는 서로 다른 보장입니다.</p>
+          <div class="mermaid diagram">
+flowchart LR
+    accepted[Order accepted] --> persisted[Order persisted]
+    persisted --> published[Event published]
+    published --> delivered[Message delivered one or more times]
+    delivered --> processed[Business effect applied once]
+    processed --> reconciled[Order payment inventory reconciled]
+          </div>
+          <table>
+            <thead><tr><th>단계</th><th>성공 증거</th><th>실패 예시</th></tr></thead>
+            <tbody>
+              <tr><td>API 수락</td><td>client idempotency key와 응답 저장</td><td>timeout 후 client 재요청</td></tr>
+              <tr><td>DB commit</td><td>order와 outbox가 같은 transaction에 존재</td><td>order만 저장되고 event 유실</td></tr>
+              <tr><td>SQS 전송</td><td>outbox publish 상태와 message metadata</td><td>전송 성공 후 ACK 유실</td></tr>
+              <tr><td>업무 처리</td><td>operation별 idempotency record</td><td>결제 후 Lambda crash</td></tr>
+              <tr><td>정합성</td><td>결제·재고·주문 invariant</td><td>일부 side effect만 성공</td></tr>
+            </tbody>
+          </table>
+
+          <h2>2. 중복은 네 개의 실패 창에서 발생한다</h2>
+          <div class="mermaid diagram">
+sequenceDiagram
+    participant P as Producer
+    participant Q as Amazon SQS
+    participant L as Lambda consumer
+    participant D as Payment or database
+    P->>Q: Send OrderCreated
+    Q-->>P: ACK can be lost
+    P->>Q: Producer retries
+    Q->>L: Deliver batch
+    L->>D: Apply side effect
+    D-->>L: Success
+    L--xQ: Lambda ends before successful batch response
+    Q->>L: Deliver message again after visibility timeout
+          </div>
+          <ol>
+            <li>producer가 성공 응답을 받지 못해 같은 event를 다시 보냅니다.</li>
+            <li>SQS의 분산 저장 과정에서 Standard queue message가 중복 전달될 수 있습니다.</li>
+            <li>consumer 처리 시간이 visibility timeout을 넘으면 다른 invocation이 같은 message를 받습니다.</li>
+            <li>side effect는 성공했지만 Lambda가 성공 응답을 반환하기 전에 종료됩니다.</li>
+          </ol>
+          <p>visibility timeout을 길게 잡는 것만으로 네 번째 실패 창을 없앨 수 없습니다. 결제는 성공했고 process가 죽었다면 timeout 길이와 상관없이 재전달됩니다. 그래서 consumer idempotency가 기본 계약이어야 합니다.</p>
+
+          <h2>3. Standard와 FIFO는 멱등성의 대체 관계가 아니다</h2>
+          <table>
+            <thead><tr><th>선택지</th><th>장점</th><th>남는 책임</th><th>선택 조건</th></tr></thead>
+            <tbody>
+              <tr><td>Standard queue</td><td>높은 처리량, 단순한 scale-out</td><td>중복과 순서 역전 허용, consumer 멱등성 필수</td><td>주문별 작업이 독립적이고 높은 처리량 우선</td></tr>
+              <tr><td>FIFO queue</td><td>message group 안의 순서와 5분 deduplication window</td><td>consumer 재실행과 외부 side effect 멱등성은 여전히 필요</td><td>같은 주문의 상태 전이가 반드시 순차적</td></tr>
+              <tr><td>Step Functions</td><td>여러 단계 상태와 보상 흐름을 명시</td><td>각 Task의 idempotency와 외부 API 오류 처리</td><td>장기 실행과 단계별 보상이 핵심</td></tr>
+              <tr><td>동기 처리</td><td>흐름이 단순하고 즉시 결과 반환</td><td>dependency latency와 장애가 API에 직접 전파</td><td>짧고 강한 일관성이 필요한 소규모 경로</td></tr>
+            </tbody>
+          </table>
+          <p>이 사례는 주문마다 독립적인 결제 준비 명령을 높은 처리량으로 처리하므로 Standard queue를 선택합니다. 주문 상태의 순서가 중요한 별도 pipeline은 FIFO를 사용하고 <code>MessageGroupId=orderId</code>로 직렬화할 수 있습니다. 그러나 FIFO의 producer deduplication window가 지났거나 consumer가 재실행되는 경우까지 business side effect가 자동으로 한 번만 실행되는 것은 아니므로 idempotency record는 유지합니다.</p>
+
+          <h2>4. 주문 저장과 메시지 전송 사이에는 transactional outbox가 필요하다</h2>
+          <p>주문 row를 commit한 뒤 <code>SendMessage</code>를 호출하면 두 시스템에 대한 dual write가 됩니다. DB commit 후 process가 죽으면 주문은 있지만 event가 없고, SQS 전송 후 DB rollback이 발생하면 존재하지 않는 주문을 처리할 수 있습니다.</p>
+          <div class="mermaid diagram">
+flowchart LR
+    api[Order API] --> tx[Single DB transaction]
+    tx --> order[(orders)]
+    tx --> outbox[(order_outbox)]
+    outbox --> relay[Outbox relay]
+    relay --> queue[SQS order-events]
+    queue --> worker[Order worker Lambda]
+          </div>
+          <pre><code class="language-sql">START TRANSACTION;
+
+INSERT INTO orders (
+  order_id, customer_id, amount, status, request_key
+) VALUES (
+  :order_id, :customer_id, :amount, 'PENDING', :request_key
+);
+
+INSERT INTO order_outbox (
+  event_id, aggregate_id, event_type, payload, created_at
+) VALUES (
+  :event_id, :order_id, 'OrderCreated.v1', :payload, UTC_TIMESTAMP()
+);
+
+COMMIT;</code></pre>
+          <p>relay는 unpublished outbox를 SQS에 보내고 성공 상태를 기록합니다. relay 자체도 같은 event를 두 번 보낼 수 있으므로 <code>event_id</code>가 consumer의 안정적인 중복 식별자가 됩니다. outbox는 duplicate를 제거하지 않고 <strong>event 유실과 잘못된 선행 전송을 방지</strong>합니다.</p>
+
+          <h2>5. MessageId 대신 업무 idempotency key를 계약에 넣는다</h2>
+          <pre><code class="language-json">{
+  "eventId": "01JQ9A5KX2P8C7Y6M4N3R2T1VW",
+  "eventType": "OrderPaymentRequested.v1",
+  "orderId": "ord-20260919-004821",
+  "aggregateVersion": 3,
+  "idempotencyKey": "PAYMENT_CAPTURE#ord-20260919-004821#v1",
+  "amount": 42000,
+  "currency": "KRW",
+  "occurredAt": "2026-09-19T00:15:21.204Z",
+  "traceId": "1-68ce..."
+}</code></pre>
+          <ul>
+            <li><code>eventId</code>는 발행 event 인스턴스를 식별합니다.</li>
+            <li><code>idempotencyKey</code>는 같은 업무 효과를 식별하며 operation과 version을 포함합니다.</li>
+            <li><code>aggregateVersion</code>은 오래된 상태 전이를 거부하거나 순서를 확인할 때 사용합니다.</li>
+            <li>같은 key인데 amount나 currency가 다르면 duplicate가 아니라 contract violation입니다.</li>
+            <li>카드번호, 주소처럼 처리를 위해 필요하지 않은 개인정보는 message에 넣지 않습니다.</li>
+          </ul>
+          <p>SQS redrive는 message에 새 <code>messageId</code>와 enqueue time을 부여할 수 있습니다. 따라서 transport ID를 업무 idempotency key로 사용하면 replay에서 보호가 사라집니다.</p>
+
+          <h2>6. 멱등성 저장소는 INPROGRESS와 COMPLETED를 구분한다</h2>
+          <p>DynamoDB에 idempotency record를 저장하면 동시 invocation 중 하나만 lock을 획득하게 할 수 있습니다. 단순히 처리 후 <code>processed=true</code>를 기록하면 두 invocation이 동시에 side effect를 시작하는 race를 막지 못합니다.</p>
+          <div class="mermaid diagram compact-diagram">
+stateDiagram-v2
+    [*] --> INPROGRESS: conditional create
+    INPROGRESS --> COMPLETED: side effect and result saved
+    INPROGRESS --> EXPIRED: execution lease expires
+    EXPIRED --> INPROGRESS: bounded retry acquires new lease
+    COMPLETED --> COMPLETED: duplicate returns stored result
+          </div>
+          <p>record에는 key, payload hash, 상태, owner token, in-progress expiry, result reference와 retention expiry를 둡니다. DynamoDB TTL은 즉시 삭제 보장이 아니므로 중복 판단은 expiry timestamp를 애플리케이션이 직접 확인합니다. lock expiry는 Lambda timeout보다 조금 길게 두되, 지나치게 길어 정상 retry가 오래 막히지 않도록 장애 실험으로 정합니다.</p>
+
+          <h2>7. Powertools는 저장소 boilerplate를 줄이지만 업무 경계를 대신 정하지 않는다</h2>
+          <pre><code class="language-python">import os
+
+from aws_lambda_powertools.utilities.idempotency import (
+    DynamoDBPersistenceLayer,
+    IdempotencyConfig,
+    idempotent_function,
+)
+
+persistence = DynamoDBPersistenceLayer(
+    table_name=os.environ["IDEMPOTENCY_TABLE"],
+)
+config = IdempotencyConfig(
+    event_key_jmespath="idempotencyKey",
+    payload_validation_jmespath="[orderId, amount, currency]",
+    raise_on_no_idempotency_key=True,
+    expires_after_seconds=30 * 24 * 60 * 60,
+)
+
+
+@idempotent_function(
+    data_keyword_argument="command",
+    persistence_store=persistence,
+    config=config,
+)
+def capture_payment(command: dict) -> dict:
+    return payment_client.capture(
+        order_id=command["orderId"],
+        amount=command["amount"],
+        currency=command["currency"],
+        idempotency_key=command["idempotencyKey"],
+    )</code></pre>
+          <p>이 예시는 key의 동시 실행과 완료 결과 재사용을 처리하지만, 외부 결제 API가 idempotency key를 지원해야 가장 위험한 창을 닫을 수 있습니다. 결제가 성공한 직후 Lambda가 종료되면 DynamoDB에는 여전히 INPROGRESS만 남을 수 있기 때문입니다. 결제사가 동일 key에 같은 결과를 반환하지 않는다면 정확히 한 번의 결제를 일반적인 local lock만으로 증명할 수 없습니다. 이 경우 승인 조회 API, reconciliation ledger와 수동 보상 절차가 필요합니다.</p>
+          <p>보존 기간은 source queue, DLQ와 수동 redrive가 허용되는 가장 긴 기간보다 길게 잡습니다. 또한 결제와 재고 차감을 하나의 decorator 안에 묶었다고 두 side effect가 하나의 transaction이 되는 것은 아닙니다. 각 operation이 독립된 idempotency key를 갖거나, 단계와 보상 상태를 저장하는 workflow가 필요합니다.</p>
+
+          <h2>8. Partial batch response로 성공한 주문의 재실행을 줄인다</h2>
+          <p>Lambda의 SQS event source mapping은 여러 message를 한 batch로 전달합니다. 기본 동작에서는 한 message가 실패해 invocation이 오류를 반환하면 성공한 message까지 visibility timeout 후 다시 보입니다. <code>ReportBatchItemFailures</code>를 켜고 실패한 message ID만 반환해야 불필요한 재처리를 줄일 수 있습니다.</p>
+          <pre><code class="language-python">import json
+import logging
+
+logger = logging.getLogger()
+
+
+def handler(event, context):
+    failures = []
+
+    for record in event["Records"]:
+        try:
+            command = json.loads(record["body"])
+            validate_contract(command)
+            capture_payment(command=command)
+        except Exception as exc:
+            logger.warning(
+                "order message failed",
+                extra={
+                    "message_id": record["messageId"],
+                    "error_class": type(exc).__name__,
+                },
+            )
+            failures.append({"itemIdentifier": record["messageId"]})
+
+    return {"batchItemFailures": failures}</code></pre>
+          <p>handler 바깥으로 exception을 다시 던지면 partial response가 전달되지 않아 batch 전체가 실패합니다. 반대로 오류를 log만 남기고 failure 목록에서 빼면 SQS가 message를 삭제해 유실됩니다. FIFO queue라면 순서를 지키기 위해 첫 실패 뒤 같은 message group의 미처리 항목도 실패로 반환해야 합니다.</p>
+
+          <h2>9. Queue와 Lambda 설정을 하나의 retry budget으로 계산한다</h2>
+          <p>Lambda 공식 가이드는 source queue의 visibility timeout을 함수 timeout의 최소 6배로 두고, batching window가 있다면 그 시간도 더하도록 권장합니다. 함수 timeout이 30초이고 batch window가 1초라면 초기 visibility timeout은 최소 181초가 필요하므로 여기서는 180초가 아니라 여유를 둔 210초에서 시작합니다.</p>
+          <pre><code class="language-text">Initial visibility budget
+  = Lambda timeout x 6
+  + maximum batching window
+  + operational margin
+
+Example
+  = 30 seconds x 6 + 1 second + 29 seconds
+  = 210 seconds</code></pre>
+          <p><code>maxReceiveCount</code>는 단순히 클수록 안전하지 않습니다. 너무 작으면 짧은 dependency 장애도 DLQ로 보내고, 너무 크면 poison message가 비용과 부하를 계속 만듭니다. AWS의 Lambda-SQS 가이드는 최소 5를 권장하므로 5에서 시작하되, 결제 API의 정상 복구 시간과 DLQ 대응 SLO를 함께 측정해 결정합니다.</p>
+
+          <h2>10. IaC에 DLQ, redrive policy와 부분 실패를 함께 고정한다</h2>
+          <pre><code class="language-yaml">Resources:
+  OrderDeadLetterQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: order-events-dlq
+      MessageRetentionPeriod: 1209600
+      KmsMasterKeyId: alias/aws/sqs
+      RedriveAllowPolicy:
+        redrivePermission: byQueue
+        sourceQueueArns:
+          - !Sub arn:${AWS::Partition}:sqs:${AWS::Region}:${AWS::AccountId}:order-events
+
+  OrderQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: order-events
+      VisibilityTimeout: 210
+      MessageRetentionPeriod: 345600
+      ReceiveMessageWaitTimeSeconds: 20
+      KmsMasterKeyId: alias/aws/sqs
+      RedrivePolicy:
+        deadLetterTargetArn: !GetAtt OrderDeadLetterQueue.Arn
+        maxReceiveCount: 5
+
+  OrderEventSourceMapping:
+    Type: AWS::Lambda::EventSourceMapping
+    Properties:
+      EventSourceArn: !GetAtt OrderQueue.Arn
+      FunctionName: !Ref OrderWorkerFunction
+      BatchSize: 10
+      MaximumBatchingWindowInSeconds: 1
+      FunctionResponseTypes:
+        - ReportBatchItemFailures
+      ScalingConfig:
+        MaximumConcurrency: 20
+      Enabled: true</code></pre>
+          <p>DLQ retention은 source queue보다 길게 둡니다. Standard queue message의 만료 기준은 DLQ로 이동해도 원래 enqueue timestamp를 유지하기 때문에, 같은 retention을 쓰면 조사 시간이 예상보다 짧아질 수 있습니다. <code>RedriveAllowPolicy</code>는 이 source queue만 DLQ를 사용할 수 있도록 제한합니다.</p>
+
+          <h2>11. IAM은 producer, consumer와 redrive operator를 분리한다</h2>
+          <table>
+            <thead><tr><th>주체</th><th>허용 권한</th><th>허용하지 않을 권한</th></tr></thead>
+            <tbody>
+              <tr><td>Outbox relay</td><td>source queue의 <code>sqs:SendMessage</code></td><td>receive, delete, redrive</td></tr>
+              <tr><td>Lambda consumer</td><td><code>ReceiveMessage</code>, <code>DeleteMessage</code>, <code>GetQueueAttributes</code>, visibility 변경</td><td>DLQ redrive와 queue policy 변경</td></tr>
+              <tr><td>Redrive operator</td><td>DLQ move task와 source·destination queue의 제한된 receive/send</td><td>애플리케이션 배포와 queue 삭제</td></tr>
+              <tr><td>Incident viewer</td><td>metric, redacted log와 metadata 조회</td><td>message body 대량 다운로드</td></tr>
+            </tbody>
+          </table>
+          <p>SSE-KMS를 사용하면 consumer와 redrive operator에 필요한 decrypt·data key 권한을 IAM과 key policy까지 포함해 검토합니다. 운영자가 source queue의 message를 콘솔에서 반복 조회하는 동작도 receive count에 영향을 줄 수 있으므로, 조사 절차는 read-only처럼 보이는 콘솔 행동까지 포함해야 합니다.</p>
+
+          <h2>12. Retryable failure와 permanent failure를 같은 방식으로 세지 않는다</h2>
+          <table>
+            <thead><tr><th>오류</th><th>분류</th><th>처리</th></tr></thead>
+            <tbody>
+              <tr><td>결제 API 429·일시적 5xx</td><td>Retryable dependency</td><td>bounded retry 후 SQS 재전달</td></tr>
+              <tr><td>DB connection timeout</td><td>Retryable infrastructure</td><td>짧은 backoff, idempotency 상태 확인</td></tr>
+              <tr><td>Schema version 미지원</td><td>Permanent contract</td><td>재시도로 해결되지 않으므로 빠른 격리와 producer 수정</td></tr>
+              <tr><td>금액 불일치</td><td>Business invariant</td><td>자동 재시도 중단, 보안·정합성 조사</td></tr>
+              <tr><td>이미 완료된 key</td><td>Expected duplicate</td><td>저장된 결과를 반환하고 성공 처리</td></tr>
+              <tr><td>INPROGRESS lock</td><td>Concurrent duplicate</td><td>현재 실행의 lease 안에서는 제한 재시도</td></tr>
+            </tbody>
+          </table>
+          <p>SQS redrive policy는 오류 종류를 이해하지 못하고 receive count만 봅니다. 애플리케이션 metric은 permanent, retryable, duplicate와 contract violation을 구분해야 합니다. 그렇지 않으면 "error rate가 높다"는 경보만 남고 어떤 팀이 무엇을 고쳐야 하는지 알 수 없습니다.</p>
+
+          <h2>13. Concurrency는 queue를 빨리 비우는 값이 아니라 downstream 보호 한도다</h2>
+          <p>Lambda의 maximum concurrency를 크게 설정하면 backlog는 빨리 줄 수 있지만 결제사 rate limit, RDS connection과 DynamoDB partition capacity를 동시에 압박합니다. 필요한 concurrency는 target 처리량과 처리 시간으로 계산하고 downstream quota보다 낮게 제한합니다.</p>
+          <pre><code class="language-text">Required concurrency
+  approximately target messages per second x p95 processing seconds
+
+Downstream-safe concurrency
+  = min(payment concurrency budget,
+        database connection budget,
+        idempotency store budget,
+        Lambda account budget)
+
+Event source maximum concurrency
+  &lt;= downstream-safe concurrency</code></pre>
+          <p>batch size 10이 곧 10개의 결제를 병렬 호출한다는 뜻은 아닙니다. 예시 handler는 batch 안에서 순차 처리합니다. 내부 병렬화를 추가한다면 invocation concurrency와 batch parallelism의 곱을 downstream request rate로 계산해야 합니다.</p>
+
+          <h2>14. DLQ는 실패를 해결하지 않고 처리 경로에서 격리한다</h2>
+          <p>DLQ에 들어간 message는 보존됐지만 주문 문제는 해결되지 않았습니다. 고객에게는 결제가 지연됐고, inventory reservation이 만료될 수 있으며, 운영팀은 message가 사라지기 전에 원인을 수정해야 합니다.</p>
+          <div class="mermaid diagram compact-diagram">
+flowchart LR
+    source[Source queue] --> retry[Bounded attempts]
+    retry -->|success| done[Business completion]
+    retry -->|max receives exceeded| dlq[Dead-letter queue]
+    dlq --> triage[Classify and redact]
+    triage --> fix[Deploy root-cause fix]
+    fix --> canary[Canary redrive]
+    canary --> reconcile[Business reconciliation]
+          </div>
+          <p>DLQ alarm은 queue depth가 1 이상일 때 빠르게 알리되, page 여부는 주문 중요도와 자동 복구 가능성에 따라 정합니다. message body 전체를 Slack이나 ticket에 복사하지 않고 event ID, schema version, error class와 receive count만 전달합니다.</p>
+
+          <h2>15. Redrive 전에 root cause와 중복 안전성을 다시 검증한다</h2>
+          <ol>
+            <li>producer contract, consumer bug, dependency 장애와 capacity 중 원인을 분류합니다.</li>
+            <li>대표 message를 격리된 fixture로 재현하고 payload의 민감 정보를 제거합니다.</li>
+            <li>수정 version에서 duplicate와 post-side-effect crash test를 다시 통과합니다.</li>
+            <li>현재 source traffic과 downstream headroom을 확인합니다.</li>
+            <li>낮은 redrive velocity로 시작하고 업무 invariant를 관찰합니다.</li>
+            <li>오류가 재발하면 move task를 취소하고 자동 반복을 중단합니다.</li>
+          </ol>
+          <pre><code class="language-bash">DLQ_ARN="arn:aws:sqs:ap-northeast-2:123456789012:order-events-dlq"
+REPLAY_ARN="arn:aws:sqs:ap-northeast-2:123456789012:order-events-replay"
+
+aws sqs start-message-move-task \
+  --source-arn "$DLQ_ARN" \
+  --destination-arn "$REPLAY_ARN" \
+  --max-number-of-messages-per-second 5
+
+aws sqs list-message-move-tasks \
+  --source-arn "$DLQ_ARN" \
+  --max-results 1</code></pre>
+          <p>destination을 생략하면 원래 source queue로 돌릴 수 있지만, production traffic과 즉시 섞이면 재발 원인과 부하를 분리하기 어렵습니다. 같은 queue type의 제한된 replay queue에서 canary consumer로 확인한 뒤 source redrive를 확대하는 방식을 선택할 수 있습니다. redrive된 message는 새 message ID와 enqueue time을 받으므로 업무 key와 최초 발생 시각은 payload 또는 별도 ledger에 유지합니다.</p>
+
+          <h2>16. FIFO와 DLQ를 함께 쓸 때는 순서 손실을 의식한다</h2>
+          <p>FIFO queue에서 한 message가 처리되지 않으면 같은 message group의 뒤 항목이 막힙니다. DLQ로 옮기면 pipeline은 진행되지만 업무 순서는 끊어질 수 있습니다. AWS도 순서가 절대적으로 중요하다면 FIFO queue에 DLQ를 사용하는 것이 적합하지 않을 수 있다고 안내합니다.</p>
+          <p>주문 상태를 <code>CREATED</code>, <code>PAID</code>, <code>SHIPPED</code> 순서로 적용해야 한다면 consumer는 <code>aggregateVersion</code>을 비교합니다. version 3이 DLQ로 이동한 뒤 version 4가 도착했다면 무조건 진행하지 않고, current state를 조회해 보류하거나 reconciliation workflow로 넘깁니다.</p>
+
+          <h2>17. 관측은 queue, function, idempotency와 business 네 층으로 나눈다</h2>
+          <table>
+            <thead><tr><th>계층</th><th>지표</th><th>질문</th></tr></thead>
+            <tbody>
+              <tr><td>SQS</td><td>oldest age, visible·in-flight count, receive·delete</td><td>적체가 SLO를 침범하는가</td></tr>
+              <tr><td>Lambda</td><td>duration, errors, throttles, concurrency</td><td>consumer와 capacity가 정상인가</td></tr>
+              <tr><td>Idempotency</td><td>duplicate hit, INPROGRESS conflict, expired lock</td><td>중복이 흡수되고 있는가</td></tr>
+              <tr><td>Dependency</td><td>payment latency, 429·5xx, DB timeout</td><td>재시도의 원인이 무엇인가</td></tr>
+              <tr><td>DLQ</td><td>visible count, oldest age, redrive status</td><td>격리 메시지가 보존 기간 안에 해결되는가</td></tr>
+              <tr><td>Business</td><td>accepted-to-paid latency, duplicate capture, reconciliation gap</td><td>고객 주문이 정확하게 완료됐는가</td></tr>
+            </tbody>
+          </table>
+          <p>DLQ로 자동 이동한 message는 DLQ의 <code>NumberOfMessagesSent</code>와 일치하지 않을 수 있으므로 이 지표 하나를 ingress count로 사용하지 않습니다. 주문 완료 지연은 <code>occurredAt</code>부터 실제 업무 완료 시각까지 application metric으로 측정합니다.</p>
+
+          <h2>18. 검증은 정상 처리보다 실패 창을 재현하는 데 집중한다</h2>
+          <table>
+            <thead><tr><th>실험</th><th>주입 방법</th><th>통과 조건</th></tr></thead>
+            <tbody>
+              <tr><td>동시 duplicate</td><td>같은 key를 여러 message로 동시에 전송</td><td>side effect 1회, 나머지는 저장 결과 반환</td></tr>
+              <tr><td>Post-side-effect crash</td><td>결제 성공 직후 process 종료</td><td>재시도에서 결제사 key로 같은 승인 결과 조회</td></tr>
+              <tr><td>Visibility expiry</td><td>처리 시간을 timeout보다 길게 지연</td><td>중복 invocation에도 side effect 1회</td></tr>
+              <tr><td>Partial batch</td><td>10개 중 1개만 실패</td><td>실패 message만 재전달</td></tr>
+              <tr><td>Poison message</td><td>지원하지 않는 schema 입력</td><td>정상 message 영향 없이 DLQ 격리</td></tr>
+              <tr><td>Dependency outage</td><td>429와 5xx를 10분간 주입</td><td>downstream 보호, backlog와 복구 SLO 준수</td></tr>
+              <tr><td>Redrive</td><td>production traffic 중 5 msg/s 재처리</td><td>오류·중복 없이 backlog 감소</td></tr>
+            </tbody>
+          </table>
+          <p>각 실험은 application commit, queue attribute, Lambda event source mapping UUID, dependency stub version과 dataset을 저장합니다. 한 번 성공한 screenshot이 아니라 재현 가능한 test run을 release evidence로 남깁니다.</p>
+
+          <h2>19. SLO와 regression gate를 코드 변경에 연결한다</h2>
+          <pre><code class="language-yaml"># order-queue-gate.yml - 도구 독립적인 운영 계약 예시
+order_processing:
+  require:
+    accepted_to_completed_p99_seconds: "&lt;= 30"
+    duplicate_business_effects: 0
+    partial_batch_retry_scope: failed_records_only
+    poison_message_isolation: pass
+    post_side_effect_crash_test: pass
+    idempotency_payload_mismatch: blocked
+  queue_budget:
+    oldest_message_age_seconds: "&lt;= 60"
+    dlq_messages: 0
+    visibility_timeout_seconds: 210
+    max_receive_count: 5
+    maximum_concurrency: 20
+  redrive:
+    requires_root_cause: true
+    initial_messages_per_second: 5
+    requires_business_reconciliation: true
+  block_on:
+    - idempotency_key_contract_change
+    - visibility_below_retry_budget
+    - partial_batch_response_disabled
+    - unbounded_redrive
+    - payment_provider_key_removed</code></pre>
+          <p>queue attribute, batch size, Lambda timeout, concurrency와 idempotency TTL 변경은 application code와 같은 review를 거칩니다. 각 값이 서로 연결되어 있으므로 하나만 콘솔에서 수정하면 gate가 drift를 감지해야 합니다.</p>
+
+          <h2>20. 비용은 SQS 요청 수보다 중복 side effect까지 포함한다</h2>
+          <pre><code class="language-text">Monthly processing cost
+  = SQS send receive delete and redrive requests
+  + Lambda invocations and duration
+  + DynamoDB idempotency reads writes and storage
+  + KMS requests when applicable
+  + logs metrics and traces
+  + outbox relay and cleanup
+  + duplicate external API calls and reconciliation labor</code></pre>
+          <p>batch size를 키우면 Lambda invocation overhead는 줄지만 한 invocation의 처리 시간과 부분 실패 surface가 커집니다. visibility timeout을 잘못 설정해 성공 message가 반복되면 SQS와 Lambda 비용보다 결제사 호출과 운영 조사 비용이 더 클 수 있습니다. 비용 최적화는 멱등성 제거가 아니라 duplicate rate, batch 효율과 log volume을 함께 줄이는 방향이어야 합니다.</p>
+
+          <h2>21. 운영 책임은 queue가 아니라 업무 lifecycle을 따라 배분한다</h2>
+          <table>
+            <thead><tr><th>영역</th><th>Primary owner</th><th>책임</th></tr></thead>
+            <tbody>
+              <tr><td>API와 outbox</td><td>Order service team</td><td>request key, DB transaction과 event contract</td></tr>
+              <tr><td>Consumer와 idempotency</td><td>Payment workflow team</td><td>업무 key, side effect와 partial batch response</td></tr>
+              <tr><td>Queue와 Lambda mapping</td><td>Cloud platform</td><td>IaC, encryption, visibility, concurrency와 IAM</td></tr>
+              <tr><td>Payment reconciliation</td><td>Payment domain owner</td><td>unknown result, duplicate·누락 승인과 보상</td></tr>
+              <tr><td>SLO와 incident</td><td>Service owner 또는 SRE</td><td>dashboard, alert, redrive 승인과 runbook drill</td></tr>
+              <tr><td>Message data</td><td>Security 또는 Privacy</td><td>최소 수집, 보존 기간, DLQ 접근과 audit</td></tr>
+            </tbody>
+          </table>
+          <p>redrive 실행 권한은 일반 개발자 역할에 넓게 주지 않습니다. root cause 수정 승인, destination과 velocity 확인, business owner의 reconciliation 준비가 끝난 뒤 별도 operator가 수행합니다.</p>
+
+          <h2>22. 아직 production-grade라고 주장하지 않는 범위</h2>
+          <ul>
+            <li>이 글의 latency, concurrency, visibility와 redrive 수치는 실제 workload의 측정값이 아닙니다.</li>
+            <li>transactional outbox relay의 lease, pagination, cleanup과 장애 복구 코드를 구현하지 않았습니다.</li>
+            <li>결제사의 실제 idempotency key 보존 기간과 동일 key·다른 payload 동작을 검증하지 않았습니다.</li>
+            <li>Lambda timeout 직전의 external API unknown result를 production sandbox에서 재현하지 않았습니다.</li>
+            <li>대규모 backlog와 production traffic이 동시에 존재할 때 downstream quota를 부하 테스트하지 않았습니다.</li>
+            <li>Multi-Region active-active 주문 처리와 Region 간 idempotency 저장소 일관성을 다루지 않았습니다.</li>
+            <li>고객 알림, 재고 reservation 만료와 환불까지 포함한 end-to-end 보상 workflow를 구현하지 않았습니다.</li>
+          </ul>
+          <p>이 상태에서 말할 수 있는 것은 "SQS-Lambda 주문 처리의 운영 계약을 설계했다"까지입니다. 실제 duplicate injection, dependency outage, DLQ redrive와 reconciliation 결과가 채워져야 production-grade라는 주장이 완성됩니다.</p>
+
+          <h2>23. 마무리</h2>
+          <p>SQS 기반 주문 처리의 목표는 message를 한 번만 받는 것이 아닙니다. message가 여러 번 도착하고 consumer가 어디서든 종료될 수 있다는 전제에서 주문, 결제와 재고의 업무 효과를 한 번만 적용하고, 해결되지 않은 message를 조사 가능한 상태로 격리하는 것입니다.</p>
+          <blockquote><p>멱등성은 duplicate를 숨기는 코드 한 줄이 아니라 producer transaction, consumer lock, 외부 side effect와 reconciliation을 관통하는 업무 계약입니다. DLQ는 그 계약이 실패했을 때 조사를 시작하는 지점입니다.</p></blockquote>
+          <p><strong>참고 문서:</strong>
+            <a href="https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/standard-queues-at-least-once-delivery.html">Amazon SQS at-least-once delivery</a>,
+            <a href="https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/FIFO-queues-exactly-once-processing.html">Amazon SQS FIFO deduplication</a>,
+            <a href="https://docs.aws.amazon.com/lambda/latest/dg/with-sqs.html">Using Lambda with Amazon SQS</a>,
+            <a href="https://docs.aws.amazon.com/lambda/latest/dg/services-sqs-configure.html">Configuring an SQS event source mapping</a>,
+            <a href="https://docs.aws.amazon.com/lambda/latest/dg/services-sqs-errorhandling.html">Handling SQS event source errors</a>,
+            <a href="https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-visibility-timeout.html">Amazon SQS visibility timeout</a>,
+            <a href="https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-dead-letter-queues.html">Using Amazon SQS dead-letter queues</a>,
+            <a href="https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-configure-dead-letter-queue-redrive.html">Configuring DLQ redrive</a>,
+            <a href="https://docs.aws.amazon.com/prescriptive-guidance/latest/cloud-design-patterns/transactional-outbox.html">Transactional outbox pattern</a>,
+            <a href="https://docs.aws.amazon.com/powertools/python/latest/utilities/idempotency/">Powertools for AWS Lambda idempotency</a>
+          </p>
+        </div>
+      </article>
+    </main>
+
+    <footer class="site-footer">
+      <p>© 2026 Jiwon Kim</p>
+      <div class="footer-links">
+        <span id="visitStatus">집계 중</span>
+        <a href="../articles.html">Articles</a>
+        <a href="../feed.xml">RSS</a>
+      </div>
+    </footer>
+    <script src="../script.js?v=20260905-4"></script>
+    <script data-goatcounter="https://jiwonkim-blog.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
+    <noscript><img class="tracking-pixel" src="https://jiwonkim-blog.goatcounter.com/count?p=/posts/aws-messaging-sqs-order-idempotency-dlq-redrive.html" alt="" /></noscript>
+  </body>
+</html>
