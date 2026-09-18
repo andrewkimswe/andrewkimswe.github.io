@@ -6,7 +6,14 @@
     <atom:link href="https://andrewkimswe.github.io/feed.xml" rel="self" type="application/rss+xml" />
     <description>백엔드, 클라우드, RAG, 아키텍처와 운영 판단을 기록하는 기술 블로그입니다.</description>
     <language>ko-KR</language>
-    <lastBuildDate>Wed, 09 Sep 2026 00:00:00 +0900</lastBuildDate>
+    <lastBuildDate>Sat, 19 Sep 2026 00:00:00 +0900</lastBuildDate>
+    <item>
+      <title>[AWS/Messaging] 주문 처리 Lambda가 재시도될 때 결제가 두 번 되지 않게 하려면? - SQS Idempotency, Partial Batch, DLQ</title>
+      <link>https://andrewkimswe.github.io/posts/aws-messaging-sqs-order-idempotency-dlq-redrive.html</link>
+      <guid isPermaLink="true">https://andrewkimswe.github.io/posts/aws-messaging-sqs-order-idempotency-dlq-redrive.html</guid>
+      <pubDate>Sat, 19 Sep 2026 00:00:00 +0900</pubDate>
+      <description>SQS를 붙이는 구성에서 더 나아가 주문의 멱등성 경계, 부분 실패, visibility budget, DLQ 분석과 안전한 redrive를 운영 계약으로 만듭니다.</description>
+    </item>
     <item>
       <title>[AWS/Database] RDS 엔진 업그레이드를 무중단이라고 부르기 전에 - Blue/Green, Switchover Gate, Rollback</title>
       <link>https://andrewkimswe.github.io/posts/aws-database-rds-blue-green-switchover-rollback.html</link>
