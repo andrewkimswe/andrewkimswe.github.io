@@ -1,0 +1,295 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>[Data/AI] AI Agent에게 실제 업무 권한을 어디까지 줄 것인가? - Palantir AIP Evals와 Progressive Automation | Jiwon Kim Engineering Notes</title>
+    <meta name="description" content="Palantir AIP Agent가 LLM, 기존 Logic과 Action을 조합하는 방식을 살펴보고, Evals와 runtime evidence를 기반으로 제안부터 제한된 자동 실행까지 권한을 확대하는 운영 계약을 설계합니다." />
+    <meta name="author" content="Jiwon Kim" />
+    <meta name="robots" content="index, follow, max-image-preview:large" />
+    <link rel="canonical" href="https://andrewkimswe.github.io/posts/data-ai-palantir-aip-agent-evals-progressive-automation.html" />
+    <meta property="og:site_name" content="Jiwon Kim | Engineering Notes" />
+    <meta property="og:title" content="[Data/AI] AI Agent에게 실제 업무 권한을 어디까지 줄 것인가? - Palantir AIP Evals와 Progressive Automation" />
+    <meta property="og:description" content="좋은 답변보다 안전한 업무 참여가 중요합니다. Agent의 tool 사용, Action 권한, 평가 gate와 점진적 자동화 단계를 운영 관점에서 연결합니다." />
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="https://andrewkimswe.github.io/posts/data-ai-palantir-aip-agent-evals-progressive-automation.html" />
+    <meta property="og:image" content="https://andrewkimswe.github.io/assets/social-card.png" />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Jiwon Kim Engineering Notes" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://andrewkimswe.github.io/assets/social-card.png" />
+    <meta name="twitter:title" content="[Data/AI] AI Agent에게 실제 업무 권한을 어디까지 줄 것인가? - Palantir AIP Evals와 Progressive Automation" />
+    <meta name="twitter:description" content="Agent의 tool 사용, Action 권한, 평가 gate와 점진적 자동화 단계를 운영 관점에서 연결합니다." />
+    <meta name="twitter:image:alt" content="Jiwon Kim Engineering Notes" />
+    <meta property="article:published_time" content="2026-09-26T00:01:00+09:00" />
+    <meta property="article:modified_time" content="2026-09-26T00:01:00+09:00" />
+    <meta property="article:author" content="Jiwon Kim" />
+    <meta property="article:tag" content="Data" />
+    <meta property="article:tag" content="AI Systems" />
+    <meta property="article:tag" content="Palantir AIP" />
+    <meta property="article:tag" content="AI Agent" />
+    <meta property="article:tag" content="Evaluation" />
+    <meta property="article:tag" content="Progressive Automation" />
+    <meta property="article:tag" content="Governance" />
+    <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="../styles.css?v=20260905-4" />
+    <script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","headline":"[Data/AI] AI Agent에게 실제 업무 권한을 어디까지 줄 것인가? - Palantir AIP Evals와 Progressive Automation","description":"Palantir AIP Agent가 LLM, 기존 Logic과 Action을 조합하는 방식을 살펴보고, Evals와 runtime evidence를 기반으로 제안부터 제한된 자동 실행까지 권한을 확대하는 운영 계약을 설계합니다.","datePublished":"2026-09-26T00:01:00+09:00","dateModified":"2026-09-26T00:01:00+09:00","author":{"@type":"Person","name":"Jiwon Kim","url":"https://github.com/andrewkimswe"},"publisher":{"@type":"Person","name":"Jiwon Kim"},"mainEntityOfPage":"https://andrewkimswe.github.io/posts/data-ai-palantir-aip-agent-evals-progressive-automation.html","inLanguage":"ko-KR"}
+    </script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main-content">본문으로 바로가기</a>
+    <header class="site-header">
+      <a class="brand" href="../" aria-label="Jiwon Kim Engineering Notes 홈">
+        <span class="brand-mark" aria-hidden="true">JK</span>
+        <span class="brand-copy"><strong>Jiwon Kim</strong><small>Engineering Notes</small></span>
+      </a>
+      <nav class="nav-links" aria-label="주요 메뉴">
+        <a href="../articles.html">Articles</a>
+        <a href="../projects.html">Projects</a>
+        <a href="../#about">About</a>
+        <span class="nav-divider" aria-hidden="true"></span>
+        <a href="https://github.com/andrewkimswe">GitHub</a>
+        <a href="https://www.linkedin.com/in/jiwon-kim-867334285/">LinkedIn</a>
+      </nav>
+    </header>
+
+    <main id="main-content">
+      <article class="article-page">
+        <header class="article-hero">
+          <a class="back-link" href="../articles.html">All articles</a>
+          <p class="eyebrow">Data · AI Systems · Evaluation</p>
+          <h1>[Data/AI] AI Agent에게 실제 업무 권한을 어디까지 줄 것인가? - Palantir AIP Evals와 Progressive Automation</h1>
+          <p class="article-summary">좋은 답변을 만드는 것과 기업 시스템에서 안전하게 행동하는 것은 다른 문제입니다. Agent의 tool 사용과 Action 권한을 평가하고, 증거가 쌓인 범위에서만 자동화를 확대하는 운영 계약을 살펴봅니다.</p>
+          <div class="article-meta"><time datetime="2026-09-26">2026.09.26</time><span>AI Agent</span><span>AIP Evals</span><span>Automation</span><span>Governance</span></div>
+        </header>
+
+        <div class="article-body">
+          <p><a href="./data-ai-palantir-foundry-aip-ontology-decision-action.html">앞선 글</a>에서는 Palantir Foundry와 AIP가 기업의 Data, Logic, Action과 Security를 Ontology로 연결하는 방식을 살펴봤습니다. 이번 글에서는 Ontology 자체를 다시 설명하기보다 그 위에서 AI Agent가 실제 업무에 참여할 때 생기는 운영 문제에 집중합니다.</p>
+          <p>질문은 "Agent가 답을 잘하는가?"에서 끝나지 않습니다. 어떤 Logic을 선택했는지, 올바른 parameter로 tool을 호출했는지, 허용되지 않은 Action을 거부했는지, 실행 결과가 실제 업무 목표를 만족했는지까지 확인해야 합니다. 권한이 커질수록 평가 대상도 response quality에서 system behavior로 확장됩니다.</p>
+          <p>이 글은 Palantir 공식 문서를 바탕으로 AIP Evals, Ontology SDK와 Branching을 운영 관점에서 해석한 설계 글입니다. 실제 Foundry tenant에서 Agent를 배포해 성능이나 비용을 측정한 결과가 아니며, <strong>Progressive Automation은 AIP Evals가 권한을 자동 승격하는 기능이 아니라 평가와 runtime evidence를 근거로 조직이 자율성 범위를 결정하는 운영 모델</strong>로 사용합니다.</p>
+
+          <h2>1. Agent의 목적은 대화가 아니라 Workflow의 일부가 되는 것이다</h2>
+          <p>재고 부족을 발견하는 dashboard와 재고 이동을 생성하는 ERP가 분리되어 있다면 담당자는 분석 결과를 다시 해석하고 다른 시스템에서 같은 context를 복원해야 합니다. Agent를 추가하는 목적은 이 과정을 자연어 화면 하나로 가리는 것이 아니라, 판단과 실행 사이의 반복 가능한 업무 계약을 만드는 데 있습니다.</p>
+          <div class="mermaid diagram">
+flowchart TB
+    signal[Operational signal] --> context[Business context]
+    context --> decision[Decision workflow]
+    decision --> proposal[Proposed action]
+    proposal --> approval{Policy and approval}
+    approval -->|Allowed| execute[Controlled execution]
+    approval -->|Denied| review[Human review]
+    execute --> outcome[Business outcome]
+    outcome --> evidence[Evaluation evidence]
+          </div>
+          <p>Workflow의 각 단계는 서로 다른 주체가 맡을 수 있습니다. 규칙 엔진이 위험도를 계산하고, LLM이 비정형 보고서에서 context를 추출하며, 사람이 고위험 결정을 승인하고, Action이 외부 시스템에 write-back할 수 있습니다. Agent는 모든 단계를 대체하기보다 이들을 조율하는 역할을 맡습니다.</p>
+
+          <h2>2. LLM이 잘하는 일과 검증된 계산을 분리한다</h2>
+          <p>공장 정비 보고서에 최근 세 교대 동안 모터 진동이 커졌다는 문장이 들어왔다고 가정하겠습니다. LLM은 보고서에서 장비, 증상과 시간 범위를 추출하는 데 유용합니다. 하지만 고장 확률을 생성된 숫자로 대신할 이유는 없습니다. 이미 검증된 failure prediction model이 있다면 그 모델을 호출하고, maintenance rule과 optimizer를 함께 사용해야 합니다.</p>
+          <div class="mermaid diagram">
+flowchart TB
+    report[Maintenance report] --> llm[LLM context extraction]
+    llm --> model[Failure prediction model]
+    telemetry[Sensor telemetry] --> model
+    model --> rule[Maintenance policy]
+    rule --> optimizer[Schedule optimizer]
+    optimizer --> proposal[Maintenance proposal]
+          </div>
+          <table>
+            <thead><tr><th>구성 요소</th><th>맡길 일</th><th>검증할 계약</th></tr></thead>
+            <tbody>
+              <tr><td>LLM</td><td>비정형 context 추출, 설명과 대안 구성</td><td>근거 연결, schema, 누락과 환각</td></tr>
+              <tr><td>Business rule</td><td>금지 조건, threshold와 승인 정책</td><td>결정성, 우선순위와 예외</td></tr>
+              <tr><td>ML model</td><td>예측 score와 분류</td><td>입력 분포, calibration과 version</td></tr>
+              <tr><td>Optimizer</td><td>자원·일정 제약 아래 해 탐색</td><td>constraint, infeasible 처리와 timeout</td></tr>
+              <tr><td>Action</td><td>Ontology 또는 외부 system 변경</td><td>권한, idempotency, side effect와 audit</td></tr>
+            </tbody>
+          </table>
+          <p>Agent 품질을 model benchmark 하나로 판단하면 안 되는 이유입니다. 올바른 답을 생성했어도 잘못된 tool을 선택하거나 stale data를 읽거나 side effect를 중복 실행하면 workflow는 실패합니다.</p>
+
+          <h2>3. 자동화 수준은 하나의 스위치가 아니라 권한 사다리다</h2>
+          <p>처음부터 Agent에 production write 권한을 주는 것은 위험합니다. 같은 use case라도 관찰, 제안, 승인 기반 실행, 제한된 자동 실행 순서로 권한을 나눌 수 있습니다.</p>
+          <table>
+            <thead><tr><th>단계</th><th>Agent 역할</th><th>Human 역할</th><th>허용된 영향</th></tr></thead>
+            <tbody>
+              <tr><td>0. Observe</td><td>실행 없이 기록된 사례를 분석</td><td>기존 방식으로 판단·실행</td><td>Production side effect 없음</td></tr>
+              <tr><td>1. Assist</td><td>정보 요약과 근거 제시</td><td>판단과 Action 선택</td><td>Read-only</td></tr>
+              <tr><td>2. Recommend</td><td>Action과 parameter 제안</td><td>검토 후 직접 실행</td><td>제안만 저장</td></tr>
+              <tr><td>3. Approve</td><td>검증된 Action 호출 준비</td><td>명시적으로 승인 또는 거부</td><td>승인된 요청만 실행</td></tr>
+              <tr><td>4. Constrained auto</td><td>낮은 위험 범위를 자동 실행</td><td>예외 처리와 사후 검토</td><td>금액·대상·빈도 제한</td></tr>
+              <tr><td>5. Expanded auto</td><td>더 넓은 조건에서 실행</td><td>정책·SLO·incident 책임</td><td>지속 monitoring과 kill switch 전제</td></tr>
+            </tbody>
+          </table>
+          <div class="mermaid diagram compact-diagram">
+flowchart TB
+    observe[Observe] --> assist[Assist]
+    assist --> recommend[Recommend]
+    recommend --> approve[Human approval]
+    approve --> constrained[Constrained automation]
+    constrained --> expanded[Expanded automation]
+    expanded -. regression .-> constrained
+    constrained -. incident .-> approve
+          </div>
+          <p>이 사다리는 일방통행이 아닙니다. 모델, prompt, Logic, data mapping이나 업무 정책이 바뀌면 낮은 단계로 되돌려 재검증해야 합니다. incident와 regression은 권한 축소의 trigger이고, 자동화 확대에는 명시적인 owner와 승인 기록이 필요합니다.</p>
+
+          <h2>4. AIP Evals는 권한 승격 기능이 아니라 판단 근거를 만드는 도구다</h2>
+          <p>AIP Evals는 AIP Logic, AIP Chatbot과 code-authored function을 대상으로 test case, target function과 evaluation function을 구성하고 실행 결과를 이전 version과 비교할 수 있는 환경입니다. 같은 입력을 여러 번 실행해 비결정적 결과의 variance를 확인하거나 model·parameter 조합을 비교할 수도 있습니다.</p>
+          <p>하지만 evaluation suite가 통과했다고 Agent의 production 권한이 자동으로 커지는 것은 아닙니다. Evals는 후보 구현의 behavior를 측정하는 evidence를 제공하고, 실제 권한 변경은 risk owner가 runtime monitoring과 업무 영향까지 보고 결정해야 합니다.</p>
+          <div class="mermaid diagram">
+flowchart TB
+    cases[Versioned test cases] --> candidate[Candidate Logic or Agent]
+    candidate --> outputs[Outputs and tool traces]
+    outputs --> evaluators[Deterministic and model evaluators]
+    evaluators --> report[Quality, variance, cost report]
+    report --> gate{Release gate}
+    gate -->|Pass| shadow[Shadow or approval mode]
+    gate -->|Fail| revise[Revise Logic, prompt or tools]
+    shadow --> runtime[Runtime evidence]
+    runtime --> autonomy{Autonomy review}
+          </div>
+
+          <h2>5. Response가 아니라 의사결정 경로를 평가한다</h2>
+          <p>Agent가 실제 Action에 가까워질수록 정답 문자열만 비교하는 평가는 부족합니다. 평가 대상을 여러 계층으로 나눠야 실패 위치를 설명할 수 있습니다.</p>
+          <table>
+            <thead><tr><th>평가 계층</th><th>질문</th><th>예시 metric</th></tr></thead>
+            <tbody>
+              <tr><td>Context</td><td>필요한 object와 최신 상태를 찾았는가?</td><td>required context recall, stale input rate</td></tr>
+              <tr><td>Reasoning output</td><td>판단과 설명이 기대 조건을 만족하는가?</td><td>correctness, completeness, source support</td></tr>
+              <tr><td>Tool selection</td><td>허용된 Logic과 tool을 올바른 순서로 골랐는가?</td><td>tool precision, forbidden tool calls</td></tr>
+              <tr><td>Parameter</td><td>대상, 수량과 조건이 정확한가?</td><td>exact match, range violation, schema failure</td></tr>
+              <tr><td>Policy</td><td>금지·승인 조건을 우회하지 않았는가?</td><td>unsafe action attempts, approval bypass</td></tr>
+              <tr><td>Execution</td><td>중복 없이 의도한 side effect를 만들었는가?</td><td>idempotency violations, execution failure</td></tr>
+              <tr><td>Outcome</td><td>실제 업무 결과가 개선됐는가?</td><td>decision time, override rate, error cost</td></tr>
+              <tr><td>Operations</td><td>예산 안에서 안정적으로 동작하는가?</td><td>p95 latency, token·tool cost, timeout rate</td></tr>
+            </tbody>
+          </table>
+          <p>LLM-as-a-judge는 의미 기반 평가에 유용하지만 유일한 gate로 두지 않습니다. 금액 한도, tool allowlist, parameter schema, permission과 idempotency는 deterministic evaluator로 검사하고, 애매한 품질 기준에는 model evaluator와 human review를 조합합니다.</p>
+
+          <h2>6. Dev set 개선만으로 자동화 단계를 높이지 않는다</h2>
+          <p>Prompt와 test case를 같은 사람이 반복해서 조정하면 평가셋에 맞춘 개선이 생길 수 있습니다. Agent 변경도 retrieval이나 ML model과 마찬가지로 개발용 사례와 untouched validation을 분리해야 합니다.</p>
+          <pre><code class="language-yaml"># agent-release-gate.yml - 도구 독립적인 운영 계약 예시
+inventory_transfer_agent:
+  candidate_version: aip-logic-17
+  evaluation:
+    held_out_cases: 180
+    required_context_recall: ">= 0.98"
+    tool_selection_accuracy: ">= 0.99"
+    parameter_exact_match: ">= 0.99"
+    forbidden_action_attempts: 0
+    approval_bypass_attempts: 0
+    p95_latency_seconds: "<= 8"
+    mean_cost_per_case_usd: "<= 0.12"
+  rollout:
+    initial_mode: recommendation_only
+    shadow_days: 14
+    minimum_reviewed_decisions: 500
+    max_human_override_rate: "<= 0.03"
+  block_on:
+    - ontology_contract_changed
+    - tool_schema_changed
+    - held_out_regression
+    - evaluator_version_missing
+    - production_kill_switch_missing</code></pre>
+          <p>숫자는 실제 측정 결과가 아니라 acceptance contract의 예시입니다. 중요한 것은 baseline과 candidate가 동일한 held-out case, evaluator version과 반복 횟수에서 비교되고, aggregate score가 좋아도 safety-critical case 하나가 실패하면 release를 막는 것입니다.</p>
+
+          <h2>7. Offline Evals와 Runtime Monitoring은 서로 대체하지 않는다</h2>
+          <p>평가셋은 알려진 위험을 반복 검증하지만 production의 모든 context를 담을 수 없습니다. 실제 사용자, 권한, dependency와 데이터 분포가 들어오면 새로운 failure mode가 나타납니다.</p>
+          <table>
+            <thead><tr><th>관찰</th><th>분류</th><th>대응</th></tr></thead>
+            <tbody>
+              <tr><td>필수 object를 찾지 못함</td><td>Context failure</td><td>Action 금지, fallback과 data owner 알림</td></tr>
+              <tr><td>금지 tool 호출을 시도</td><td>Policy failure</td><td>호출 차단, security event와 사례 보존</td></tr>
+              <tr><td>동일 요청이 재실행됨</td><td>Execution failure</td><td>idempotency key 확인, 중복 side effect 조정</td></tr>
+              <tr><td>사람이 제안을 반복 수정</td><td>Decision quality drift</td><td>override 이유 수집, autonomy 단계 하향</td></tr>
+              <tr><td>외부 system timeout</td><td>Dependency failure</td><td>bounded retry, 상태 조회와 503·504 구분</td></tr>
+              <tr><td>비용 또는 latency 급증</td><td>Operational regression</td><td>budget 차단, model·tool 경로 분석</td></tr>
+            </tbody>
+          </table>
+          <p>metric에는 Agent version, workflow, tool과 outcome class 정도만 넣고 customer ID, order ID나 원문 prompt 같은 high-cardinality·민감 정보를 label로 사용하지 않습니다. 개별 의사결정의 context와 trace는 접근 통제된 audit store에 보관하고 metric과 연결합니다.</p>
+
+          <h2>8. OSDK는 Ontology를 제품의 typed backend로 사용하게 한다</h2>
+          <p>Ontology SDK(OSDK)는 TypeScript, Python과 Java에서 선택한 Ontology의 type을 생성하고 object 조회, Action 적용, function과 AIP Logic 호출을 지원합니다. 따라서 사용자가 반드시 Foundry UI 안에서만 workflow를 수행할 필요는 없습니다.</p>
+          <div class="mermaid diagram">
+flowchart LR
+    web[Web or mobile product] --> osdk[Generated OSDK client]
+    service[Backend service] --> osdk
+    osdk --> auth[OAuth and scoped permissions]
+    auth --> ontology[Ontology objects and links]
+    auth --> functions[Functions and AIP Logic]
+    auth --> actions[Governed actions]
+          </div>
+          <p>이 접근은 "SDK of the business"라는 표현처럼 Warehouse, Shipment, Order와 <code>TransferInventory</code>를 application interface로 노출합니다. 동시에 SDK가 permission, retry, transaction과 업무 invariant를 대신 설계해주는 것은 아닙니다. Client credential 범위, Action idempotency, API version과 실패 계약은 application owner의 책임으로 남습니다.</p>
+
+          <h2>9. Runtime 권한과 시스템 변경 권한을 분리한다</h2>
+          <p>Agent가 production object를 읽고 Action을 실행하는 권한과, Ontology·Logic·application 정의 자체를 변경하는 권한은 다른 통제입니다. 전자는 runtime policy가, 후자는 branch와 review workflow가 담당해야 합니다.</p>
+          <div class="mermaid diagram compact-diagram">
+flowchart TB
+    runtime[Runtime control<br/>What can execute now]
+    change[Change control<br/>What can enter production]
+    runtime --> identity[Identity, object and action permission]
+    runtime --> limits[Parameter, volume and approval limits]
+    change --> branch[Isolated branch]
+    branch --> evals[Evals and tests]
+    evals --> review[Proposal review]
+    review --> main[Merge to main]
+          </div>
+          <p>Foundry의 Ontology는 Global Branching에서 변경, conflict resolution, proposal review와 merge를 지원합니다. 다만 모든 resource와 interface가 같은 수준으로 branch-aware한 것은 아닙니다. 공식 문서 기준 pro-code Agent의 Global Branching 연동은 Beta이고 OSDK type과 일부 API에는 제한이 있으므로, "Agent가 만든 모든 변경이 안전한 branch 안에서 완전히 격리된다"고 일반화하면 안 됩니다.</p>
+
+          <h2>10. 권한 확대 결정에는 명시적인 owner가 필요하다</h2>
+          <table>
+            <thead><tr><th>결정</th><th>Primary owner</th><th>필요한 evidence</th></tr></thead>
+            <tbody>
+              <tr><td>Business outcome 정의</td><td>Domain owner</td><td>현재 decision time, 오류 비용과 목표</td></tr>
+              <tr><td>Logic·model 변경</td><td>AI/ML owner</td><td>held-out eval, variance, latency와 cost</td></tr>
+              <tr><td>Tool·Action 계약</td><td>Service owner</td><td>schema, idempotency, timeout과 rollback</td></tr>
+              <tr><td>권한·승인 정책</td><td>Security와 risk owner</td><td>abuse case, least privilege와 audit test</td></tr>
+              <tr><td>자동화 단계 승격</td><td>Business owner와 change approver</td><td>offline gate, shadow 결과와 override 분석</td></tr>
+              <tr><td>Incident와 권한 축소</td><td>On-call owner</td><td>kill switch, fallback과 recovery runbook</td></tr>
+            </tbody>
+          </table>
+          <p>추천 모드에서 정확도가 높았다는 이유만으로 자동 실행으로 넘어가지 않습니다. 승인 모드에서 실제 사용자의 거부·수정 이유를 수집하고, 제한된 tenant나 금액 범위에서 canary를 수행한 뒤, 오류 예산과 업무 outcome이 함께 통과할 때만 범위를 확대합니다.</p>
+
+          <h2>11. 이 글에서 검증하지 않은 것</h2>
+          <ul>
+            <li>AIP Logic, AIP Evals와 OSDK를 실제 tenant에서 구성하거나 실행하지 않았습니다.</li>
+            <li>앞선 evaluation threshold와 rollout 기간은 실측값이 아니라 설계 예시입니다.</li>
+            <li>실제 ERP 또는 production system에 대한 write-back과 compensation을 구현하지 않았습니다.</li>
+            <li>model evaluator의 bias, 재현성과 evaluator 자체의 regression을 측정하지 않았습니다.</li>
+            <li>Global Branching에서 pro-code Agent, OSDK와 Platform API의 제한을 재현하지 않았습니다.</li>
+            <li>조직이 자동화 단계와 ownership 모델을 실제로 채택하고 유지할 수 있는지 검증하지 않았습니다.</li>
+          </ul>
+          <p>따라서 이 글은 Palantir 제품의 실제 도입 성과가 아니라 Agent의 업무 권한을 평가하고 확대하기 위한 운영 설계입니다. Production 적합성을 주장하려면 고정된 evaluation suite, shadow traffic, 실제 human override, incident drill과 업무 outcome이 release evidence로 남아야 합니다.</p>
+
+          <h2>12. 마무리</h2>
+          <p>Enterprise Agent의 핵심 문제는 LLM에게 무엇을 물어볼지가 아니라 어떤 context와 Logic을 제공하고, 어떤 Action을 어느 범위까지 허용하며, 더 많은 권한을 줘도 된다는 것을 어떻게 증명할지에 있습니다.</p>
+          <blockquote><p>Progressive Automation은 AI를 믿는 속도가 아니라, 평가와 운영 증거가 허용하는 범위까지만 권한을 이동시키는 변화 관리입니다.</p></blockquote>
+          <p>AIP Evals는 후보 Logic의 품질과 variance를 비교하는 중요한 도구지만, 실제 자율성은 offline evaluation만으로 결정되지 않습니다. Human override, policy violation, dependency failure, 비용과 business outcome을 함께 관찰하고 언제든 낮은 권한 단계로 돌아갈 수 있어야 합니다.</p>
+          <p><strong>함께 읽기:</strong> <a href="./data-ai-palantir-foundry-aip-ontology-decision-action.html">데이터는 많은데 왜 의사결정은 느릴까? - Palantir Foundry와 AIP의 Ontology</a></p>
+          <p><strong>참고 문서:</strong>
+            <a href="https://www.palantir.com/docs/foundry/aip-evals/overview">AIP Evals overview</a>,
+            <a href="https://www.palantir.com/docs/foundry/aip-evals/create-suite">Create an evaluation suite</a>,
+            <a href="https://www.palantir.com/docs/foundry/aip-evals/experiments">Run experiments</a>,
+            <a href="https://www.palantir.com/docs/foundry/logic/core-concepts">AIP Logic core concepts</a>,
+            <a href="https://www.palantir.com/docs/foundry/dev-toolchain/overview">Developer toolchain and OSDK</a>,
+            <a href="https://www.palantir.com/docs/foundry/ontologies/branching-ontology">Branching the Ontology</a>,
+            <a href="https://www.palantir.com/docs/foundry/agents/branching">Pro-code agents on a global branch</a>
+          </p>
+        </div>
+      </article>
+    </main>
+
+    <footer class="site-footer">
+      <p>© 2026 Jiwon Kim</p>
+      <div class="footer-links">
+        <span id="visitStatus">집계 중</span>
+        <a href="../articles.html">Articles</a>
+        <a href="../feed.xml">RSS</a>
+      </div>
+    </footer>
+    <script src="../script.js?v=20260905-4"></script>
+    <script data-goatcounter="https://jiwonkim-blog.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
+    <noscript><img class="tracking-pixel" src="https://jiwonkim-blog.goatcounter.com/count?p=/posts/data-ai-palantir-aip-agent-evals-progressive-automation.html" alt="" /></noscript>
+  </body>
+</html>
