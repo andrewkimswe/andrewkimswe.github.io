@@ -6,7 +6,14 @@
     <atom:link href="https://andrewkimswe.github.io/feed.xml" rel="self" type="application/rss+xml" />
     <description>백엔드, 클라우드, RAG, 아키텍처와 운영 판단을 기록하는 기술 블로그입니다.</description>
     <language>ko-KR</language>
-    <lastBuildDate>Sat, 19 Sep 2026 00:00:00 +0900</lastBuildDate>
+    <lastBuildDate>Tue, 22 Sep 2026 00:00:00 +0900</lastBuildDate>
+    <item>
+      <title>[AWS/Streaming] Consumer를 늘렸는데 Kinesis 지연이 줄지 않는 이유 - Shard, EFO, KCL</title>
+      <link>https://andrewkimswe.github.io/posts/aws-streaming-kinesis-shard-efo-kcl-checkpointing.html</link>
+      <guid isPermaLink="true">https://andrewkimswe.github.io/posts/aws-streaming-kinesis-shard-efo-kcl-checkpointing.html</guid>
+      <pubDate>Tue, 22 Sep 2026 00:00:00 +0900</pubDate>
+      <description>Kinesis의 write, read, processing capacity를 분리하고 EFO 선택, KCL checkpoint, resharding과 운영 SLO를 함께 설계합니다.</description>
+    </item>
     <item>
       <title>[AWS/Messaging] 주문 처리 Lambda가 재시도될 때 결제가 두 번 되지 않게 하려면? - SQS Idempotency, Partial Batch, DLQ</title>
       <link>https://andrewkimswe.github.io/posts/aws-messaging-sqs-order-idempotency-dlq-redrive.html</link>

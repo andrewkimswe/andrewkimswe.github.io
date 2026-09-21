@@ -22,6 +22,7 @@ Jiwon Kim's Korean engineering journal about backend systems, cloud infrastructu
 
 ## Posts
 
+- [[AWS/Streaming] Consumer를 늘렸는데 Kinesis 지연이 줄지 않는 이유 - Shard, EFO, KCL](https://andrewkimswe.github.io/posts/aws-streaming-kinesis-shard-efo-kcl-checkpointing.html): Amazon Kinesis Data Streams의 shard 용량, partition key, Enhanced Fan-Out, KCL lease와 checkpoint를 하나의 운영 계약으로 설계하고 resharding, 관측, 비용과 회귀 검증까지 연결합니다.
 - [[AWS/Messaging] 주문 처리 Lambda가 재시도될 때 결제가 두 번 되지 않게 하려면? - SQS Idempotency, Partial Batch, DLQ](https://andrewkimswe.github.io/posts/aws-messaging-sqs-order-idempotency-dlq-redrive.html): Amazon SQS와 Lambda 기반 주문 처리에서 중복 전달, visibility timeout, partial batch failure와 DLQ redrive를 멱등성 저장소, transactional outbox, 운영 SLO로 통제하는 방법을 설계합니다.
 - [[AWS/Database] RDS 엔진 업그레이드를 무중단이라고 부르기 전에 - Blue/Green, Switchover Gate, Rollback](https://andrewkimswe.github.io/posts/aws-database-rds-blue-green-switchover-rollback.html): Amazon RDS Blue/Green Deployments로 엔진 업그레이드를 준비하면서 복제 지연, 연결 종료, 스키마 호환성, switchover 승인 기준, 비용 예산과 데이터 롤백의 한계를 운영 관점에서 설계합니다.
 - [[AWS/Database] Lambda는 버티는데 RDS가 먼저 죽는 이유 - RDS Proxy, Connection Storm, Pinning](https://andrewkimswe.github.io/posts/aws-database-rds-proxy-connection-storm-pinning.html): Lambda 트래픽 급증이 RDS connection storm으로 번지는 과정을 재현하고, RDS Proxy의 pooling과 multiplexing, session pinning, SLO, 비용 기준, canary rollout과 rollback을 운영 관점에서 설계합니다.
