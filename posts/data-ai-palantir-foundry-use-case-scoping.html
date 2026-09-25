@@ -21,10 +21,10 @@
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:image" content="https://andrewkimswe.github.io/assets/social-card.png" />
     <meta name="twitter:title" content="[Data/AI] AI Agent보다 먼저 무엇을 만들어야 할까? - Palantir Foundry Use Case Scoping" />
-    <meta name="twitter:description" content="사용자 pain, workflow, business impact와 feasibility를 기준으로 Foundry/AIP의 첫 Use Case를 선택합니다." />
+    <meta name="twitter:description" content="기술을 먼저 고르지 않고 사용자 pain, end-to-end workflow, business impact와 feasibility를 기준으로 첫 Use Case를 선택합니다." />
+    <meta property="article:modified_time" content="2026-09-26T00:02:00+09:00" />
     <meta name="twitter:image:alt" content="Jiwon Kim Engineering Notes" />
     <meta property="article:published_time" content="2026-09-26T00:02:00+09:00" />
-    <meta property="article:modified_time" content="2026-09-26T00:02:00+09:00" />
     <meta property="article:author" content="Jiwon Kim" />
     <meta property="article:tag" content="Data" />
     <meta property="article:tag" content="AI Systems" />
@@ -63,8 +63,32 @@
           <p class="eyebrow">Data · AI Systems · Product Discovery</p>
           <h1>[Data/AI] AI Agent보다 먼저 무엇을 만들어야 할까? - Palantir Foundry Use Case Scoping</h1>
           <p class="article-summary">좋은 Use Case는 기술 목록에서 나오지 않습니다. 실제 사용자 pain, end-to-end workflow, business impact와 실행 가능성을 근거로 첫 문제를 선택하고 빠르게 중단하거나 확장할 수 있어야 합니다.</p>
-          <div class="article-meta"><time datetime="2026-09-26">2026.09.26</time><span>Foundry</span><span>Scoping</span><span>Workflow</span><span>Adoption</span></div>
+          <div class="article-meta"><time datetime="2026-09-26">2026.09.26</time><span>Foundry</span><span>Scoping</span><span>Workflow</span><span>Adoption</span><span class="reading-time" data-generated="true">약 17분</span></div>
         </header>
+
+        <!-- GENERATED:ARTICLE_TOC:START -->
+        <aside class="article-toc" aria-label="이 글의 목차">
+          <details open>
+            <summary>On this page</summary>
+            <ol>
+              <li><a href="#section-01">1. Solution이 아니라 Problem Statement에서 시작한다</a></li>
+              <li><a href="#section-02">2. Business, People, Data &amp; Tech를 함께 평가한다</a></li>
+              <li><a href="#section-03">3. Impact와 Urgency를 baseline으로 설명한다</a></li>
+              <li><a href="#section-04">4. Desk-side에서 사용자의 실제 업무를 본다</a></li>
+              <li><a href="#section-05">5. 현재 Workflow를 새로운 화면으로 복제하지 않는다</a></li>
+              <li><a href="#section-06">6. Solution 확정은 늦추되 feasibility 확인은 병렬로 한다</a></li>
+              <li><a href="#section-07">7. 모든 문제에 Foundry/AIP가 필요한 것은 아니다</a></li>
+              <li><a href="#section-08">8. Scorecard는 토론을 대신하지 않고 가정을 드러낸다</a></li>
+              <li><a href="#section-09">9. 첫 MVP는 가장 작은 기능이 아니라 가장 작은 학습 단위다</a></li>
+              <li><a href="#section-10">10. Production Gate와 Stop Gate를 함께 정의한다</a></li>
+              <li><a href="#section-11">11. Scoping 결과물은 완벽한 설계서가 아니다</a></li>
+              <li><a href="#section-12">12. Workflow를 Scope하는 실행 순서</a></li>
+              <li><a href="#section-13">13. 이 글에서 검증하지 않은 것</a></li>
+              <li><a href="#section-14">14. 마무리</a></li>
+            </ol>
+          </details>
+        </aside>
+        <!-- GENERATED:ARTICLE_TOC:END -->
 
         <div class="article-body">
           <p>앞선 글에서는 <a href="./data-ai-palantir-foundry-aip-ontology-decision-action.html">Foundry와 AIP의 Ontology</a>, 그리고 <a href="./data-ai-palantir-aip-agent-evals-progressive-automation.html">AI Agent의 평가와 점진적 자동화</a>를 살펴봤습니다. 구조를 이해하고 나면 바로 Agent나 Ontology를 만들고 싶어지지만, 그보다 먼저 답해야 할 질문이 있습니다.</p>
@@ -72,7 +96,7 @@
           <p>회사에는 해결할 문제가 많지만 모든 문제가 Foundry/AIP를 사용할 만큼 중요하거나 복잡하지는 않습니다. 실제 프로젝트의 시작점은 기술 선택이 아니라 Use Case Scoping입니다.</p>
           <p>이 글은 Palantir Learning의 <em>Scoping Use Cases for Foundry &amp; AIP</em> 과정과 공식 adoption 문서를 바탕으로 제가 이해한 선택 기준을 운영 계약 형태로 재구성한 글입니다. 실제 조직에서 Foundry 도입 ROI나 adoption을 측정한 사례가 아니며, 아래 점수와 목표값은 scoping 방법을 설명하기 위한 예시입니다.</p>
 
-          <h2>1. Solution이 아니라 Problem Statement에서 시작한다</h2>
+          <h2 id="section-01">1. Solution이 아니라 Problem Statement에서 시작한다</h2>
           <p>"LLM Agent를 이용한 공급망 dashboard를 만들자"는 구현 아이디어이지 문제 정의가 아닙니다. 기술과 화면을 먼저 고르면 조사 과정이 이미 선택한 해결책을 정당화하는 방향으로 좁아질 수 있습니다.</p>
           <table>
             <thead><tr><th>구분</th><th>예시</th><th>문제점 또는 장점</th></tr></thead>
@@ -87,7 +111,7 @@
 이 때문에 [business impact]가 발생한다.
 첫 검증에서는 [observable outcome]을 [target]까지 개선할 수 있는지 확인한다.</code></pre>
 
-          <h2>2. Business, People, Data &amp; Tech를 함께 평가한다</h2>
+          <h2 id="section-02">2. Business, People, Data &amp; Tech를 함께 평가한다</h2>
           <p>Use Case는 가치가 크다는 이유만으로 시작할 수 없고, 데이터가 있다는 이유만으로 성공하지도 않습니다. 세 영역 중 하나가 비어 있으면 prototype은 만들어도 production workflow로 이어지기 어렵습니다.</p>
           <div class="mermaid diagram compact-diagram">
 flowchart TB
@@ -111,7 +135,7 @@ flowchart TB
             </tbody>
           </table>
 
-          <h2>3. Impact와 Urgency를 baseline으로 설명한다</h2>
+          <h2 id="section-03">3. Impact와 Urgency를 baseline으로 설명한다</h2>
           <p>정확한 재무 ROI를 시작 전에 계산하기 어렵더라도 현재 비용을 전혀 측정하지 않으면 성공 기준도 만들 수 없습니다. 금액 외에 decision time, 수작업 단계, 오류율, 규제 준수와 영향받는 사용자 수를 baseline으로 사용할 수 있습니다.</p>
           <table>
             <thead><tr><th>지표</th><th>현재 상태 예시</th><th>초기 목표 예시</th></tr></thead>
@@ -125,7 +149,7 @@ flowchart TB
           </table>
           <p>이 수치는 실측 결과가 아니라 측정 계약의 예시입니다. 실제 scoping에서는 표본 기간, 데이터 출처와 owner를 함께 적어야 합니다. "6개월 미루면 어떤 비용이나 위험이 계속되는가?"에 답할 수 없다면 높은 impact와 높은 urgency를 구분하기 어렵습니다.</p>
 
-          <h2>4. Desk-side에서 사용자의 실제 업무를 본다</h2>
+          <h2 id="section-04">4. Desk-side에서 사용자의 실제 업무를 본다</h2>
           <p>사용자에게 재고 확인 방법을 물으면 "SAP에서 확인한다"고 답할 수 있습니다. 실제 업무를 옆에서 보면 SAP export, VLOOKUP, Teams 문의, 다른 Excel 수신, 수동 계산과 Email 승인이 이어질 수 있습니다. 인터뷰가 사용자의 업무 모델을 알려준다면 desk-side walkthrough는 시스템 사이의 실제 마찰을 보여줍니다.</p>
           <div class="mermaid diagram">
 flowchart TB
@@ -139,7 +163,7 @@ flowchart TB
           </div>
           <p>각 단계에서 입력과 출력, 사용하는 도구, 대기 시간, 오류, handoff, business rule과 최종 Action을 기록합니다. 사용자의 말을 평가하려는 것이 아니라 문서에 없는 workflow를 함께 발견하는 과정입니다.</p>
 
-          <h2>5. 현재 Workflow를 새로운 화면으로 복제하지 않는다</h2>
+          <h2 id="section-05">5. 현재 Workflow를 새로운 화면으로 복제하지 않는다</h2>
           <p>SAP, Excel, Email과 승인을 Foundry App, table, notification과 approval로 일대일 치환하면 UI는 바뀌어도 불필요한 handoff는 남을 수 있습니다. 현재 process의 앞뒤까지 보면서 왜 각 단계가 존재하는지 묻습니다.</p>
           <table>
             <thead><tr><th>질문</th><th>찾으려는 것</th></tr></thead>
@@ -152,7 +176,7 @@ flowchart TB
             </tbody>
           </table>
 
-          <h2>6. Solution 확정은 늦추되 feasibility 확인은 병렬로 한다</h2>
+          <h2 id="section-06">6. Solution 확정은 늦추되 feasibility 확인은 병렬로 한다</h2>
           <p>기술적 구조를 너무 일찍 확정하면 problem space가 선택한 제품과 architecture에 맞춰질 수 있습니다. 그렇다고 데이터 접근, 보안과 연동 현실을 discovery 뒤까지 미뤄서는 안 됩니다.</p>
           <div class="mermaid diagram">
 flowchart LR
@@ -169,7 +193,7 @@ flowchart LR
           </div>
           <p>Production 연결 승인을 기다리는 동안 승인된 snapshot이나 익명화한 sample data로 interaction을 검증할 수 있습니다. 이는 governance 우회가 아닙니다. 누가 extract를 승인했고 어떤 민감 정보를 제거했으며 언제 폐기할지 기록한 뒤, 사용자 학습과 production integration을 병렬화하는 것입니다.</p>
 
-          <h2>7. 모든 문제에 Foundry/AIP가 필요한 것은 아니다</h2>
+          <h2 id="section-07">7. 모든 문제에 Foundry/AIP가 필요한 것은 아니다</h2>
           <p>좋은 scoping은 제품을 선택하는 과정인 동시에 선택하지 않는 과정입니다. 다음 조건이라면 더 단순한 BI, SaaS workflow 또는 기존 application 개선이 나을 수 있습니다.</p>
           <table>
             <thead><tr><th>상황</th><th>먼저 검토할 대안</th><th>판단 이유</th></tr></thead>
@@ -184,7 +208,7 @@ flowchart LR
           </table>
           <p>Foundry에 맞추기 위해 문제를 키우지 않습니다. 여러 source와 조직을 가로지르는 판단, 재사용할 business object와 실제 Action이 함께 있을 때 플랫폼 접근의 가치가 커집니다.</p>
 
-          <h2>8. Scorecard는 토론을 대신하지 않고 가정을 드러낸다</h2>
+          <h2 id="section-08">8. Scorecard는 토론을 대신하지 않고 가정을 드러낸다</h2>
           <p>후보 Use Case가 많다면 동일한 기준으로 비교할 수 있습니다. 점수 자체가 정답은 아니지만 누가 무엇을 근거로 높게 평가했는지 드러냅니다.</p>
           <table>
             <thead><tr><th>항목</th><th>가중치</th><th>질문</th></tr></thead>
@@ -214,7 +238,7 @@ Hard blockers override the score:
 - no owner for production Action or support</code></pre>
           <p>높은 ROI 추정치가 hard blocker를 상쇄하지는 않습니다. 데이터 접근이 불가능하거나 실제 사용자가 없는 프로젝트는 점수를 조정해서 통과시키지 않고, blocker를 제거할 owner와 기한이 있을 때 discovery 상태로 둡니다.</p>
 
-          <h2>9. 첫 MVP는 가장 작은 기능이 아니라 가장 작은 학습 단위다</h2>
+          <h2 id="section-09">9. 첫 MVP는 가장 작은 기능이 아니라 가장 작은 학습 단위다</h2>
           <p>MVP의 목적은 기능 수를 줄이는 데만 있지 않습니다. 가장 위험한 가정을 실제 사용자와 빠르게 검증해야 합니다. 공급망 use case라면 dashboard를 완성하는 것보다 차질 하나를 발견하고 영향 계산과 승인된 대응까지 이어지는 얇은 end-to-end slice가 더 많은 것을 알려줄 수 있습니다.</p>
           <div class="mermaid diagram compact-diagram">
 flowchart TB
@@ -235,7 +259,7 @@ flowchart TB
             </tbody>
           </table>
 
-          <h2>10. Production Gate와 Stop Gate를 함께 정의한다</h2>
+          <h2 id="section-10">10. Production Gate와 Stop Gate를 함께 정의한다</h2>
           <p>모든 prototype을 production까지 끌고 갈 필요는 없습니다. 중단 기준이 없으면 sunk cost 때문에 사용되지 않는 workflow를 계속 확장하게 됩니다.</p>
           <table>
             <thead><tr><th>Production Gate</th><th>Stop 또는 Rescope Gate</th></tr></thead>
@@ -249,7 +273,7 @@ flowchart TB
             </tbody>
           </table>
 
-          <h2>11. Scoping 결과물은 완벽한 설계서가 아니다</h2>
+          <h2 id="section-11">11. Scoping 결과물은 완벽한 설계서가 아니다</h2>
           <p>Scoping의 완료 조건은 수백 페이지의 요구사항이나 고정된 architecture가 아닙니다. 첫 solution을 만들고 가장 위험한 가정을 검증할 만큼 문제를 이해한 상태입니다.</p>
           <ul>
             <li>Problem Statement와 현재 baseline</li>
@@ -263,7 +287,7 @@ flowchart TB
           </ul>
           <p>High-level interface와 Ontology 후보는 포함할 수 있지만 solution이 사용자 feedback에 따라 바뀌는 것을 실패로 보지 않습니다. 바뀌지 않는 것은 해결하려는 outcome과 통제해야 할 제약입니다.</p>
 
-          <h2>12. Workflow를 Scope하는 실행 순서</h2>
+          <h2 id="section-12">12. Workflow를 Scope하는 실행 순서</h2>
           <div class="mermaid diagram">
 flowchart TB
     pain[1. Find user pain and baseline] --> observe[2. Observe the end-to-end workflow]
@@ -278,7 +302,7 @@ flowchart TB
           </div>
           <p>이 순서에서 Ontology와 Agent는 목적이 아니라 선택 가능한 구현 요소입니다. 사용자 pain에서 필요한 Data, Logic과 Action을 찾은 뒤 업무에서 의미 있는 개념을 Ontology로 표현하고, 반복 작업 중 평가 가능한 부분에만 automation을 추가합니다.</p>
 
-          <h2>13. 이 글에서 검증하지 않은 것</h2>
+          <h2 id="section-13">13. 이 글에서 검증하지 않은 것</h2>
           <ul>
             <li>실제 조직에서 후보 Use Case를 수집하고 scorecard의 예측력을 검증하지 않았습니다.</li>
             <li>예시 baseline, target, 가중치와 decision band는 실측값이 아닙니다.</li>
@@ -289,7 +313,7 @@ flowchart TB
           </ul>
           <p>따라서 이 글에서 말할 수 있는 것은 Foundry/AIP Use Case를 선택하고 첫 학습 단위로 줄이는 방법까지입니다. 실제 adoption과 ROI를 주장하려면 선택하지 않은 후보, 중단된 MVP, production 전환율과 baseline 대비 outcome을 장기간 추적해야 합니다.</p>
 
-          <h2>14. 마무리</h2>
+          <h2 id="section-14">14. 마무리</h2>
           <p>좋은 Use Case Scoping은 요구사항을 완벽하게 고정하는 과정이 아닙니다. 해결할 가치가 있는 문제를 찾고, 실제 workflow와 제약을 이해하고, 빠르게 학습할 수 있는 범위로 줄이는 과정입니다.</p>
           <blockquote><p>좋은 시스템의 첫 단계는 멋진 Architecture Diagram을 그리는 것이 아니라, 누구의 어떤 결정을 더 낫게 만들 것인지 확인하는 것입니다.</p></blockquote>
           <p>Ontology를 먼저 만들고 사용할 곳을 찾거나 Agent를 먼저 만들고 업무를 끼워 맞추지 않습니다. 사용자 pain에서 출발해 필요한 Data, Logic과 Action을 찾고, 가장 작은 end-to-end slice로 가치를 검증한 뒤, evidence가 허용하는 만큼 production과 automation으로 확장합니다.</p>
@@ -306,6 +330,30 @@ flowchart TB
             <a href="https://www.palantir.com/docs/foundry/foundry-adoption/program-overview">Establish a Foundry Program</a>
           </p>
         </div>
+
+        <!-- GENERATED:ARTICLE_TAIL:START -->
+        <nav class="article-pagination" aria-label="발행 순서로 읽기">
+          <span class="article-nav-empty"><span>Newer</span><strong>더 이상 글이 없습니다.</strong></span>
+          <a href="./data-ai-palantir-aip-agent-evals-progressive-automation.html"><span>Older</span><strong>[Data/AI] AI Agent에게 실제 업무 권한을 어디까지 줄 것인가? - Palantir AIP Evals와 Progressive Automation</strong></a>
+        </nav>
+        <aside class="related-notes" aria-labelledby="related-heading">
+          <h2 id="related-heading">Related notes</h2>
+          <div class="related-note-list">
+          <a href="./data-ai-palantir-foundry-aip-ontology-decision-action.html">
+            <span>Data · 2026.09.26</span>
+            <strong>[Data/AI] 데이터는 많은데 왜 의사결정은 느릴까? - Palantir Foundry와 AIP의 Ontology</strong>
+          </a>
+          <a href="./data-ai-palantir-aip-agent-evals-progressive-automation.html">
+            <span>Data · 2026.09.26</span>
+            <strong>[Data/AI] AI Agent에게 실제 업무 권한을 어디까지 줄 것인가? - Palantir AIP Evals와 Progressive Automation</strong>
+          </a>
+          <a href="./aws-streaming-kinesis-shard-efo-kcl-checkpointing.html">
+            <span>Data · 2026.09.22</span>
+            <strong>[AWS/Streaming] Consumer를 늘렸는데 Kinesis 지연이 줄지 않는 이유 - Shard, EFO, KCL</strong>
+          </a>
+          </div>
+        </aside>
+        <!-- GENERATED:ARTICLE_TAIL:END -->
       </article>
     </main>
 

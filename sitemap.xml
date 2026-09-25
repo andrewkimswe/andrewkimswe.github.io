@@ -2,19 +2,19 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://andrewkimswe.github.io/</loc>
-    <lastmod>2026-09-22</lastmod>
+    <lastmod>2026-09-26</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
     <loc>https://andrewkimswe.github.io/articles.html</loc>
-    <lastmod>2026-09-22</lastmod>
+    <lastmod>2026-09-26</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
     <loc>https://andrewkimswe.github.io/projects.html</loc>
-    <lastmod>2026-09-22</lastmod>
+    <lastmod>2026-09-26</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
@@ -237,6 +237,24 @@
   <url>
     <loc>https://andrewkimswe.github.io/posts/aws-streaming-kinesis-shard-efo-kcl-checkpointing.html</loc>
     <lastmod>2026-09-22</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://andrewkimswe.github.io/posts/data-ai-palantir-foundry-aip-ontology-decision-action.html</loc>
+    <lastmod>2026-09-26</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://andrewkimswe.github.io/posts/data-ai-palantir-aip-agent-evals-progressive-automation.html</loc>
+    <lastmod>2026-09-26</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://andrewkimswe.github.io/posts/data-ai-palantir-foundry-use-case-scoping.html</loc>
+    <lastmod>2026-09-26</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
