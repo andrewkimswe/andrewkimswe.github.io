@@ -94,7 +94,12 @@ def parse_post(path: Path) -> Post:
     eyebrow = match_one(r'<p class="eyebrow">(.*?)</p>', html)
     data_terms = set(tags)
     data_terms.update(part.strip() for part in eyebrow.split("·") if part.strip())
-    data_terms.update(term for term in ("AWS", "Cloud", "Architecture", "Operations") if term in html)
+    searchable_metadata = " ".join((title, description, summary, eyebrow))
+    data_terms.update(
+        term
+        for term in ("AWS", "Cloud", "Architecture", "Operations")
+        if term in searchable_metadata
+    )
     data_terms.update(re.findall(r"[A-Za-z][A-Za-z0-9@+-]*", title))
 
     body_match = re.search(r'<div class="article-body">(.*?)\n        </div>', html, re.S)
@@ -123,6 +128,7 @@ def choose_topic(tags: tuple[str, ...], eyebrow: str, title: str) -> str:
     if re.search(r"(?<![A-Za-z0-9])DR(?![A-Za-z0-9])", haystack):
         return "DR"
     for label in (
+        "Semiconductor",
         "Networking",
         "API",
         "S3",

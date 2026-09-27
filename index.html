@@ -96,7 +96,7 @@
             <dl class="signal-list">
               <div>
                 <dt>Articles</dt>
-                <dd data-post-count>40</dd>
+                <dd data-post-count>41</dd>
               </div>
               <div>
                 <dt>Projects</dt>
@@ -166,13 +166,26 @@
             <p class="eyebrow">Latest</p>
             <h2 id="latest-heading">최근 발행</h2>
           </div>
-          <a class="section-link" href="./articles.html">전체 <span data-post-count>40</span>개 글 보기 <span aria-hidden="true">→</span></a>
+          <a class="section-link" href="./articles.html">전체 <span data-post-count>41</span>개 글 보기 <span aria-hidden="true">→</span></a>
         </div>
         <div class="post-list home-post-list" aria-label="최근 글 목록">
           <!-- GENERATED:RECENT_POSTS:START -->
           <article
             class="post-row"
-            data-tags="Adoption | Agent | AI | AI Systems | Architecture | Case | Data | Foundry | Palantir | Palantir Foundry | Product Discovery | Scoping | Use | Use Case Scoping | Workflow"
+            data-tags="Current | Electric Field | Electrostatics | Fundamentals | Semiconductor | Voltage"
+            data-title="[Semiconductor] 전하·전계·전위·전압·전류는 어떻게 연결되는가?"
+            data-summary="전하에서 시작해 전계와 전위, 전압과 전류가 어떻게 연결되는지 살펴보고 반도체 소자에서 왜 중요한지 정리합니다."
+          >
+            <a href="./posts/semiconductor-charge-field-potential-voltage-current.html">
+              <time datetime="2026-09-27">2026.09.27</time>
+              <span class="post-topic">Semiconductor</span>
+              <h3>[Semiconductor] 전하·전계·전위·전압·전류는 어떻게 연결되는가?</h3>
+              <p>전하에서 시작해 전계와 전위, 전압과 전류가 어떻게 연결되는지 살펴보고 반도체 소자에서 왜 중요한지 정리합니다.</p>
+            </a>
+          </article>
+          <article
+            class="post-row"
+            data-tags="Adoption | Agent | AI | AI Systems | Case | Data | Foundry | Palantir | Palantir Foundry | Product Discovery | Scoping | Use | Use Case Scoping | Workflow"
             data-title="[Data/AI] AI Agent보다 먼저 무엇을 만들어야 할까? - Palantir Foundry Use Case Scoping"
             data-summary="기술을 먼저 고르지 않고 사용자 pain, end-to-end workflow, business impact와 feasibility를 기준으로 첫 Use Case를 선택합니다."
           >
@@ -185,7 +198,7 @@
           </article>
           <article
             class="post-row"
-            data-tags="Agent | AI | AI Agent | AI Systems | AIP | Automation | Data | Evals | Evaluation | Governance | Operations | Palantir | Palantir AIP | Progressive | Progressive Automation"
+            data-tags="Agent | AI | AI Agent | AI Systems | AIP | Automation | Data | Evals | Evaluation | Governance | Palantir | Palantir AIP | Progressive | Progressive Automation"
             data-title="[Data/AI] AI Agent에게 실제 업무 권한을 어디까지 줄 것인가? - Palantir AIP Evals와 Progressive Automation"
             data-summary="좋은 답변보다 안전한 업무 참여가 중요합니다. Agent의 tool 사용, Action 권한, 평가 gate와 점진적 자동화 단계를 운영 관점에서 연결합니다."
           >
@@ -211,7 +224,7 @@
           </article>
           <article
             class="post-row"
-            data-tags="Amazon Kinesis Data Streams | AWS | Cloud | Consumer | EFO | Enhanced Fan-Out | KCL | Kinesis | Kinesis Client Library | Observability | Reliability | Shard | Streaming"
+            data-tags="Amazon Kinesis Data Streams | AWS | Consumer | EFO | Enhanced Fan-Out | KCL | Kinesis | Kinesis Client Library | Observability | Reliability | Shard | Streaming"
             data-title="[AWS/Streaming] Consumer를 늘렸는데 Kinesis 지연이 줄지 않는 이유 - Shard, EFO, KCL"
             data-summary="Kinesis의 write, read, processing capacity를 분리하고 EFO 선택, KCL checkpoint, resharding과 운영 SLO를 함께 설계합니다."
           >
@@ -224,7 +237,7 @@
           </article>
           <article
             class="post-row"
-            data-tags="Amazon SQS | AWS | AWS Lambda | Batch | Cloud | DLQ | Idempotency | Lambda | Messaging | Partial | Reliability | SQS"
+            data-tags="Amazon SQS | AWS | AWS Lambda | Batch | DLQ | Idempotency | Lambda | Messaging | Partial | Reliability | SQS"
             data-title="[AWS/Messaging] 주문 처리 Lambda가 재시도될 때 결제가 두 번 되지 않게 하려면? - SQS Idempotency, Partial Batch, DLQ"
             data-summary="SQS를 붙이는 구성에서 더 나아가 주문의 멱등성 경계, 부분 실패, visibility budget, DLQ 분석과 안전한 redrive를 운영 계약으로 만듭니다."
           >
@@ -237,7 +250,7 @@
           </article>
           <article
             class="post-row"
-            data-tags="Amazon RDS | AWS | Blue | Blue/Green Deployments | Cloud | Database | Deployment | Gate | Green | MySQL | RDS | Reliability | Rollback | Switchover"
+            data-tags="Amazon RDS | AWS | Blue | Blue/Green Deployments | Database | Deployment | Gate | Green | MySQL | RDS | Reliability | Rollback | Switchover"
             data-title="[AWS/Database] RDS 엔진 업그레이드를 무중단이라고 부르기 전에 - Blue/Green, Switchover Gate, Rollback"
             data-summary="RDS Blue/Green의 생성 방법보다 변경 적합성, 복제 상태, switchover gate, 애플리케이션 재연결과 rollback 책임을 먼저 설계합니다."
           >
@@ -246,19 +259,6 @@
               <span class="post-topic">Database</span>
               <h3>[AWS/Database] RDS 엔진 업그레이드를 무중단이라고 부르기 전에 - Blue/Green, Switchover Gate, Rollback</h3>
               <p>RDS Blue/Green의 생성 방법보다 변경 적합성, 복제 상태, switchover gate, 애플리케이션 재연결과 rollback 책임을 먼저 설계합니다.</p>
-            </a>
-          </article>
-          <article
-            class="post-row"
-            data-tags="AWS | Cloud | Connection | Database | Lambda | MySQL | Observability | Pinning | Proxy | RDS | RDS Proxy | Reliability | Storm"
-            data-title="[AWS/Database] Lambda는 버티는데 RDS가 먼저 죽는 이유 - RDS Proxy, Connection Storm, Pinning"
-            data-summary="RDS Proxy를 붙이는 구성에서 더 나아가 연결 예산, pinning 회귀, 부하 테스트, 장애조치와 운영 책임까지 설계합니다."
-          >
-            <a href="./posts/aws-database-rds-proxy-connection-storm-pinning.html">
-              <time datetime="2026-09-06">2026.09.06</time>
-              <span class="post-topic">Database</span>
-              <h3>[AWS/Database] Lambda는 버티는데 RDS가 먼저 죽는 이유 - RDS Proxy, Connection Storm, Pinning</h3>
-              <p>RDS Proxy를 붙이는 구성에서 더 나아가 연결 예산, pinning 회귀, 부하 테스트, 장애조치와 운영 책임까지 설계합니다.</p>
             </a>
           </article>
           <!-- GENERATED:RECENT_POSTS:END -->

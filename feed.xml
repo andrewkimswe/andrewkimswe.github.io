@@ -6,7 +6,14 @@
     <atom:link href="https://andrewkimswe.github.io/feed.xml" rel="self" type="application/rss+xml" />
     <description>백엔드, 클라우드, RAG, 아키텍처와 운영 판단을 기록하는 기술 블로그입니다.</description>
     <language>ko-KR</language>
-    <lastBuildDate>Sat, 26 Sep 2026 00:02:00 +0900</lastBuildDate>
+    <lastBuildDate>Sun, 27 Sep 2026 09:00:00 +0900</lastBuildDate>
+    <item>
+      <title>[Semiconductor] 전하·전계·전위·전압·전류는 어떻게 연결되는가?</title>
+      <link>https://andrewkimswe.github.io/posts/semiconductor-charge-field-potential-voltage-current.html</link>
+      <guid isPermaLink="true">https://andrewkimswe.github.io/posts/semiconductor-charge-field-potential-voltage-current.html</guid>
+      <pubDate>Sun, 27 Sep 2026 09:00:00 +0900</pubDate>
+      <description>전하에서 시작해 전계와 전위, 전압과 전류가 어떻게 연결되는지 살펴보고 반도체 소자에서 왜 중요한지 정리합니다.</description>
+    </item>
     <item>
       <title>[Data/AI] AI Agent보다 먼저 무엇을 만들어야 할까? - Palantir Foundry Use Case Scoping</title>
       <link>https://andrewkimswe.github.io/posts/data-ai-palantir-foundry-use-case-scoping.html</link>
