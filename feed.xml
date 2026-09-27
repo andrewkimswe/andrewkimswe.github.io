@@ -6,7 +6,14 @@
     <atom:link href="https://andrewkimswe.github.io/feed.xml" rel="self" type="application/rss+xml" />
     <description>백엔드, 클라우드, RAG, 아키텍처와 운영 판단을 기록하는 기술 블로그입니다.</description>
     <language>ko-KR</language>
-    <lastBuildDate>Sun, 27 Sep 2026 21:00:00 +0900</lastBuildDate>
+    <lastBuildDate>Sun, 27 Sep 2026 22:00:00 +0900</lastBuildDate>
+    <item>
+      <title>[Semiconductor] Gate Voltage는 어떻게 없던 Channel을 만들까? - MOS Capacitor에서 MOSFET까지</title>
+      <link>https://andrewkimswe.github.io/posts/semiconductor-mos-capacitor-mosfet-channel.html</link>
+      <guid isPermaLink="true">https://andrewkimswe.github.io/posts/semiconductor-mos-capacitor-mosfet-channel.html</guid>
+      <pubDate>Sun, 27 Sep 2026 22:00:00 +0900</pubDate>
+      <description>Gate electric field가 p-type 표면을 depletion과 inversion으로 바꾸고 Source·Drain 사이의 channel과 current를 제어하는 과정을 살펴봅니다.</description>
+    </item>
     <item>
       <title>[Semiconductor] n형과 p형을 붙이면 무슨 일이 일어날까? - PN Junction, Depletion Region, Bias</title>
       <link>https://andrewkimswe.github.io/posts/semiconductor-pn-junction-depletion-built-in-potential-bias.html</link>

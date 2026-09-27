@@ -22,6 +22,7 @@ Jiwon Kim's Korean engineering journal about backend systems, cloud infrastructu
 
 ## Posts
 
+- [[Semiconductor] Gate Voltage는 어떻게 없던 Channel을 만들까? - MOS Capacitor에서 MOSFET까지](https://andrewkimswe.github.io/posts/semiconductor-mos-capacitor-mosfet-channel.html): MOS capacitor의 accumulation, depletion, inversion에서 시작해 threshold voltage, MOSFET channel, linear·saturation region과 long-channel 모델의 한계를 설명합니다.
 - [[Semiconductor] n형과 p형을 붙이면 무슨 일이 일어날까? - PN Junction, Depletion Region, Bias](https://andrewkimswe.github.io/posts/semiconductor-pn-junction-depletion-built-in-potential-bias.html): n-type과 p-type을 접합했을 때 diffusion, depletion region, space charge, built-in potential이 형성되는 과정과 forward·reverse bias의 전류를 설명합니다.
 - [[Semiconductor] 반도체는 어떻게 전류를 제어하는가? - Energy Band, Doping, Fermi Level](https://andrewkimswe.github.io/posts/semiconductor-energy-band-doping-fermi-level.html): Energy Band와 Band Gap에서 출발해 electron·hole, intrinsic semiconductor, donor·acceptor doping, Fermi Level과 전도도의 관계를 하나의 흐름으로 설명합니다.
 - [[Semiconductor] 전하·전계·전위·전압·전류는 어떻게 연결되는가?](https://andrewkimswe.github.io/posts/semiconductor-charge-field-potential-voltage-current.html): 반도체 소자를 이해하는 데 필요한 전하, 전계, 전위, 전압과 전류의 관계를 정리하고 drift와 diffusion, MOSFET·HEMT·PN Junction으로 이어지는 연결을 설명합니다.
