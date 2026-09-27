@@ -1,0 +1,278 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>[Semiconductor] n형과 p형을 붙이면 무슨 일이 일어날까? - PN Junction, Depletion Region, Bias | Jiwon Kim Engineering Notes</title>
+    <meta name="description" content="n-type과 p-type을 접합했을 때 diffusion, depletion region, space charge, built-in potential이 형성되는 과정과 forward·reverse bias의 전류를 설명합니다." />
+    <meta name="author" content="Jiwon Kim" />
+    <meta name="robots" content="index, follow, max-image-preview:large" />
+    <link rel="canonical" href="https://andrewkimswe.github.io/posts/semiconductor-pn-junction-depletion-built-in-potential-bias.html" />
+    <meta property="og:site_name" content="Jiwon Kim | Engineering Notes" />
+    <meta property="og:title" content="[Semiconductor] n형과 p형을 붙이면 무슨 일이 일어날까? - PN Junction, Depletion Region, Bias" />
+    <meta property="og:description" content="Carrier diffusion에서 시작해 depletion region과 built-in potential, forward·reverse bias의 전류가 만들어지는 과정을 연결합니다." />
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="https://andrewkimswe.github.io/posts/semiconductor-pn-junction-depletion-built-in-potential-bias.html" />
+    <meta property="og:image" content="https://andrewkimswe.github.io/assets/social-card.png" />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Jiwon Kim Engineering Notes" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://andrewkimswe.github.io/assets/social-card.png" />
+    <meta name="twitter:title" content="[Semiconductor] n형과 p형을 붙이면 무슨 일이 일어날까? - PN Junction, Depletion Region, Bias" />
+    <meta name="twitter:description" content="Carrier diffusion에서 시작해 depletion region과 built-in potential, forward·reverse bias의 전류가 만들어지는 과정을 연결합니다." />
+    <meta property="article:modified_time" content="2026-09-27T21:00:00+09:00" />
+    <meta name="twitter:image:alt" content="Jiwon Kim Engineering Notes" />
+    <meta property="article:published_time" content="2026-09-27T21:00:00+09:00" />
+    <meta property="article:author" content="Jiwon Kim" />
+    <meta property="article:tag" content="Semiconductor" />
+    <meta property="article:tag" content="PN Junction" />
+    <meta property="article:tag" content="Depletion Region" />
+    <meta property="article:tag" content="Built-in Potential" />
+    <meta property="article:tag" content="Diode" />
+    <meta property="article:tag" content="Bias" />
+    <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="../styles.css?v=20260905-4" />
+    <script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","headline":"[Semiconductor] n형과 p형을 붙이면 무슨 일이 일어날까? - PN Junction, Depletion Region, Bias","description":"n-type과 p-type을 접합했을 때 diffusion, depletion region, space charge, built-in potential이 형성되는 과정과 forward·reverse bias의 전류를 설명합니다.","datePublished":"2026-09-27T21:00:00+09:00","dateModified":"2026-09-27T21:00:00+09:00","author":{"@type":"Person","name":"Jiwon Kim","url":"https://github.com/andrewkimswe"},"publisher":{"@type":"Person","name":"Jiwon Kim"},"mainEntityOfPage":"https://andrewkimswe.github.io/posts/semiconductor-pn-junction-depletion-built-in-potential-bias.html","inLanguage":"ko-KR"}
+    </script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main-content">본문으로 바로가기</a>
+    <header class="site-header">
+      <a class="brand" href="../" aria-label="Jiwon Kim Engineering Notes 홈">
+        <span class="brand-mark" aria-hidden="true">JK</span>
+        <span class="brand-copy"><strong>Jiwon Kim</strong><small>Engineering Notes</small></span>
+      </a>
+      <nav class="nav-links" aria-label="주요 메뉴">
+        <a href="../articles.html">Articles</a>
+        <a href="../projects.html">Projects</a>
+        <a href="../#about">About</a>
+        <span class="nav-divider" aria-hidden="true"></span>
+        <a href="https://github.com/andrewkimswe">GitHub</a>
+        <a href="https://www.linkedin.com/in/jiwon-kim-867334285/">LinkedIn</a>
+      </nav>
+    </header>
+
+    <main id="main-content">
+      <article class="article-page">
+        <header class="article-hero">
+          <a class="back-link" href="../articles.html">All articles</a>
+          <p class="eyebrow">Semiconductor · PN Junction · Diode</p>
+          <h1>[Semiconductor] n형과 p형을 붙이면 무슨 일이 일어날까? - PN Junction, Depletion Region, Bias</h1>
+          <p class="article-summary">Carrier diffusion에서 시작해 depletion region과 built-in potential이 형성되는 과정, 그리고 forward·reverse bias가 장벽과 전류를 어떻게 바꾸는지 살펴봅니다.</p>
+          <div class="article-meta"><time datetime="2026-09-27">2026.09.27</time><span>Semiconductor</span><span>PN Junction</span><span>Diode</span><span class="reading-time" data-generated="true">약 14분</span></div>
+        </header>
+
+        <!-- GENERATED:ARTICLE_TOC:START -->
+        <aside class="article-toc" aria-label="이 글의 목차">
+          <details open>
+            <summary>On this page</summary>
+            <ol>
+              <li><a href="#section-01">1. 접합 직후에는 Carrier가 확산한다</a></li>
+              <li><a href="#section-02">2. Depletion Region은 빈 공간이 아니다</a></li>
+              <li><a href="#section-03">3. Space Charge가 Electric Field를 만든다</a></li>
+              <li><a href="#section-04">4. Built-in Potential은 내부 장벽이다</a></li>
+              <li><a href="#section-05">5. Depletion Width는 낮게 도핑된 쪽으로 더 넓어진다</a></li>
+              <li><a href="#section-06">6. Energy Band에서는 왜 Band Bending이 보일까</a></li>
+              <li><a href="#section-07">7. External Bias는 내부 장벽을 바꾼다</a></li>
+              <li><a href="#section-08">8. Forward Bias에서는 Minority Carrier가 주인공이 된다</a></li>
+              <li><a href="#section-09">9. Reverse Bias의 작은 전류와 Breakdown</a></li>
+              <li><a href="#section-10">10. 이상적인 Diode Equation이 말하는 범위</a></li>
+              <li><a href="#section-11">11. Forward Bias와 Reverse Bias 비교</a></li>
+              <li><a href="#section-12">12. 정리: Carrier에서 단자 전류까지</a></li>
+            </ol>
+          </details>
+        </aside>
+        <!-- GENERATED:ARTICLE_TOC:END -->
+
+        <div class="article-body">
+          <p><a href="./semiconductor-energy-band-doping-fermi-level.html">앞선 글</a>에서는 doping으로 electron이 많은 n-type과 hole이 많은 p-type을 만들고, carrier concentration과 Fermi Level이 전도도에 어떻게 연결되는지 살펴봤습니다.</p>
+          <p>두 영역을 붙이면 경계만 생기는 것이 아닙니다. Carrier가 농도 차이를 따라 이동하고, 움직이지 않는 dopant ion이 드러나며, 그 전하가 다시 carrier의 이동을 막는 electric field를 만듭니다. PN Junction은 이 자기 일관적인 평형과 외부 전압으로 평형을 흔드는 방법을 이해하는 문제입니다.</p>
+          <div class="mermaid diagram">
+flowchart TB
+    contact[n-type과 p-type 접합] --> diffusion[Carrier diffusion]
+    diffusion --> charge[고정된 ionized dopant 노출]
+    charge --> field[Built-in electric field]
+    field --> equilibrium[Drift와 diffusion의 열평형]
+    bias[External bias] --> barrier[Barrier와 depletion width 변화]
+    barrier --> current[Terminal current 변화]
+          </div>
+
+          <h2 id="section-01">1. 접합 직후에는 Carrier가 확산한다</h2>
+          <p>접합 전 n-type에는 electron이 많고 p-type에는 적습니다. Hole은 반대로 p-type에 많고 n-type에 적습니다. 두 영역이 연결되면 concentration gradient 때문에 electron은 n에서 p로, hole은 p에서 n으로 diffusion합니다.</p>
+          <div class="mermaid diagram compact-diagram">
+flowchart LR
+    pside[p-type<br/>hole majority] <-->|접합면| nside[n-type<br/>electron majority]
+    nside -->|electron diffusion| pside
+    pside -->|hole diffusion| nside
+          </div>
+          <p>접합을 넘어간 electron과 hole 일부는 재결합합니다. 이 과정에서 접합 주변의 mobile carrier가 줄어들고, 원래 carrier와 전기적으로 균형을 이루던 ionized dopant가 드러납니다.</p>
+
+          <h2 id="section-02">2. Depletion Region은 빈 공간이 아니다</h2>
+          <p>n측에서 electron이 빠져나간 자리에는 격자에 고정된 양전하의 ionized donor가, p측에서 hole이 줄어든 자리에는 음전하의 ionized acceptor가 남습니다. Mobile carrier가 크게 감소한 이 영역을 depletion region 또는 공핍층이라고 합니다.</p>
+          <div class="mermaid diagram">
+flowchart LR
+    pbulk[p-type quasi-neutral region] --> pacceptor[p-side depletion<br/>fixed acceptor -]
+    pacceptor --> ndonor[n-side depletion<br/>fixed donor +]
+    ndonor --> nbulk[n-type quasi-neutral region]
+          </div>
+          <p>공핍층은 아무것도 없는 공간이 아닙니다. 움직이는 electron과 hole은 적지만, 공간적으로 분리된 고정 전하인 space charge가 존재합니다. 공핍층 바깥의 quasi-neutral region에서는 mobile carrier와 dopant ion의 전하가 거의 상쇄됩니다.</p>
+
+          <h2 id="section-03">3. Space Charge가 Electric Field를 만든다</h2>
+          <p>양전하가 남은 n측과 음전하가 남은 p측 사이에는 n에서 p 방향의 built-in electric field가 형성됩니다. Electron은 음전하이므로 전계와 반대인 p에서 n 방향으로 drift하고, hole은 전계 방향인 n에서 p로 drift합니다. 두 drift 방향은 처음의 diffusion을 방해합니다.</p>
+          <div class="mermaid diagram">
+flowchart TB
+    diffusion[Diffusion<br/>electron n to p<br/>hole p to n] --> spaceCharge[Space charge 증가]
+    spaceCharge --> electricField[Electric field: n to p]
+    electricField --> drift[Drift<br/>electron p to n<br/>hole n to p]
+    drift --> balance[Diffusion과 반대]
+          </div>
+          <p>처음에는 diffusion이 우세하지만 space charge가 커질수록 field와 drift도 강해집니다. 열평형에 도달하면 electron current와 hole current에서 drift와 diffusion이 각각 균형을 이루며, 미시적인 움직임은 남아 있어도 전체 net current는 0이 됩니다.</p>
+
+          <h2 id="section-04">4. Built-in Potential은 내부 장벽이다</h2>
+          <p>공핍층의 electric field를 위치에 따라 적분하면 접합 양쪽의 electric potential 차이가 됩니다. 이것이 built-in potential <code>V_bi</code>입니다. 외부 전원으로 만든 전압이 아니라 carrier redistribution이 스스로 만든 내부 장벽입니다.</p>
+          <p>비축퇴, 열평형, 완전 이온화와 abrupt junction 같은 이상적인 가정에서는 다음과 같이 근사할 수 있습니다.</p>
+          <pre><code>V_bi = (kT / q) ln(N_A N_D / n_i^2)</code></pre>
+          <p>따라서 built-in potential은 실리콘이면 언제나 0.7 V인 상수가 아닙니다. 온도, intrinsic carrier concentration과 양쪽 doping 농도에 따라 달라집니다. 흔히 말하는 “실리콘 다이오드의 0.7 V forward drop”도 특정 전류·온도·소자 조건에서 사용하는 회로 근사이며 <code>V_bi</code>와 동일한 값이 아닙니다.</p>
+          <blockquote><p>평형 PN Junction의 built-in potential은 일반적인 전압계로 단자에서 그대로 읽을 수 없습니다. 반도체와 금속 접촉에서 생기는 contact potential들이 측정 경로에서 상쇄되기 때문입니다.</p></blockquote>
+
+          <h2 id="section-05">5. Depletion Width는 낮게 도핑된 쪽으로 더 넓어진다</h2>
+          <p>공핍층 양쪽의 총 고정 전하는 크기가 같아야 합니다. p측과 n측으로 확장된 폭을 각각 <code>x_p</code>, <code>x_n</code>이라고 하면 depletion approximation에서 다음 관계가 성립합니다.</p>
+          <pre><code>N_A x_p = N_D x_n</code></pre>
+          <p>도핑 농도가 높은 쪽은 짧은 거리에서도 같은 전하량을 만들 수 있고, 낮은 쪽은 더 넓은 영역이 필요합니다. 따라서 one-sided junction에서는 공핍층 대부분이 더 낮게 도핑된 쪽으로 확장됩니다.</p>
+          <div class="mermaid diagram compact-diagram">
+flowchart LR
+    high[Heavily doped side<br/>narrow depletion] --- junction[Junction]
+    junction --- low[Lightly doped side<br/>wide depletion]
+          </div>
+          <p>전체 depletion width는 zero bias에서는 대략 <code>V_bi</code>의 제곱근에 비례하고, reverse bias에서는 <code>V_bi + V_R</code>의 제곱근에 비례해 증가합니다. 이 관계는 junction capacitance와 breakdown 설계로 이어집니다.</p>
+
+          <h2 id="section-06">6. Energy Band에서는 왜 Band Bending이 보일까</h2>
+          <p>접합 전 n-type과 p-type은 Fermi Level의 상대적 위치가 다릅니다. 두 영역이 연결되어 열평형에 도달하면 하나의 시스템에서 Fermi Level은 공간적으로 일정해야 합니다. 대신 conduction band edge와 valence band edge가 위치에 따라 변합니다.</p>
+          <p>전자의 potential energy는 electric potential <code>V</code>와 <code>U_e = -qV</code>로 연결됩니다. 따라서 공핍층에서 potential이 변하면 electron energy로 표현한 band edge도 기울어집니다. 이것이 band bending입니다.</p>
+          <div class="mermaid diagram">
+flowchart TB
+    potential[공간에 따른 electric potential 변화] --> field[Electric field]
+    potential --> electronEnergy[Electron potential energy: -qV]
+    electronEnergy --> bending[Ec와 Ev의 band bending]
+    flatFermi[Thermal equilibrium] --> flat[Fermi Level은 공간적으로 일정]
+          </div>
+          <p>Band bending은 별도의 현상이 아니라 같은 공핍층을 charge, field, potential과 electron energy의 서로 다른 관점에서 본 결과입니다.</p>
+
+          <h2 id="section-07">7. External Bias는 내부 장벽을 바꾼다</h2>
+          <p>외부에서 p측 전위를 n측보다 높이면 forward bias, 반대로 낮추면 reverse bias입니다. Applied voltage를 <code>V_A</code>라 하고 forward 방향을 양수로 잡으면 majority carrier가 보는 이상적인 장벽은 대략 <code>q(V_bi - V_A)</code>로 바뀝니다.</p>
+          <div class="mermaid diagram">
+flowchart TB
+    zero[Zero bias<br/>barrier V_bi] --> forward[Forward bias<br/>barrier V_bi - V_A<br/>depletion width 감소]
+    zero --> reverse[Reverse bias<br/>barrier V_bi + V_R<br/>depletion width 증가]
+          </div>
+          <p>이 관계는 외부 전압이 built-in potential 자체를 없애거나 더하는 단순한 전압원이라는 뜻이 아닙니다. 경계 조건이 달라지면서 junction 내부의 potential profile, charge distribution과 carrier concentration이 함께 다시 정해진다는 뜻입니다.</p>
+
+          <h2 id="section-08">8. Forward Bias에서는 Minority Carrier가 주인공이 된다</h2>
+          <p>Forward bias는 p측에 +, n측에 -를 연결합니다. Barrier와 depletion width가 감소하면서 n측 electron과 p측 hole이 접합을 넘어가기 쉬워집니다.</p>
+          <p>접합을 넘은 n측의 majority electron은 p측에서는 minority carrier가 됩니다. 마찬가지로 p측의 majority hole은 n측에 주입된 minority carrier가 됩니다. 이들이 quasi-neutral region에서 diffusion하고 재결합하면서 forward current가 형성됩니다.</p>
+          <div class="mermaid diagram">
+flowchart TB
+    bias[p + / n -] --> lower[Barrier 감소]
+    lower --> injection[Majority carrier injection]
+    injection --> minority[반대편의 minority carrier 증가]
+    minority --> diffusion[Quasi-neutral region diffusion]
+    diffusion --> forwardCurrent[Forward current]
+          </div>
+          <p>따라서 forward current를 단순히 “공핍층 안에서 전하가 많이 흐른다”라고만 설명하면 부족합니다. Junction을 넘은 뒤의 minority carrier 분포와 재결합도 전류를 결정합니다.</p>
+
+          <h2 id="section-09">9. Reverse Bias의 작은 전류와 Breakdown</h2>
+          <p>Reverse bias는 p측에 -, n측에 +를 연결합니다. Barrier와 depletion width가 증가해 majority carrier diffusion은 강하게 억제됩니다. 그러나 열적으로 생성된 minority carrier가 공핍층의 field에 의해 쓸려가면서 작은 reverse current가 흐를 수 있습니다. 실제 소자에서는 depletion-region generation과 표면 누설도 더해집니다.</p>
+          <p>Reverse voltage가 커지면 공핍층의 peak electric field도 증가합니다. 충분히 강한 field에서는 tunneling이 우세한 Zener breakdown이나 impact ionization에 의한 avalanche breakdown으로 전류가 급증할 수 있습니다.</p>
+          <blockquote><p>Breakdown은 곧바로 소자 파괴를 뜻하지 않습니다. Zener diode처럼 전류와 발열을 정격 안에서 제한하면 breakdown 영역을 의도적으로 사용할 수 있습니다.</p></blockquote>
+
+          <h2 id="section-10">10. 이상적인 Diode Equation이 말하는 범위</h2>
+          <p>이상적인 PN diode의 전류는 다음 형태로 나타낼 수 있습니다.</p>
+          <pre><code>I = I_S (exp(q V_A / eta kT) - 1)</code></pre>
+          <p>이상적인 diffusion 지배 모델에서는 ideality factor <code>eta</code>를 1로 둡니다. 실제 diode에서는 depletion-region recombination, series resistance, high-level injection과 leakage 때문에 <code>eta</code>와 I-V curve가 달라집니다.</p>
+          <p>Forward voltage는 고정된 turn-on threshold가 아닙니다. 식이 보여주듯 전류가 전압에 지수적으로 의존하므로, “0.7 V에서 갑자기 켜진다”는 표현은 특정 범위의 회로 계산을 위한 근사입니다. Reverse bias에서도 breakdown 전까지 전류가 정확히 0인 것은 아닙니다.</p>
+
+          <h2 id="section-11">11. Forward Bias와 Reverse Bias 비교</h2>
+          <table>
+            <thead>
+              <tr><th>구분</th><th>Forward Bias</th><th>Reverse Bias</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>단자 연결</td><td>p에 +, n에 -</td><td>p에 -, n에 +</td></tr>
+              <tr><td>Carrier barrier</td><td>감소</td><td>증가</td></tr>
+              <tr><td>Depletion width</td><td>감소</td><td>증가</td></tr>
+              <tr><td>주요 전류</td><td>주입된 minority carrier의 diffusion</td><td>Minority carrier와 generation leakage</td></tr>
+              <tr><td>전류 크기</td><td>전압에 따라 빠르게 증가</td><td>Breakdown 전에는 일반적으로 작음</td></tr>
+            </tbody>
+          </table>
+          <p>이 비대칭이 rectification입니다. 다이오드는 “한 방향으로만 전류가 흐르는 부품”이라기보다, bias가 carrier barrier와 concentration profile을 비대칭적으로 바꾸는 junction이라고 보는 편이 정확합니다.</p>
+
+          <h2 id="section-12">12. 정리: Carrier에서 단자 전류까지</h2>
+          <dl class="service-summary">
+            <div><dt>Diffusion</dt><dd>접합 직후 carrier concentration gradient가 electron과 hole을 반대편으로 이동시킵니다.</dd></div>
+            <div><dt>Depletion Region</dt><dd>Mobile carrier는 줄고 고정된 ionized dopant가 space charge를 형성합니다.</dd></div>
+            <div><dt>Built-in Field</dt><dd>Space charge가 diffusion과 반대 방향의 drift를 만듭니다.</dd></div>
+            <div><dt>Thermal Equilibrium</dt><dd>Drift와 diffusion이 균형을 이루고 net current는 0이 됩니다.</dd></div>
+            <div><dt>Forward Bias</dt><dd>Barrier를 낮춰 carrier injection과 minority-carrier diffusion을 증가시킵니다.</dd></div>
+            <div><dt>Reverse Bias</dt><dd>Barrier와 depletion width를 키우며, 작은 leakage와 breakdown 한계를 남깁니다.</dd></div>
+          </dl>
+          <div class="mermaid diagram">
+flowchart TB
+    carrier[Carrier concentration gradient] --> diffusion[Diffusion]
+    diffusion --> fixedCharge[Fixed space charge]
+    fixedCharge --> field[Electric field]
+    field --> potential[Built-in potential]
+    potential --> band[Band bending]
+    bias[External bias] --> band
+    band --> profile[Carrier profile]
+    profile --> current[Terminal current]
+          </div>
+          <p>다음 글에서는 접합으로 carrier를 나누는 대신, oxide를 사이에 둔 gate electric field로 반도체 표면을 accumulation, depletion, inversion 상태로 바꾸는 MOS capacitor를 살펴봅니다. 이 흐름이 MOSFET의 channel 형성으로 이어집니다.</p>
+          <p><strong>참고 자료:</strong>
+            <a href="https://ocw.mit.edu/courses/6-012-microelectronic-devices-and-circuits-fall-2009/resources/mit6_012f09_lec04/">MIT 6.012: PN Junctions - Electrostatics</a>,
+            <a href="https://ocw.mit.edu/courses/6-012-microelectronic-devices-and-circuits-spring-2009/resources/mit6_012s09_lec15/">MIT 6.012: PN Junction Diode I-V Characteristics</a>,
+            <a href="https://ocw.mit.edu/courses/3-024-electronic-optical-and-magnetic-properties-of-materials-spring-2013/833afa926e598523708318bdf7d6a4ed_MIT3_024S13_2012lec18.pdf">MIT 3.024: The P-N Junction</a>
+          </p>
+        </div>
+
+        <!-- GENERATED:ARTICLE_TAIL:START -->
+        <nav class="article-pagination" aria-label="발행 순서로 읽기">
+          <span class="article-nav-empty"><span>Newer</span><strong>더 이상 글이 없습니다.</strong></span>
+          <a href="./semiconductor-energy-band-doping-fermi-level.html"><span>Older</span><strong>[Semiconductor] 반도체는 어떻게 전류를 제어하는가? - Energy Band, Doping, Fermi Level</strong></a>
+        </nav>
+        <aside class="related-notes" aria-labelledby="related-heading">
+          <h2 id="related-heading">Related notes</h2>
+          <div class="related-note-list">
+          <a href="./semiconductor-energy-band-doping-fermi-level.html">
+            <span>Semiconductor · 2026.09.27</span>
+            <strong>[Semiconductor] 반도체는 어떻게 전류를 제어하는가? - Energy Band, Doping, Fermi Level</strong>
+          </a>
+          <a href="./semiconductor-charge-field-potential-voltage-current.html">
+            <span>Semiconductor · 2026.09.27</span>
+            <strong>[Semiconductor] 전하·전계·전위·전압·전류는 어떻게 연결되는가?</strong>
+          </a>
+          <a href="./data-ai-palantir-foundry-use-case-scoping.html">
+            <span>Data · 2026.09.26</span>
+            <strong>[Data/AI] AI Agent보다 먼저 무엇을 만들어야 할까? - Palantir Foundry Use Case Scoping</strong>
+          </a>
+          </div>
+        </aside>
+        <!-- GENERATED:ARTICLE_TAIL:END -->
+      </article>
+    </main>
+
+    <footer class="site-footer">
+      <p>© 2026 Jiwon Kim</p>
+      <div class="footer-links">
+        <span id="visitStatus">집계 중</span>
+        <a href="../articles.html">Articles</a>
+        <a href="../feed.xml">RSS</a>
+      </div>
+    </footer>
+    <script src="../script.js?v=20260905-4"></script>
+    <script data-goatcounter="https://jiwonkim-blog.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
+    <noscript><img class="tracking-pixel" src="https://jiwonkim-blog.goatcounter.com/count?p=/posts/semiconductor-pn-junction-depletion-built-in-potential-bias.html" alt="" /></noscript>
+  </body>
+</html>
