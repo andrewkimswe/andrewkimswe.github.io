@@ -6,7 +6,14 @@
     <atom:link href="https://andrewkimswe.github.io/feed.xml" rel="self" type="application/rss+xml" />
     <description>백엔드, 클라우드, RAG, 아키텍처와 운영 판단을 기록하는 기술 블로그입니다.</description>
     <language>ko-KR</language>
-    <lastBuildDate>Sun, 27 Sep 2026 22:00:00 +0900</lastBuildDate>
+    <lastBuildDate>Sun, 27 Sep 2026 23:00:00 +0900</lastBuildDate>
+    <item>
+      <title>[Semiconductor] GaN은 왜 고출력 RF 소자에 적합할까? - Wide Band Gap, HEMT, 2DEG</title>
+      <link>https://andrewkimswe.github.io/posts/semiconductor-gan-hemt-2deg-rf-power.html</link>
+      <guid isPermaLink="true">https://andrewkimswe.github.io/posts/semiconductor-gan-hemt-2deg-rf-power.html</guid>
+      <pubDate>Sun, 27 Sep 2026 23:00:00 +0900</pubDate>
+      <description>AlGaN/GaN 계면의 2DEG가 어디서 오고, HEMT가 이를 어떻게 제어하며, 실제 RF 성능을 무엇이 제한하는지 살펴봅니다.</description>
+    </item>
     <item>
       <title>[Semiconductor] Gate Voltage는 어떻게 없던 Channel을 만들까? - MOS Capacitor에서 MOSFET까지</title>
       <link>https://andrewkimswe.github.io/posts/semiconductor-mos-capacitor-mosfet-channel.html</link>
