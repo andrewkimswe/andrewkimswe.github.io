@@ -22,6 +22,7 @@ Jiwon Kim's Korean engineering journal about backend systems, cloud infrastructu
 
 ## Posts
 
+- [[RF] 신호는 배선을 어떻게 이동할까? - Transmission Line, Characteristic Impedance, Reflection](https://andrewkimswe.github.io/posts/rf-transmission-line-characteristic-impedance-reflection.html): Distributed RLCG model에서 characteristic impedance와 traveling wave를 유도하고, load 경계의 reflection coefficient, return loss, VSWR, input impedance와 quarter-wave 변환을 설명합니다.
 - [[RF] 주파수가 올라가면 왜 PCB 배선도 회로 소자가 될까? - Lumped Circuit과 Electrical Length](https://andrewkimswe.github.io/posts/rf-lumped-circuit-electrical-length-pcb-trace.html): Lumped circuit 가정이 성립하는 조건을 propagation delay, wavelength, phase difference와 digital rise time으로 설명하고 PCB trace가 transmission line이 되는 경계를 살펴봅니다.
 - [[Semiconductor] GaN은 왜 고출력 RF 소자에 적합할까? - Wide Band Gap, HEMT, 2DEG](https://andrewkimswe.github.io/posts/semiconductor-gan-hemt-2deg-rf-power.html): Wide band gap에서 시작해 AlGaN/GaN heterojunction의 polarization과 2DEG, HEMT의 gate 제어, RF 성능과 field plate·trap·열 한계를 연결해 설명합니다.
 - [[Semiconductor] Gate Voltage는 어떻게 없던 Channel을 만들까? - MOS Capacitor에서 MOSFET까지](https://andrewkimswe.github.io/posts/semiconductor-mos-capacitor-mosfet-channel.html): MOS capacitor의 accumulation, depletion, inversion에서 시작해 threshold voltage, MOSFET channel, linear·saturation region과 long-channel 모델의 한계를 설명합니다.
