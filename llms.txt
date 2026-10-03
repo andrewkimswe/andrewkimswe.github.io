@@ -22,6 +22,7 @@ Jiwon Kim's Korean engineering journal about backend systems, cloud infrastructu
 
 ## Posts
 
+- [[RF] 주파수가 올라가면 왜 PCB 배선도 회로 소자가 될까? - Lumped Circuit과 Electrical Length](https://andrewkimswe.github.io/posts/rf-lumped-circuit-electrical-length-pcb-trace.html): Lumped circuit 가정이 성립하는 조건을 propagation delay, wavelength, phase difference와 digital rise time으로 설명하고 PCB trace가 transmission line이 되는 경계를 살펴봅니다.
 - [[Semiconductor] GaN은 왜 고출력 RF 소자에 적합할까? - Wide Band Gap, HEMT, 2DEG](https://andrewkimswe.github.io/posts/semiconductor-gan-hemt-2deg-rf-power.html): Wide band gap에서 시작해 AlGaN/GaN heterojunction의 polarization과 2DEG, HEMT의 gate 제어, RF 성능과 field plate·trap·열 한계를 연결해 설명합니다.
 - [[Semiconductor] Gate Voltage는 어떻게 없던 Channel을 만들까? - MOS Capacitor에서 MOSFET까지](https://andrewkimswe.github.io/posts/semiconductor-mos-capacitor-mosfet-channel.html): MOS capacitor의 accumulation, depletion, inversion에서 시작해 threshold voltage, MOSFET channel, linear·saturation region과 long-channel 모델의 한계를 설명합니다.
 - [[Semiconductor] n형과 p형을 붙이면 무슨 일이 일어날까? - PN Junction, Depletion Region, Bias](https://andrewkimswe.github.io/posts/semiconductor-pn-junction-depletion-built-in-potential-bias.html): n-type과 p-type을 접합했을 때 diffusion, depletion region, space charge, built-in potential이 형성되는 과정과 forward·reverse bias의 전류를 설명합니다.

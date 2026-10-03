@@ -1,0 +1,253 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>[RF] 주파수가 올라가면 왜 PCB 배선도 회로 소자가 될까? - Lumped Circuit과 Electrical Length | Jiwon Kim Engineering Notes</title>
+    <meta name="description" content="Lumped circuit 가정이 성립하는 조건을 propagation delay, wavelength, phase difference와 digital rise time으로 설명하고 PCB trace가 transmission line이 되는 경계를 살펴봅니다." />
+    <meta name="author" content="Jiwon Kim" />
+    <meta name="robots" content="index, follow, max-image-preview:large" />
+    <link rel="canonical" href="https://andrewkimswe.github.io/posts/rf-lumped-circuit-electrical-length-pcb-trace.html" />
+    <meta property="og:site_name" content="Jiwon Kim | Engineering Notes" />
+    <meta property="og:title" content="[RF] 주파수가 올라가면 왜 PCB 배선도 회로 소자가 될까? - Lumped Circuit과 Electrical Length" />
+    <meta property="og:description" content="Frequency 자체보다 electrical length와 edge rate가 중요한 이유를 회로 가정의 경계에서 살펴봅니다." />
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="https://andrewkimswe.github.io/posts/rf-lumped-circuit-electrical-length-pcb-trace.html" />
+    <meta property="og:image" content="https://andrewkimswe.github.io/assets/social-card.png" />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Jiwon Kim Engineering Notes" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://andrewkimswe.github.io/assets/social-card.png" />
+    <meta name="twitter:title" content="[RF] 주파수가 올라가면 왜 PCB 배선도 회로 소자가 될까? - Lumped Circuit과 Electrical Length" />
+    <meta name="twitter:description" content="Frequency 자체보다 electrical length와 edge rate가 중요한 이유를 회로 가정의 경계에서 살펴봅니다." />
+    <meta property="article:modified_time" content="2026-10-03T09:00:00+09:00" />
+    <meta name="twitter:image:alt" content="Jiwon Kim Engineering Notes" />
+    <meta property="article:published_time" content="2026-10-03T09:00:00+09:00" />
+    <meta property="article:author" content="Jiwon Kim" />
+    <meta property="article:tag" content="RF" />
+    <meta property="article:tag" content="Lumped Circuit" />
+    <meta property="article:tag" content="Transmission Line" />
+    <meta property="article:tag" content="PCB" />
+    <meta property="article:tag" content="Signal Integrity" />
+    <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="../styles.css?v=20260905-4" />
+    <script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","headline":"[RF] 주파수가 올라가면 왜 PCB 배선도 회로 소자가 될까? - Lumped Circuit과 Electrical Length","description":"Lumped circuit 가정이 성립하는 조건을 propagation delay, wavelength, phase difference와 digital rise time으로 설명하고 PCB trace가 transmission line이 되는 경계를 살펴봅니다.","datePublished":"2026-10-03T09:00:00+09:00","dateModified":"2026-10-03T09:00:00+09:00","author":{"@type":"Person","name":"Jiwon Kim","url":"https://github.com/andrewkimswe"},"publisher":{"@type":"Person","name":"Jiwon Kim"},"mainEntityOfPage":"https://andrewkimswe.github.io/posts/rf-lumped-circuit-electrical-length-pcb-trace.html","inLanguage":"ko-KR"}
+    </script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main-content">본문으로 바로가기</a>
+    <header class="site-header">
+      <a class="brand" href="../" aria-label="Jiwon Kim Engineering Notes 홈">
+        <span class="brand-mark" aria-hidden="true">JK</span>
+        <span class="brand-copy"><strong>Jiwon Kim</strong><small>Engineering Notes</small></span>
+      </a>
+      <nav class="nav-links" aria-label="주요 메뉴">
+        <a href="../articles.html">Articles</a>
+        <a href="../projects.html">Projects</a>
+        <a href="../#about">About</a>
+        <span class="nav-divider" aria-hidden="true"></span>
+        <a href="https://github.com/andrewkimswe">GitHub</a>
+        <a href="https://www.linkedin.com/in/jiwon-kim-867334285/">LinkedIn</a>
+      </nav>
+    </header>
+
+    <main id="main-content">
+      <article class="article-page">
+        <header class="article-hero">
+          <a class="back-link" href="../articles.html">All articles</a>
+          <p class="eyebrow">RF · PCB · Signal Integrity</p>
+          <h1>[RF] 주파수가 올라가면 왜 PCB 배선도 회로 소자가 될까? - Lumped Circuit과 Electrical Length</h1>
+          <p class="article-summary">Frequency 자체보다 electrical length와 edge rate가 중요한 이유를 회로 가정의 경계에서 살펴봅니다.</p>
+          <div class="article-meta"><time datetime="2026-10-03">2026.10.03</time><span>RF</span><span>PCB</span><span>Signal Integrity</span><span class="reading-time" data-generated="true">약 12분</span></div>
+        </header>
+
+        <!-- GENERATED:ARTICLE_TOC:START -->
+        <aside class="article-toc" aria-label="이 글의 목차">
+          <details open>
+            <summary>On this page</summary>
+            <ol>
+              <li><a href="#section-01">1. Lumped Circuit은 공간을 생략하는 모델이다</a></li>
+              <li><a href="#section-02">2. 신호는 Electron이 아니라 Field 변화로 전달된다</a></li>
+              <li><a href="#section-03">3. Wavelength는 시간 지연을 공간으로 표현한다</a></li>
+              <li><a href="#section-04">4. Electrical Length가 회로 모델을 결정한다</a></li>
+              <li><a href="#section-05">5. λ/10은 법칙이 아니라 오차 예산이다</a></li>
+              <li><a href="#section-06">6. 같은 배선 위에서도 Voltage가 달라진다</a></li>
+              <li><a href="#section-07">7. PCB Trace에는 RLCG가 분포한다</a></li>
+              <li><a href="#section-08">8. Return Path까지 포함해야 하나의 선로가 된다</a></li>
+              <li><a href="#section-09">9. Digital Signal은 Clock보다 Rise Time을 봐야 한다</a></li>
+              <li><a href="#section-10">10. 부품과 Via도 주파수에 따라 정체가 달라진다</a></li>
+              <li><a href="#section-11">11. 정리: 고주파의 경계는 Hz가 아니라 비율이다</a></li>
+            </ol>
+          </details>
+        </aside>
+        <!-- GENERATED:ARTICLE_TOC:END -->
+
+        <div class="article-body">
+          <p><a href="./semiconductor-gan-hemt-2deg-rf-power.html">앞선 글</a>에서는 GaN HEMT가 높은 주파수에서 큰 voltage와 current를 다루는 이유를 소자 관점에서 살펴봤습니다. 이제 그 transistor를 PCB와 package에 연결해 보겠습니다. 저주파에서 단순한 연결선이었던 copper trace가 RF에서는 회로 동작을 바꾸는 소자가 됩니다.</p>
+          <div class="mermaid diagram">
+flowchart TB
+    fast[Frequency or edge rate increases] --> short[Relevant wavelength shortens]
+    short --> ratio[Trace length divided by wavelength increases]
+    ratio --> delay[Propagation delay and phase difference matter]
+    delay --> distributed[Distributed transmission-line model]
+          </div>
+
+          <h2 id="section-01">1. Lumped Circuit은 공간을 생략하는 모델이다</h2>
+          <p>Lumped circuit model은 resistance, inductance와 capacitance가 각각의 부품에 모여 있고, 부품을 잇는 이상적인 wire에는 지연이 없다고 가정합니다. 그래서 한 node의 모든 지점에 같은 voltage를 부여하고 Ohm's law와 Kirchhoff's laws로 회로를 풉니다.</p>
+          <p>이 법칙들이 고주파에서 사라지는 것은 아닙니다. 문제는 <strong>길이가 있는 구조 전체를 하나의 node나 하나의 lumped element로 축약하는 근사</strong>입니다. 전파 지연이 신호 변화 시간에 비해 작지 않으면 위치를 생략할 수 없고, 작은 구간마다 전압과 전류를 정의해야 합니다.</p>
+
+          <h2 id="section-02">2. 신호는 Electron이 아니라 Field 변화로 전달된다</h2>
+          <p>입력에 voltage를 가했다고 한쪽 끝 electron이 즉시 반대쪽 끝까지 이동하는 것은 아닙니다. 도체와 dielectric에 형성된 electric field와 magnetic field의 변화가 유한한 속도로 이동하며 에너지를 전달합니다.</p>
+          <p>진공에서 속도는 <code>c ≈ 3 × 10^8 m/s</code>이고, PCB와 cable에서는 dielectric 때문에 phase velocity가 더 낮습니다. 단순한 quasi-TEM 구조라면 다음처럼 근사할 수 있습니다.</p>
+          <pre><code>v_p ≈ c / sqrt(epsilon_eff)
+t_pd = l / v_p</code></pre>
+          <p><code>epsilon_eff</code>는 field가 여러 dielectric 영역에 걸쳐 분포하는 효과를 포함합니다. Microstrip처럼 field 일부가 air에 놓이는 구조에서는 기판의 relative permittivity와 같지 않으며, 실제 값은 geometry와 frequency에도 영향을 받습니다.</p>
+
+          <h2 id="section-03">3. Wavelength는 시간 지연을 공간으로 표현한다</h2>
+          <p>Sinusoidal signal의 wavelength는 한 주기 동안 wave가 이동하는 거리입니다.</p>
+          <pre><code>lambda_g = v_p / f
+beta = 2 pi / lambda_g</code></pre>
+          <p>진공에서 1 GHz의 wavelength는 약 30 cm지만 PCB의 guided wavelength <code>lambda_g</code>는 더 짧습니다. 따라서 주파수만 보고 trace가 짧다고 판단해서는 안 됩니다. 사용 중인 stack-up에서의 propagation velocity를 적용해야 합니다.</p>
+          <table>
+            <thead><tr><th>Frequency</th><th>Vacuum wavelength</th><th>의미</th></tr></thead>
+            <tbody>
+              <tr><td>100 MHz</td><td>약 3 m</td><td>보드 크기보다 길 수 있음</td></tr>
+              <tr><td>1 GHz</td><td>약 30 cm</td><td>PCB trace 길이와 비교 필요</td></tr>
+              <tr><td>10 GHz</td><td>약 3 cm</td><td>Via와 package도 무시하기 어려움</td></tr>
+              <tr><td>30 GHz</td><td>약 1 cm</td><td>작은 geometry도 큰 phase를 가짐</td></tr>
+            </tbody>
+          </table>
+
+          <h2 id="section-04">4. Electrical Length가 회로 모델을 결정한다</h2>
+          <p>Physical length <code>l</code>이 같아도 wavelength가 달라지면 전기적으로는 다른 길이입니다. Sinusoidal steady state에서 electrical length는 다음 phase로 나타낼 수 있습니다.</p>
+          <pre><code>theta = beta l = 2 pi l / lambda_g</code></pre>
+          <div class="mermaid diagram">
+flowchart LR
+    short[Small theta] --> lumped[One voltage and current pair is adequate]
+    medium[Non-negligible theta] --> error[Phase and amplitude vary by position]
+    error --> line[Transmission-line model required]
+          </div>
+          <p>따라서 “RF는 몇 GHz부터인가”보다 <code>l/lambda_g</code>와 허용 가능한 phase error를 묻는 편이 정확합니다. 100 MHz에서도 cable이 수 m라면 distributed effect가 중요하고, 수 GHz라도 on-chip의 매우 짧은 구간은 특정 조건에서 lumped model로 근사할 수 있습니다.</p>
+
+          <h2 id="section-05">5. λ/10은 법칙이 아니라 오차 예산이다</h2>
+          <p>입문에서는 길이가 <code>lambda/10</code>보다 작으면 lumped model을 쓸 수 있다는 기준을 자주 봅니다. 하지만 <code>lambda/10</code>은 36°의 phase에 해당해 정밀한 RF 회로에서는 이미 큰 값일 수 있습니다. 어떤 회로는 더 엄격한 <code>lambda/20</code>이나 작은 phase budget을 요구합니다.</p>
+          <blockquote><p>기준은 특정 분수 자체가 아니라, 그 길이가 만드는 delay와 phase 차이가 회로의 허용 오차보다 작은가입니다.</p></blockquote>
+          <p>부품 크기, pad, via와 연결 trace를 모두 포함한 가장 긴 current path를 평가해야 합니다. “부품 본체가 작다”는 사실만으로 lumped element가 되는 것은 아닙니다.</p>
+
+          <h2 id="section-06">6. 같은 배선 위에서도 Voltage가 달라진다</h2>
+          <p>한 방향으로 진행하는 sinusoidal voltage wave는 단순화하면 다음과 같습니다.</p>
+          <pre><code>V(x,t) = V0 cos(omega t - beta x)
+Delta phi = beta Delta x</code></pre>
+          <p><code>beta Delta x</code>를 무시할 수 없다면 같은 copper trace의 두 지점도 같은 순간에 다른 voltage와 current를 가집니다. 이때 trace 전체를 하나의 equipotential node로 두는 모델은 실제 field와 energy storage를 표현하지 못합니다.</p>
+          <div class="mermaid diagram">
+flowchart LR
+    x1[Position x1] -->|finite propagation delay| x2[Position x2]
+    x1 --> v1[Voltage phase phi1]
+    x2 --> v2[Voltage phase phi2]
+    v1 --> different[phi1 differs from phi2]
+    v2 --> different
+          </div>
+
+          <h2 id="section-07">7. PCB Trace에는 RLCG가 분포한다</h2>
+          <p>짧은 구간 <code>Delta x</code>마다 conductor에는 series resistance <code>R' Delta x</code>와 inductance <code>L' Delta x</code>가 있고, signal conductor와 return conductor 사이에는 shunt conductance <code>G' Delta x</code>와 capacitance <code>C' Delta x</code>가 있습니다. Prime은 단위 길이당 값이라는 뜻입니다.</p>
+          <div class="mermaid diagram">
+flowchart LR
+    a[Section Delta x] --> r[Series R prime Delta x]
+    a --> l[Series L prime Delta x]
+    a --> g[Shunt G prime Delta x]
+    a --> c[Shunt C prime Delta x]
+    r --> repeat[Repeated along the route]
+    l --> repeat
+    g --> repeat
+    c --> repeat
+          </div>
+          <p>이 연속적인 energy storage와 loss가 transmission line의 propagation constant와 characteristic impedance를 만듭니다. Trace width, copper thickness, dielectric thickness와 permittivity가 단순 제조 치수가 아니라 전기적 설계 변수가 되는 이유입니다.</p>
+
+          <h2 id="section-08">8. Return Path까지 포함해야 하나의 선로가 된다</h2>
+          <p>“PCB trace가 transmission line”이라는 표현은 signal conductor 하나만을 뜻하지 않습니다. Wave를 지지하는 electric field와 magnetic field는 signal path와 return path 사이에 형성됩니다. Microstrip은 인접 plane을, stripline은 위아래 reference plane을 주된 return path로 사용합니다.</p>
+          <div class="mermaid diagram">
+flowchart TB
+    signal[Signal trace] --> fields[Electric and magnetic fields]
+    return[Reference plane or return conductor] --> fields
+    dielectric[Dielectric geometry] --> fields
+    fields --> mode[Propagation mode and impedance]
+          </div>
+          <p>Reference plane의 split이나 긴 우회 경로는 return-current geometry를 바꾸고 discontinuity, radiation과 crosstalk을 키울 수 있습니다. Controlled-impedance routing은 trace width만 맞추는 일이 아니라 연속된 return path까지 설계하는 일입니다.</p>
+
+          <h2 id="section-09">9. Digital Signal은 Clock보다 Rise Time을 봐야 한다</h2>
+          <p>Digital waveform은 하나의 clock frequency만 갖는 sine wave가 아닙니다. 빠른 edge에는 높은-frequency harmonic이 포함되므로 10 MHz clock도 rise time이 수백 ps라면 transmission-line behavior를 보일 수 있습니다.</p>
+          <div class="mermaid diagram">
+flowchart TB
+    clock[Low repetition-rate clock] --> edge[Fast rise and fall time]
+    edge --> spectrum[High-frequency spectral content]
+    spectrum --> delay[Trace propagation delay becomes significant]
+    delay --> ringing[Reflection, overshoot and timing error]
+          </div>
+          <p>실무 경험칙 중 하나는 one-way propagation delay가 rise time의 약 1/6보다 작을 때 line을 lumped하게 근사하는 것입니다. 다른 지침은 15%나 30%처럼 다른 비율을 사용합니다. 모두 같은 경계 법칙이 아니라 허용 가능한 waveform error에 따른 설계 기준입니다. Driver의 실제 edge rate와 round-trip delay를 함께 봐야 합니다.</p>
+
+          <h2 id="section-10">10. 부품과 Via도 주파수에 따라 정체가 달라진다</h2>
+          <p>실제 capacitor에는 equivalent series inductance와 resistance가 있고, inductor에는 inter-winding capacitance가 있습니다. Self-resonant frequency를 넘으면 capacitor가 inductive하게, inductor가 capacitive하게 보일 수 있습니다.</p>
+          <p>Via, pad, connector와 package transition도 local inductance와 capacitance를 만듭니다. 특히 끝이 열린 via stub은 특정 frequency에서 강한 resonance를 만들 수 있습니다. RF layout에서 schematic에 없는 geometry까지 simulation과 measurement 대상이 되는 이유입니다.</p>
+
+          <h2 id="section-11">11. 정리: 고주파의 경계는 Hz가 아니라 비율이다</h2>
+          <dl class="service-summary">
+            <div><dt>Time</dt><dd>Propagation delay가 signal 변화 시간에 비해 충분히 작은지 봅니다.</dd></div>
+            <div><dt>Space</dt><dd>Physical length를 guided wavelength와 비교합니다.</dd></div>
+            <div><dt>Geometry</dt><dd>Signal과 return path가 만드는 distributed RLCG를 봅니다.</dd></div>
+            <div><dt>Digital</dt><dd>Clock rate보다 rise and fall time을 먼저 확인합니다.</dd></div>
+            <div><dt>Model</dt><dd>허용 오차를 넘으면 node 대신 position-dependent voltage와 current를 사용합니다.</dd></div>
+          </dl>
+          <div class="mermaid diagram">
+flowchart TB
+    geometry[Physical geometry] --> delay[Propagation delay]
+    waveform[Frequency or rise time] --> variation[Signal variation time]
+    delay --> compare[Compare delay with variation]
+    variation --> compare
+    compare -->|negligible| lumped[Lumped model]
+    compare -->|not negligible| distributed[Distributed model]
+          </div>
+          <p>다음 글에서는 이 distributed line에서 voltage와 current wave가 어떻게 이동하고, load impedance가 characteristic impedance와 다를 때 왜 reflected wave가 필요한지 살펴보겠습니다.</p>
+          <p><strong>참고 자료:</strong> <a href="https://ocw.mit.edu/courses/6-013-electromagnetics-and-applications-fall-2005/">MIT 6.013: Electromagnetics and Applications</a>, <a href="https://ocw.mit.edu/courses/6-776-high-speed-communication-circuits-spring-2005/resources/lec4/">MIT 6.776: High Speed Communication Circuits, Lecture 4</a>, <a href="https://www.ti.com/lit/pdf/SCAA082A">Texas Instruments: High-Speed Layout Guidelines</a>, <a href="https://www.analog.com/en/resources/app-notes/an-98.html">Analog Devices AN-98: Signal Sources, Conditioners and Power Circuitry</a></p>
+        </div>
+
+        <!-- GENERATED:ARTICLE_TAIL:START -->
+        <nav class="article-pagination" aria-label="발행 순서로 읽기">
+          <span class="article-nav-empty"><span>Newer</span><strong>더 이상 글이 없습니다.</strong></span>
+          <a href="./semiconductor-gan-hemt-2deg-rf-power.html"><span>Older</span><strong>[Semiconductor] GaN은 왜 고출력 RF 소자에 적합할까? - Wide Band Gap, HEMT, 2DEG</strong></a>
+        </nav>
+        <aside class="related-notes" aria-labelledby="related-heading">
+          <h2 id="related-heading">Related notes</h2>
+          <div class="related-note-list">
+          <a href="./semiconductor-gan-hemt-2deg-rf-power.html">
+            <span>Semiconductor · 2026.09.27</span>
+            <strong>[Semiconductor] GaN은 왜 고출력 RF 소자에 적합할까? - Wide Band Gap, HEMT, 2DEG</strong>
+          </a>
+          <a href="./semiconductor-mos-capacitor-mosfet-channel.html">
+            <span>Semiconductor · 2026.09.27</span>
+            <strong>[Semiconductor] Gate Voltage는 어떻게 없던 Channel을 만들까? - MOS Capacitor에서 MOSFET까지</strong>
+          </a>
+          <a href="./semiconductor-pn-junction-depletion-built-in-potential-bias.html">
+            <span>Semiconductor · 2026.09.27</span>
+            <strong>[Semiconductor] n형과 p형을 붙이면 무슨 일이 일어날까? - PN Junction, Depletion Region, Bias</strong>
+          </a>
+          </div>
+        </aside>
+        <!-- GENERATED:ARTICLE_TAIL:END -->
+      </article>
+    </main>
+    <footer class="site-footer">
+      <p>© 2026 Jiwon Kim</p>
+      <div class="footer-links">
+        <span id="visitStatus">집계 중</span>
+        <a href="../articles.html">Articles</a>
+        <a href="../feed.xml">RSS</a>
+      </div>
+    </footer>
+    <script src="../script.js?v=20260905-4"></script>
+    <script data-goatcounter="https://jiwonkim-blog.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
+    <noscript><img class="tracking-pixel" src="https://jiwonkim-blog.goatcounter.com/count?p=/posts/rf-lumped-circuit-electrical-length-pcb-trace.html" alt="" /></noscript>
+  </body>
+</html>

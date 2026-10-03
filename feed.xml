@@ -6,7 +6,14 @@
     <atom:link href="https://andrewkimswe.github.io/feed.xml" rel="self" type="application/rss+xml" />
     <description>백엔드, 클라우드, RAG, 아키텍처와 운영 판단을 기록하는 기술 블로그입니다.</description>
     <language>ko-KR</language>
-    <lastBuildDate>Sun, 27 Sep 2026 23:00:00 +0900</lastBuildDate>
+    <lastBuildDate>Sat, 03 Oct 2026 09:00:00 +0900</lastBuildDate>
+    <item>
+      <title>[RF] 주파수가 올라가면 왜 PCB 배선도 회로 소자가 될까? - Lumped Circuit과 Electrical Length</title>
+      <link>https://andrewkimswe.github.io/posts/rf-lumped-circuit-electrical-length-pcb-trace.html</link>
+      <guid isPermaLink="true">https://andrewkimswe.github.io/posts/rf-lumped-circuit-electrical-length-pcb-trace.html</guid>
+      <pubDate>Sat, 03 Oct 2026 09:00:00 +0900</pubDate>
+      <description>Frequency 자체보다 electrical length와 edge rate가 중요한 이유를 회로 가정의 경계에서 살펴봅니다.</description>
+    </item>
     <item>
       <title>[Semiconductor] GaN은 왜 고출력 RF 소자에 적합할까? - Wide Band Gap, HEMT, 2DEG</title>
       <link>https://andrewkimswe.github.io/posts/semiconductor-gan-hemt-2deg-rf-power.html</link>
