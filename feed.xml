@@ -6,7 +6,14 @@
     <atom:link href="https://andrewkimswe.github.io/feed.xml" rel="self" type="application/rss+xml" />
     <description>백엔드, 클라우드, RAG, 아키텍처와 운영 판단을 기록하는 기술 블로그입니다.</description>
     <language>ko-KR</language>
-    <lastBuildDate>Sat, 03 Oct 2026 15:00:00 +0900</lastBuildDate>
+    <lastBuildDate>Sat, 03 Oct 2026 21:00:00 +0900</lastBuildDate>
+    <item>
+      <title>[RF] 왜 50Ω을 기준으로 삼을까? - Impedance Matching과 Smith Chart</title>
+      <link>https://andrewkimswe.github.io/posts/rf-50-ohm-impedance-matching-smith-chart.html</link>
+      <guid isPermaLink="true">https://andrewkimswe.github.io/posts/rf-50-ohm-impedance-matching-smith-chart.html</guid>
+      <pubDate>Sat, 03 Oct 2026 21:00:00 +0900</pubDate>
+      <description>50Ω은 어디까지나 interface의 기준입니다. 실제 device impedance를 matching network와 Smith chart로 다루는 과정을 살펴봅니다.</description>
+    </item>
     <item>
       <title>[RF] 신호는 배선을 어떻게 이동할까? - Transmission Line, Characteristic Impedance, Reflection</title>
       <link>https://andrewkimswe.github.io/posts/rf-transmission-line-characteristic-impedance-reflection.html</link>

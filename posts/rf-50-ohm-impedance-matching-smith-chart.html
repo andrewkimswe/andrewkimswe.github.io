@@ -1,0 +1,262 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>[RF] 왜 50Ω을 기준으로 삼을까? - Impedance Matching과 Smith Chart | Jiwon Kim Engineering Notes</title>
+    <meta name="description" content="50Ω RF ecosystem의 배경, complex impedance matching, Smith chart의 Z-Gamma mapping, S11 해석과 GaN PA의 load-pull까지 연결해 설명합니다." />
+    <meta name="author" content="Jiwon Kim" />
+    <meta name="robots" content="index, follow, max-image-preview:large" />
+    <link rel="canonical" href="https://andrewkimswe.github.io/posts/rf-50-ohm-impedance-matching-smith-chart.html" />
+    <meta property="og:site_name" content="Jiwon Kim | Engineering Notes" />
+    <meta property="og:title" content="[RF] 왜 50Ω을 기준으로 삼을까? - Impedance Matching과 Smith Chart" />
+    <meta property="og:description" content="50Ω은 어디까지나 interface의 기준입니다. 실제 device impedance를 matching network와 Smith chart로 다루는 과정을 살펴봅니다." />
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="https://andrewkimswe.github.io/posts/rf-50-ohm-impedance-matching-smith-chart.html" />
+    <meta property="og:image" content="https://andrewkimswe.github.io/assets/social-card.png" />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Jiwon Kim Engineering Notes" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://andrewkimswe.github.io/assets/social-card.png" />
+    <meta name="twitter:title" content="[RF] 왜 50Ω을 기준으로 삼을까? - Impedance Matching과 Smith Chart" />
+    <meta name="twitter:description" content="50Ω은 어디까지나 interface의 기준입니다. 실제 device impedance를 matching network와 Smith chart로 다루는 과정을 살펴봅니다." />
+    <meta property="article:modified_time" content="2026-10-03T21:00:00+09:00" />
+    <meta name="twitter:image:alt" content="Jiwon Kim Engineering Notes" />
+    <meta property="article:published_time" content="2026-10-03T21:00:00+09:00" />
+    <meta property="article:author" content="Jiwon Kim" />
+    <meta property="article:tag" content="RF" />
+    <meta property="article:tag" content="50 Ohm" />
+    <meta property="article:tag" content="Impedance Matching" />
+    <meta property="article:tag" content="Smith Chart" />
+    <meta property="article:tag" content="S11" />
+    <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="../styles.css?v=20260905-4" />
+    <script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","headline":"[RF] 왜 50Ω을 기준으로 삼을까? - Impedance Matching과 Smith Chart","description":"50Ω RF ecosystem의 배경, complex impedance matching, Smith chart의 Z-Gamma mapping, S11 해석과 GaN PA의 load-pull까지 연결해 설명합니다.","datePublished":"2026-10-03T21:00:00+09:00","dateModified":"2026-10-03T21:00:00+09:00","author":{"@type":"Person","name":"Jiwon Kim","url":"https://github.com/andrewkimswe"},"publisher":{"@type":"Person","name":"Jiwon Kim"},"mainEntityOfPage":"https://andrewkimswe.github.io/posts/rf-50-ohm-impedance-matching-smith-chart.html","inLanguage":"ko-KR"}
+    </script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main-content">본문으로 바로가기</a>
+    <header class="site-header"><a class="brand" href="../" aria-label="Jiwon Kim Engineering Notes 홈"><span class="brand-mark" aria-hidden="true">JK</span><span class="brand-copy"><strong>Jiwon Kim</strong><small>Engineering Notes</small></span></a><nav class="nav-links" aria-label="주요 메뉴"><a href="../articles.html">Articles</a><a href="../projects.html">Projects</a><a href="../#about">About</a><span class="nav-divider" aria-hidden="true"></span><a href="https://github.com/andrewkimswe">GitHub</a><a href="https://www.linkedin.com/in/jiwon-kim-867334285/">LinkedIn</a></nav></header>
+
+    <main id="main-content">
+      <article class="article-page">
+        <header class="article-hero">
+          <a class="back-link" href="../articles.html">All articles</a>
+          <p class="eyebrow">RF · Matching · Smith Chart</p>
+          <h1>[RF] 왜 50Ω을 기준으로 삼을까? - Impedance Matching과 Smith Chart</h1>
+          <p class="article-summary">50Ω은 어디까지나 interface의 기준입니다. 실제 device impedance를 matching network와 Smith chart로 다루는 과정을 살펴봅니다.</p>
+          <div class="article-meta"><time datetime="2026-10-03">2026.10.03</time><span>RF</span><span>Matching</span><span>Smith Chart</span><span class="reading-time" data-generated="true">약 14분</span></div>
+        </header>
+
+        <!-- GENERATED:ARTICLE_TOC:START -->
+        <aside class="article-toc" aria-label="이 글의 목차">
+          <details open>
+            <summary>On this page</summary>
+            <ol>
+              <li><a href="#section-01">1. 50Ω은 자연 상수가 아니라 Interface 표준이다</a></li>
+              <li><a href="#section-02">2. 50Ω은 Coax의 Loss와 Power Handling 사이에서 정착했다</a></li>
+              <li><a href="#section-03">3. Transistor 내부까지 50Ω인 것은 아니다</a></li>
+              <li><a href="#section-04">4. Matching은 Complex Impedance를 변환한다</a></li>
+              <li><a href="#section-05">5. Reactive Network도 공짜는 아니다</a></li>
+              <li><a href="#section-06">6. Smith Chart는 Z를 Γ 평면에 옮긴 지도다</a></li>
+              <li><a href="#section-07">7. Center, Open, Short와 위아래 절반 읽기</a></li>
+              <li><a href="#section-08">8. 한 점을 계산해 Smith Chart에 올려보기</a></li>
+              <li><a href="#section-09">9. Series와 Shunt Element는 서로 다른 좌표에서 움직인다</a></li>
+              <li><a href="#section-10">10. Transmission Line은 같은 |Γ| 원을 따라 움직인다</a></li>
+              <li><a href="#section-11">11. S11은 Reference Plane과 Termination을 포함한다</a></li>
+              <li><a href="#section-12">12. PA의 목표는 단순한 50Ω Match보다 넓다</a></li>
+              <li><a href="#section-13">13. 정리: 50Ω은 출발점이고 성능 목표는 별도로 정한다</a></li>
+            </ol>
+          </details>
+        </aside>
+        <!-- GENERATED:ARTICLE_TOC:END -->
+
+        <div class="article-body">
+          <p><a href="./rf-transmission-line-characteristic-impedance-reflection.html">앞선 글</a>에서는 <code>ZL</code>과 <code>Z0</code>가 다르면 load의 경계조건을 만족시키기 위해 reflected wave가 생긴다는 것을 살펴봤습니다. 그렇다면 왜 RF cable과 장비는 50Ω을 반복해서 사용하고, 50Ω이 아닌 transistor는 어떻게 연결할까요?</p>
+          <div class="mermaid diagram">
+flowchart LR
+    source[50 ohm source interface] --> input[Input matching network]
+    input --> device[Transistor complex impedance]
+    device --> output[Output matching network]
+    output --> load[50 ohm load interface]
+          </div>
+
+          <h2 id="section-01">1. 50Ω은 자연 상수가 아니라 Interface 표준이다</h2>
+          <p>Signal generator, VNA, coaxial cable, connector와 RF module이 같은 reference impedance를 사용하면 서로 연결할 때마다 별도 변환을 만들 필요가 줄어듭니다. 대부분의 RF·microwave single-ended ecosystem은 50Ω을, cable TV와 video 계열은 75Ω을 많이 사용합니다.</p>
+          <p>“50Ω system”은 모든 내부 node가 50Ω resistor라는 뜻이 아닙니다. Cable의 characteristic impedance와 장비 port의 reference impedance가 50Ω이고, 외부 interface에서 reflection과 power wave를 이 기준으로 정의한다는 뜻입니다.</p>
+
+          <h2 id="section-02">2. 50Ω은 Coax의 Loss와 Power Handling 사이에서 정착했다</h2>
+          <p>Air-filled coaxial geometry를 이상화하면 attenuation이 가장 낮아지는 impedance는 약 77Ω 부근이고, breakdown-limited power handling은 약 30Ω 부근에서 유리합니다. 50Ω은 이 둘 사이의 실용적 절충으로 자리 잡은 뒤 장비와 connector 생태계의 표준이 되었습니다.</p>
+          <div class="mermaid diagram">
+flowchart LR
+    low[Near 30 ohm] --> power[Power-handling advantage]
+    high[Near 77 ohm] --> loss[Low-attenuation advantage]
+    power --> standard[50 ohm compromise and ecosystem]
+    loss --> standard
+    loss --> video[75 ohm cable and video systems]
+          </div>
+          <p>이 수치는 coax의 conductor ratio와 dielectric 같은 가정에 의존합니다. 50Ω이 모든 transmission-line geometry의 보편적인 물리 최적점이라는 뜻은 아닙니다. 이미 구축된 component·measurement ecosystem과 호환된다는 이점이 오늘날에는 더 직접적입니다.</p>
+
+          <h2 id="section-03">3. Transistor 내부까지 50Ω인 것은 아니다</h2>
+          <p>GaN HEMT의 gate와 drain에서 최적 성능을 내는 impedance는 frequency, bias, drive level과 package parasitic에 따라 달라지며 보통 <code>50 + j0 Ω</code>가 아닙니다. 외부 connector가 50Ω이라는 이유로 die의 optimal load까지 50Ω으로 만들 필요는 없습니다.</p>
+          <div class="mermaid diagram">
+flowchart TB
+    external[External 50 ohm interface] --> network[Matching network]
+    network --> internal[Device reference plane]
+    internal --> target[Target complex source or load impedance]
+    target --> metric[Gain, power, efficiency, noise or linearity]
+          </div>
+          <p>Matching network는 external port에서 50Ω으로 보이게 하면서 device plane에는 설계 목표에 맞는 complex impedance를 제공합니다. 어느 reference plane에서 어떤 impedance를 말하는지 구분해야 합니다.</p>
+
+          <h2 id="section-04">4. Matching은 Complex Impedance를 변환한다</h2>
+          <p>Impedance는 resistance와 reactance의 합입니다.</p>
+          <pre><code>Z = R + jX
+Inductor: ZL = j omega L
+Capacitor: ZC = 1 / (j omega C)</code></pre>
+          <p>50Ω reference에서 load가 <code>25 - j20 Ω</code>이라면 matching network를 통과해 source 쪽에서 <code>50 + j0 Ω</code>으로 보이도록 resistance를 변환하고 reactance를 상쇄해야 합니다. Source가 complex라면 maximum available power의 조건은 일반적으로 conjugate match인 <code>ZL = ZS*</code>입니다.</p>
+          <p>저항을 직렬로 추가해 숫자만 50Ω으로 맞출 수도 있지만 real power를 heat로 버립니다. Low-loss matching에는 inductor, capacitor, transformer, transmission-line section과 stub 같은 reactive element를 사용합니다.</p>
+
+          <h2 id="section-05">5. Reactive Network도 공짜는 아니다</h2>
+          <p>이상적인 L과 C는 평균 real power를 소비하지 않지만 실제 부품에는 ESR, finite Q, parasitic과 self-resonance가 있습니다. Matching ratio가 크고 Q가 높아질수록 bandwidth가 좁아지고 component tolerance와 loss에 민감해질 수 있습니다.</p>
+          <div class="mermaid diagram">
+flowchart TB
+    ratio[Large impedance transformation] --> q[Higher loaded Q]
+    q --> narrow[Narrower bandwidth]
+    q --> sensitive[More tolerance sensitivity]
+    real[Finite component Q] --> loss[Insertion loss and heat]
+    parasitic[Package and layout parasitic] --> shift[Match frequency shifts]
+          </div>
+          <p>“Reflection을 0으로 만든다”만으로 설계가 끝나지 않습니다. Bandwidth, insertion loss, voltage-current stress, harmonic termination과 manufacturability를 함께 확인해야 합니다.</p>
+
+          <h2 id="section-06">6. Smith Chart는 Z를 Γ 평면에 옮긴 지도다</h2>
+          <p>Smith chart는 complex impedance를 reflection-coefficient plane에 mapping한 도구입니다. 먼저 reference impedance <code>Z0</code>로 normalize합니다.</p>
+          <pre><code>z = Z / Z0
+Gamma = (z - 1) / (z + 1)
+z = (1 + Gamma) / (1 - Gamma)</code></pre>
+          <p>무한히 넓은 positive-resistance impedance plane이 <code>|Gamma| ≤ 1</code>인 원 안으로 들어옵니다. Constant-resistance circle과 constant-reactance arc가 그려져 있어 complex 계산과 matching 과정을 기하학적으로 읽을 수 있습니다.</p>
+
+          <h2 id="section-07">7. Center, Open, Short와 위아래 절반 읽기</h2>
+          <table>
+            <thead><tr><th>위치</th><th>Normalized impedance</th><th>Reflection</th></tr></thead>
+            <tbody>
+              <tr><td>Center</td><td><code>1 + j0</code></td><td><code>Gamma = 0</code>, reference match</td></tr>
+              <tr><td>Right edge</td><td>Open, <code>Z → Infinite</code></td><td><code>Gamma = +1</code></td></tr>
+              <tr><td>Left edge</td><td>Short, <code>Z = 0</code></td><td><code>Gamma = -1</code></td></tr>
+              <tr><td>Upper half</td><td><code>+jX</code></td><td>Inductive impedance</td></tr>
+              <tr><td>Lower half</td><td><code>-jX</code></td><td>Capacitive impedance</td></tr>
+            </tbody>
+          </table>
+          <p>위아래 해석은 <strong>impedance Smith chart</strong> 기준입니다. Admittance chart에서는 susceptance의 부호와 series·shunt 해석이 달라지므로 현재 보고 있는 grid를 확인해야 합니다.</p>
+          <div class="mermaid diagram">
+flowchart TB
+    chart[Impedance Smith chart] --> center[Center: matched reference]
+    chart --> left[Left edge: short]
+    chart --> right[Right edge: open]
+    chart --> upper[Upper half: inductive]
+    chart --> lower[Lower half: capacitive]
+          </div>
+
+          <h2 id="section-08">8. 한 점을 계산해 Smith Chart에 올려보기</h2>
+          <p>50Ω system에서 <code>ZL = 25 + j25 Ω</code>를 생각해 보겠습니다.</p>
+          <pre><code>z = (25 + j25) / 50 = 0.5 + j0.5
+Gamma = (z - 1) / (z + 1) = -0.2 + j0.4
+|Gamma| ≈ 0.447
+S11 ≈ 20 log10(0.447) ≈ -7.0 dB</code></pre>
+          <p>이 점은 resistance circle <code>r = 0.5</code>와 inductive reactance arc <code>x = +0.5</code>의 교점입니다. Center까지의 거리가 <code>|Gamma|</code>이고, center로 옮기는 것이 이 reference plane에서의 match입니다.</p>
+
+          <h2 id="section-09">9. Series와 Shunt Element는 서로 다른 좌표에서 움직인다</h2>
+          <p>Series inductor나 capacitor는 impedance에 <code>jX</code>를 더하므로 constant-resistance circle을 따라 이동합니다. Shunt element는 admittance <code>Y = G + jB</code>에 susceptance를 더하므로 admittance chart에서 보는 편이 자연스럽습니다.</p>
+          <div class="mermaid diagram">
+flowchart LR
+    load[Load impedance] --> series[Add series reactance in Z plane]
+    load --> convert[Convert Z to Y]
+    convert --> shunt[Add shunt susceptance in Y plane]
+    series --> target[Move toward target impedance]
+    shunt --> target
+          </div>
+          <p>L-match는 series와 shunt reactive element 두 개를 조합해 reactance를 제거하면서 resistance level을 바꿉니다. 가능한 topology가 하나뿐인 것은 아니며 DC path, component value, low-pass 또는 high-pass 특성과 device bias 조건으로 선택합니다.</p>
+
+          <h2 id="section-10">10. Transmission Line은 같은 |Γ| 원을 따라 움직인다</h2>
+          <p>Uniform lossless line을 따라 reference plane을 이동하면 <code>|Gamma|</code>는 유지되고 phase만 변합니다. Smith chart에서는 center를 기준으로 같은-radius circle 위를 회전하는 것으로 보입니다. Rotation direction은 load 쪽인지 generator 쪽인지에 따라 달라집니다.</p>
+          <p>Lossy line에서는 이동할수록 reflected wave가 감쇠하므로 radius도 변합니다. Open·short stub이나 quarter-wave transformer를 chart에서 다룰 때는 line impedance, electrical length, loss와 design frequency를 함께 지정해야 합니다.</p>
+
+          <h2 id="section-11">11. S11은 Reference Plane과 Termination을 포함한다</h2>
+          <p>VNA의 <code>S11</code>은 port 1로 보낸 incident power wave에 대한 reflected power wave의 complex ratio입니다. 동일한 real reference impedance를 쓰고 다른 port가 그 reference로 terminate된 일반적인 조건에서는 input reflection coefficient와 직접 연결됩니다.</p>
+          <pre><code>S11(dB) = 20 log10 |S11|
+S11 = -20 dB  means  |S11| = 0.1
+Reflected power ratio = 1%</code></pre>
+          <p>측정 결과는 calibration reference plane부터 DUT까지의 cable, fixture와 transition 영향을 포함할 수 있습니다. Calibration과 de-embedding 없이 Smith chart의 한 점을 곧바로 die impedance라고 해석하면 안 됩니다.</p>
+
+          <h2 id="section-12">12. PA의 목표는 단순한 50Ω Match보다 넓다</h2>
+          <p>Small-signal amplifier에서는 gain, stability와 noise figure를 고려해 source·load match를 선택합니다. Power amplifier는 compression 영역에서 동작하므로 maximum output power, power-added efficiency, linearity와 ruggedness를 목표로 fundamental과 harmonic impedance를 함께 봅니다.</p>
+          <div class="mermaid diagram">
+flowchart TB
+    pa[Nonlinear PA at chosen bias and drive] --> pull[Source-pull and load-pull]
+    pull --> contours[Gain, Pout, PAE and linearity contours]
+    contours --> optimum[Choose target impedance]
+    optimum --> network[Design matching network]
+    network --> interface[Transform to external 50 ohm port]
+          </div>
+          <p>Load-pull은 DUT에 제시하는 impedance를 바꾸며 성능 contour를 측정합니다. Maximum <code>Pout</code> 지점과 maximum PAE 지점이 다를 수 있으므로 “transistor output을 50Ω에 conjugate match하면 끝”이라고 단순화할 수 없습니다. Large-signal PA의 optimal load는 작은 신호의 S22만으로 결정되지 않습니다.</p>
+
+          <h2 id="section-13">13. 정리: 50Ω은 출발점이고 성능 목표는 별도로 정한다</h2>
+          <dl class="service-summary">
+            <div><dt>50Ω</dt><dd>장비·cable·module을 연결하기 위한 대표 reference impedance입니다.</dd></div>
+            <div><dt>Matching</dt><dd>한 reference plane의 complex impedance를 다른 plane에서 원하는 값으로 변환합니다.</dd></div>
+            <div><dt>Smith Chart</dt><dd>Normalized impedance와 reflection coefficient를 한 원 안에서 연결합니다.</dd></div>
+            <div><dt>S11</dt><dd>지정된 reference plane과 termination 조건에서의 input reflection입니다.</dd></div>
+            <div><dt>PA Design</dt><dd>50Ω interface 안쪽에서는 load-pull로 성능 목표에 맞는 impedance를 선택합니다.</dd></div>
+          </dl>
+          <div class="mermaid diagram">
+flowchart TB
+    standard[50 ohm ecosystem] --> reference[Known reference planes]
+    device[Frequency and bias dependent device] --> target[Target source and load impedance]
+    reference --> matching[Matching network]
+    target --> matching
+    matching --> verify[VNA, load-pull and power measurement]
+          </div>
+          <p>결국 Smith chart의 목적은 모든 점을 기계적으로 50Ω에 만드는 것이 아닙니다. 어느 plane에서 어떤 impedance가 필요한지 정하고, 그 목표까지 이동하는 network를 설계하며, bandwidth와 loss를 포함해 측정으로 확인하는 데 있습니다.</p>
+          <p><strong>참고 자료:</strong> <a href="https://cdn.rohde-schwarz.com/ymkt/na/content/RF_fundamentals_seminar_materials/2_RF_Fun_-_T-Lines_dB_review_Signal_Levels.pdf">Rohde &amp; Schwarz: RF Fundamentals Part 2</a>, <a href="https://www.rohde-schwarz.com/us/applications/rf-port-impedance-verification_56279-789696.html">Rohde &amp; Schwarz: RF Port Impedance Verification</a>, <a href="https://helpfiles.keysight.com/csg/FieldFoxOnlineSupplementalHelp/Concepts/About_Display_Formats.htm">Keysight: Smith Chart and Polar Display Formats</a>, <a href="https://www.keysight.com/us/en/assets/7018-01881/article-reprints/5989-9015.pdf">Keysight: Matching Network Yin-Yang Part 1</a>, <a href="https://www.rohde-schwarz.com/uk/applications/amplifier-characterization-using-load-pull_56279-922304.html">Rohde &amp; Schwarz: Amplifier Characterization Using Load Pull</a></p>
+        </div>
+
+        <!-- GENERATED:ARTICLE_TAIL:START -->
+        <nav class="article-pagination" aria-label="발행 순서로 읽기">
+          <span class="article-nav-empty"><span>Newer</span><strong>더 이상 글이 없습니다.</strong></span>
+          <a href="./rf-transmission-line-characteristic-impedance-reflection.html"><span>Older</span><strong>[RF] 신호는 배선을 어떻게 이동할까? - Transmission Line, Characteristic Impedance, Reflection</strong></a>
+        </nav>
+        <aside class="related-notes" aria-labelledby="related-heading">
+          <h2 id="related-heading">Related notes</h2>
+          <div class="related-note-list">
+          <a href="./rf-transmission-line-characteristic-impedance-reflection.html">
+            <span>Architecture · 2026.10.03</span>
+            <strong>[RF] 신호는 배선을 어떻게 이동할까? - Transmission Line, Characteristic Impedance, Reflection</strong>
+          </a>
+          <a href="./rf-lumped-circuit-electrical-length-pcb-trace.html">
+            <span>Architecture · 2026.10.03</span>
+            <strong>[RF] 주파수가 올라가면 왜 PCB 배선도 회로 소자가 될까? - Lumped Circuit과 Electrical Length</strong>
+          </a>
+          <a href="./semiconductor-gan-hemt-2deg-rf-power.html">
+            <span>Semiconductor · 2026.09.27</span>
+            <strong>[Semiconductor] GaN은 왜 고출력 RF 소자에 적합할까? - Wide Band Gap, HEMT, 2DEG</strong>
+          </a>
+          </div>
+        </aside>
+        <!-- GENERATED:ARTICLE_TAIL:END -->
+      </article>
+    </main>
+    <footer class="site-footer">
+      <p>© 2026 Jiwon Kim</p>
+      <div class="footer-links">
+        <span id="visitStatus">집계 중</span>
+        <a href="../articles.html">Articles</a>
+        <a href="../feed.xml">RSS</a>
+      </div>
+    </footer>
+    <script src="../script.js?v=20260905-4"></script>
+    <script data-goatcounter="https://jiwonkim-blog.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
+    <noscript><img class="tracking-pixel" src="https://jiwonkim-blog.goatcounter.com/count?p=/posts/rf-50-ohm-impedance-matching-smith-chart.html" alt="" /></noscript>
+  </body>
+</html>
