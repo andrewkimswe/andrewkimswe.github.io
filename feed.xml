@@ -6,49 +6,7 @@
     <atom:link href="https://andrewkimswe.github.io/feed.xml" rel="self" type="application/rss+xml" />
     <description>백엔드, 클라우드, RAG, 아키텍처와 운영 판단을 기록하는 기술 블로그입니다.</description>
     <language>ko-KR</language>
-    <lastBuildDate>Sun, 04 Oct 2026 15:00:00 +0900</lastBuildDate>
-    <item>
-      <title>[RF] 좋은 증폭기는 무엇으로 평가할까? - Gain, Noise, Stability, Linearity</title>
-      <link>https://andrewkimswe.github.io/posts/rf-amplifier-gain-noise-stability-linearity.html</link>
-      <guid isPermaLink="true">https://andrewkimswe.github.io/posts/rf-amplifier-gain-noise-stability-linearity.html</guid>
-      <pubDate>Sun, 04 Oct 2026 15:00:00 +0900</pubDate>
-      <description>Gain 하나가 아니라 용도에 맞는 noise, stability, linearity, output power와 efficiency를 함께 읽는 방법을 살펴봅니다.</description>
-    </item>
-    <item>
-      <title>[RF] 반사와 전달을 어떻게 측정할까? - S-Parameter와 VNA Calibration</title>
-      <link>https://andrewkimswe.github.io/posts/rf-s-parameters-vna-calibration-measurement.html</link>
-      <guid isPermaLink="true">https://andrewkimswe.github.io/posts/rf-s-parameters-vna-calibration-measurement.html</guid>
-      <pubDate>Sun, 04 Oct 2026 09:00:00 +0900</pubDate>
-      <description>네 개의 S-parameter를 외우는 데서 멈추지 않고 어떤 termination과 reference plane에서 측정한 값인지까지 살펴봅니다.</description>
-    </item>
-    <item>
-      <title>[RF] 왜 50Ω을 기준으로 삼을까? - Impedance Matching과 Smith Chart</title>
-      <link>https://andrewkimswe.github.io/posts/rf-50-ohm-impedance-matching-smith-chart.html</link>
-      <guid isPermaLink="true">https://andrewkimswe.github.io/posts/rf-50-ohm-impedance-matching-smith-chart.html</guid>
-      <pubDate>Sat, 03 Oct 2026 21:00:00 +0900</pubDate>
-      <description>50Ω은 어디까지나 interface의 기준입니다. 실제 device impedance를 matching network와 Smith chart로 다루는 과정을 살펴봅니다.</description>
-    </item>
-    <item>
-      <title>[RF] 신호는 배선을 어떻게 이동할까? - Transmission Line, Characteristic Impedance, Reflection</title>
-      <link>https://andrewkimswe.github.io/posts/rf-transmission-line-characteristic-impedance-reflection.html</link>
-      <guid isPermaLink="true">https://andrewkimswe.github.io/posts/rf-transmission-line-characteristic-impedance-reflection.html</guid>
-      <pubDate>Sat, 03 Oct 2026 15:00:00 +0900</pubDate>
-      <description>50Ω 선로의 의미와 impedance가 달라질 때 reflected wave가 필요한 이유를 경계조건에서 설명합니다.</description>
-    </item>
-    <item>
-      <title>[RF] 주파수가 올라가면 왜 PCB 배선도 회로 소자가 될까? - Lumped Circuit과 Electrical Length</title>
-      <link>https://andrewkimswe.github.io/posts/rf-lumped-circuit-electrical-length-pcb-trace.html</link>
-      <guid isPermaLink="true">https://andrewkimswe.github.io/posts/rf-lumped-circuit-electrical-length-pcb-trace.html</guid>
-      <pubDate>Sat, 03 Oct 2026 09:00:00 +0900</pubDate>
-      <description>Frequency 자체보다 electrical length와 edge rate가 중요한 이유를 회로 가정의 경계에서 살펴봅니다.</description>
-    </item>
-    <item>
-      <title>[Semiconductor] GaN은 왜 고출력 RF 소자에 적합할까? - Wide Band Gap, HEMT, 2DEG</title>
-      <link>https://andrewkimswe.github.io/posts/semiconductor-gan-hemt-2deg-rf-power.html</link>
-      <guid isPermaLink="true">https://andrewkimswe.github.io/posts/semiconductor-gan-hemt-2deg-rf-power.html</guid>
-      <pubDate>Sun, 27 Sep 2026 23:00:00 +0900</pubDate>
-      <description>AlGaN/GaN 계면의 2DEG가 어디서 오고, HEMT가 이를 어떻게 제어하며, 실제 RF 성능을 무엇이 제한하는지 살펴봅니다.</description>
-    </item>
+    <lastBuildDate>Sun, 27 Sep 2026 22:00:00 +0900</lastBuildDate>
     <item>
       <title>[Semiconductor] Gate Voltage는 어떻게 없던 Channel을 만들까? - MOS Capacitor에서 MOSFET까지</title>
       <link>https://andrewkimswe.github.io/posts/semiconductor-mos-capacitor-mosfet-channel.html</link>
