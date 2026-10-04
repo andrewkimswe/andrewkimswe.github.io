@@ -1,0 +1,270 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>[RF] 반사와 전달을 어떻게 측정할까? - S-Parameter와 VNA Calibration | Jiwon Kim Engineering Notes</title>
+    <meta name="description" content="Power wave로 정의하는 S11, S21, S12, S22의 측정 조건과 VNA calibration, reference plane, de-embedding, dynamic range와 small-signal 한계를 설명합니다." />
+    <meta name="author" content="Jiwon Kim" />
+    <meta name="robots" content="index, follow, max-image-preview:large" />
+    <link rel="canonical" href="https://andrewkimswe.github.io/posts/rf-s-parameters-vna-calibration-measurement.html" />
+    <meta property="og:site_name" content="Jiwon Kim | Engineering Notes" />
+    <meta property="og:title" content="[RF] 반사와 전달을 어떻게 측정할까? - S-Parameter와 VNA Calibration" />
+    <meta property="og:description" content="네 개의 S-parameter를 외우는 데서 멈추지 않고 어떤 termination과 reference plane에서 측정한 값인지까지 살펴봅니다." />
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="https://andrewkimswe.github.io/posts/rf-s-parameters-vna-calibration-measurement.html" />
+    <meta property="og:image" content="https://andrewkimswe.github.io/assets/social-card.png" />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Jiwon Kim Engineering Notes" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://andrewkimswe.github.io/assets/social-card.png" />
+    <meta name="twitter:title" content="[RF] 반사와 전달을 어떻게 측정할까? - S-Parameter와 VNA Calibration" />
+    <meta name="twitter:description" content="네 개의 S-parameter를 외우는 데서 멈추지 않고 어떤 termination과 reference plane에서 측정한 값인지까지 살펴봅니다." />
+    <meta property="article:modified_time" content="2026-10-04T09:00:00+09:00" />
+    <meta name="twitter:image:alt" content="Jiwon Kim Engineering Notes" />
+    <meta property="article:published_time" content="2026-10-04T09:00:00+09:00" />
+    <meta property="article:author" content="Jiwon Kim" />
+    <meta property="article:tag" content="RF" />
+    <meta property="article:tag" content="S-Parameter" />
+    <meta property="article:tag" content="VNA" />
+    <meta property="article:tag" content="Calibration" />
+    <meta property="article:tag" content="Measurement" />
+    <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="../styles.css?v=20260905-4" />
+    <script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","headline":"[RF] 반사와 전달을 어떻게 측정할까? - S-Parameter와 VNA Calibration","description":"Power wave로 정의하는 S11, S21, S12, S22의 측정 조건과 VNA calibration, reference plane, de-embedding, dynamic range와 small-signal 한계를 설명합니다.","datePublished":"2026-10-04T09:00:00+09:00","dateModified":"2026-10-04T09:00:00+09:00","author":{"@type":"Person","name":"Jiwon Kim","url":"https://github.com/andrewkimswe"},"publisher":{"@type":"Person","name":"Jiwon Kim"},"mainEntityOfPage":"https://andrewkimswe.github.io/posts/rf-s-parameters-vna-calibration-measurement.html","inLanguage":"ko-KR"}
+    </script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main-content">본문으로 바로가기</a>
+    <header class="site-header"><a class="brand" href="../" aria-label="Jiwon Kim Engineering Notes 홈"><span class="brand-mark" aria-hidden="true">JK</span><span class="brand-copy"><strong>Jiwon Kim</strong><small>Engineering Notes</small></span></a><nav class="nav-links" aria-label="주요 메뉴"><a href="../articles.html">Articles</a><a href="../projects.html">Projects</a><a href="../#about">About</a><span class="nav-divider" aria-hidden="true"></span><a href="https://github.com/andrewkimswe">GitHub</a><a href="https://www.linkedin.com/in/jiwon-kim-867334285/">LinkedIn</a></nav></header>
+
+    <main id="main-content">
+      <article class="article-page">
+        <header class="article-hero">
+          <a class="back-link" href="../articles.html">All articles</a>
+          <p class="eyebrow">RF · S-Parameter · VNA</p>
+          <h1>[RF] 반사와 전달을 어떻게 측정할까? - S-Parameter와 VNA Calibration</h1>
+          <p class="article-summary">네 개의 S-parameter를 외우는 데서 멈추지 않고 어떤 termination과 reference plane에서 측정한 값인지까지 살펴봅니다.</p>
+          <div class="article-meta"><time datetime="2026-10-04">2026.10.04</time><span>RF</span><span>S-Parameter</span><span>VNA</span><span class="reading-time" data-generated="true">약 14분</span></div>
+        </header>
+
+        <!-- GENERATED:ARTICLE_TOC:START -->
+        <aside class="article-toc" aria-label="이 글의 목차">
+          <details open>
+            <summary>On this page</summary>
+            <ol>
+              <li><a href="#section-01">1. RF에서는 Voltage와 Current 대신 Wave를 측정한다</a></li>
+              <li><a href="#section-02">2. S-Matrix는 Incident Wave와 Outgoing Wave를 연결한다</a></li>
+              <li><a href="#section-03">3. S11, S21, S12, S22의 정의에는 조건이 붙는다</a></li>
+              <li><a href="#section-04">4. Magnitude만 보면 절반만 측정한 것이다</a></li>
+              <li><a href="#section-05">5. S11과 S22는 Port Match를 보여준다</a></li>
+              <li><a href="#section-06">6. S21은 언제 Gain이고 언제 Insertion Loss인가</a></li>
+              <li><a href="#section-07">7. Reciprocity, Symmetry, Isolation은 서로 다르다</a></li>
+              <li><a href="#section-08">8. VNA는 Ratio를 Frequency별로 측정한다</a></li>
+              <li><a href="#section-09">9. Calibration은 Reference Plane을 옮긴다</a></li>
+              <li><a href="#section-10">10. SOLT와 TRL은 서로 다른 Standard를 사용한다</a></li>
+              <li><a href="#section-11">11. Fixture가 남으면 De-embedding이 필요하다</a></li>
+              <li><a href="#section-12">12. Dynamic Range와 측정 설정이 Trace를 바꾼다</a></li>
+              <li><a href="#section-13">13. Small-Signal S-Parameter가 말하지 못하는 것</a></li>
+              <li><a href="#section-14">14. 정리: 숫자보다 측정 조건을 먼저 읽는다</a></li>
+            </ol>
+          </details>
+        </aside>
+        <!-- GENERATED:ARTICLE_TOC:END -->
+
+        <div class="article-body">
+          <p><a href="./rf-50-ohm-impedance-matching-smith-chart.html">앞선 글</a>에서는 complex impedance와 reflection coefficient를 Smith chart에서 연결했습니다. 실제 filter와 amplifier의 reflection과 transmission을 frequency별로 얻으려면 incident wave와 outgoing wave의 복소 비를 측정해야 합니다. 이것이 S-parameter와 vector network analyzer의 역할입니다.</p>
+          <div class="mermaid diagram">
+flowchart LR
+    source[VNA source] --> incident[Incident power wave]
+    incident --> dut[DUT]
+    dut --> reflected[Reflected wave]
+    dut --> transmitted[Transmitted wave]
+    reflected --> receivers[Coherent receivers]
+    transmitted --> receivers
+    receivers --> ratio[Complex S-parameter ratio]
+          </div>
+
+          <h2 id="section-01">1. RF에서는 Voltage와 Current 대신 Wave를 측정한다</h2>
+          <p>RF port에서 voltage와 current를 직접 분리해 측정하는 일은 쉽지 않습니다. Directional coupler와 coherent receiver를 사용하면 DUT로 들어가는 incident wave와 되돌아오거나 다른 port로 나가는 wave를 분리해 magnitude와 phase의 비로 측정할 수 있습니다.</p>
+          <p>일반적인 real reference impedance <code>Z0</code>에서 power wave를 <code>a</code>와 <code>b</code>로 정의합니다. 정확한 normalization convention은 장비와 이론에 따라 표현이 다를 수 있지만, 핵심은 <code>|a|^2</code>와 <code>|b|^2</code>를 incident·outgoing power에 연결할 수 있다는 점입니다.</p>
+
+          <h2 id="section-02">2. S-Matrix는 Incident Wave와 Outgoing Wave를 연결한다</h2>
+          <p>Linear two-port의 small-signal 관계는 다음 행렬로 나타냅니다.</p>
+          <pre><code>[b1]   [S11 S12] [a1]
+[b2] = [S21 S22] [a2]</code></pre>
+          <p>첫 번째 첨자는 wave가 나오는 port, 두 번째 첨자는 자극이 들어간 port입니다. 따라서 <code>S21</code>은 port 1에서 들어가 port 2로 나가는 정방향 전달이고, <code>S12</code>는 반대 방향 전달입니다.</p>
+          <div class="mermaid diagram">
+flowchart TB
+    s11[S11: port 1 to port 1] --> reflection[Reflection terms]
+    s22[S22: port 2 to port 2] --> reflection
+    s21[S21: port 1 to port 2] --> transmission[Transmission terms]
+    s12[S12: port 2 to port 1] --> transmission
+          </div>
+
+          <h2 id="section-03">3. S11, S21, S12, S22의 정의에는 조건이 붙는다</h2>
+          <p>각 parameter를 측정할 때 자극하지 않는 다른 port에는 incident wave가 없어야 합니다. 실무적으로는 그 port를 system reference impedance로 terminate합니다.</p>
+          <pre><code>S11 = b1/a1  with a2 = 0
+S21 = b2/a1  with a2 = 0
+S12 = b1/a2  with a1 = 0
+S22 = b2/a2  with a1 = 0</code></pre>
+          <p>따라서 <code>S11</code>은 port 2가 reference impedance로 terminate된 조건의 input reflection이고, <code>S22</code>도 port 1 termination 조건을 포함합니다. 반대 port가 임의의 mismatch라면 실제 input reflection은 S-parameter와 load reflection coefficient를 함께 계산해야 합니다.</p>
+
+          <h2 id="section-04">4. Magnitude만 보면 절반만 측정한 것이다</h2>
+          <p>S-parameter는 complex number입니다. Magnitude는 얼마나 반사·전달되는지, phase는 wave가 얼마나 회전했는지를 나타냅니다.</p>
+          <pre><code>Sij = |Sij| exp(j angle Sij)
+Log magnitude = 20 log10 |Sij|</code></pre>
+          <p>같은 <code>|S21|</code>을 가진 두 network도 phase response와 group delay가 다를 수 있습니다. Cascade, matching, time-domain transform과 de-embedding에는 phase가 반드시 필요합니다. Magnitude만 측정하는 scalar network analysis와 VNA의 차이도 여기에 있습니다.</p>
+
+          <h2 id="section-05">5. S11과 S22는 Port Match를 보여준다</h2>
+          <p>Real reference impedance와 앞서 말한 termination 조건에서 <code>S11 = Gamma_in</code>, <code>S22 = Gamma_out</code>로 읽을 수 있습니다. Log magnitude는 음수이고 0에서 멀어질수록 reflected wave가 작습니다.</p>
+          <table>
+            <thead><tr><th>S11 Log Mag</th><th>|S11|</th><th>Reflected power</th><th>Return loss</th></tr></thead>
+            <tbody>
+              <tr><td>-10 dB</td><td>약 0.316</td><td>약 10%</td><td>10 dB</td></tr>
+              <tr><td>-20 dB</td><td>0.1</td><td>1%</td><td>20 dB</td></tr>
+              <tr><td>-30 dB</td><td>약 0.0316</td><td>약 0.1%</td><td>30 dB</td></tr>
+            </tbody>
+          </table>
+          <p>“S11이 더 작다”와 “return loss가 더 크다”는 같은 개선을 서로 다른 부호 관례로 표현합니다. Smith chart에 S11을 표시하면 magnitude와 phase를 impedance로 변환해 볼 수 있습니다.</p>
+
+          <h2 id="section-06">6. S21은 언제 Gain이고 언제 Insertion Loss인가</h2>
+          <p>Matched source와 load, 같은 real reference impedance에서 <code>|S21|^2</code>는 port 1 incident power 대비 port 2 outgoing power ratio입니다. Amplifier의 small-signal forward gain을 보거나 passive filter와 cable의 insertion loss를 평가할 때 사용할 수 있습니다.</p>
+          <table>
+            <thead><tr><th>DUT</th><th>S21 예시</th><th>해석</th></tr></thead>
+            <tbody>
+              <tr><td>Amplifier</td><td>+16 dB</td><td>Matched small-signal forward gain</td></tr>
+              <tr><td>Cable</td><td>-1 dB</td><td>Insertion loss</td></tr>
+              <tr><td>Band-pass filter stopband</td><td>-40 dB</td><td>Rejection</td></tr>
+            </tbody>
+          </table>
+          <p>Source와 load가 mismatch이면 실제 delivered-power gain인 transducer gain은 <code>S21</code> 하나로 정해지지 않습니다. <code>S21</code>을 모든 조건의 amplifier gain으로 부르는 것은 생략된 조건이 많은 표현입니다.</p>
+
+          <h2 id="section-07">7. Reciprocity, Symmetry, Isolation은 서로 다르다</h2>
+          <p>Passive reciprocal network는 일반적으로 <code>S21 = S12</code>입니다. Symmetric network는 추가로 <code>S11 = S22</code>를 만족합니다. 두 조건은 같은 뜻이 아닙니다.</p>
+          <p>Active amplifier는 보통 non-reciprocal하며 <code>|S21|</code>은 크고 <code>|S12|</code>는 작게 설계합니다. 작은 S12는 reverse isolation에 유리하지만 안정성을 S12 한 숫자만으로 판정할 수는 없습니다. 네 parameter의 magnitude와 phase, source·load termination을 함께 봐야 합니다.</p>
+
+          <h2 id="section-08">8. VNA는 Ratio를 Frequency별로 측정한다</h2>
+          <p>2-port VNA는 source를 한 port씩 인가하고 directional bridge 또는 coupler와 coherent receiver로 reference, reflected, transmitted wave를 측정합니다. Sweep의 각 frequency point에서 complex ratio를 계산해 네 S-parameter trace를 만듭니다.</p>
+          <div class="mermaid diagram">
+flowchart TB
+    sweep[Frequency sweep] --> p1[Excite port 1]
+    p1 --> s11[Measure S11]
+    p1 --> s21[Measure S21]
+    sweep --> p2[Excite port 2]
+    p2 --> s22[Measure S22]
+    p2 --> s12[Measure S12]
+    s11 --> dataset[Complex data versus frequency]
+    s21 --> dataset
+    s22 --> dataset
+    s12 --> dataset
+          </div>
+          <p>VNA가 측정하는 것은 DUT만의 절대적인 고정값이 아닙니다. S-parameter는 frequency, reference impedance, reference plane, bias, temperature와 active-device source power에 따라 달라질 수 있습니다.</p>
+
+          <h2 id="section-09">9. Calibration은 Reference Plane을 옮긴다</h2>
+          <p>Cable과 coupler에는 directivity, source/load match, frequency response와 leakage 같은 systematic error가 있습니다. Calibration은 알려진 standard를 측정해 error model을 구하고, raw ratio에서 반복 가능한 systematic error를 보정합니다.</p>
+          <div class="mermaid diagram">
+flowchart LR
+    vna[VNA internal plane] --> cables[Test cables and adapters]
+    cables --> cal[Calibration standards]
+    cal --> plane[Calibrated reference plane]
+    plane --> dut[DUT connection]
+          </div>
+          <p>Calibration plane은 standard를 연결한 위치에 놓입니다. Calibration 이후 cable을 크게 움직이거나 connector를 다시 체결하고 온도가 변하면 residual error가 늘 수 있습니다. Calibration은 noise, drift, connector repeatability와 잘못된 fixture model까지 없애는 마법이 아닙니다.</p>
+
+          <h2 id="section-10">10. SOLT와 TRL은 서로 다른 Standard를 사용한다</h2>
+          <p>SOLT는 short, open, load, through의 알려진 response를 사용해 full two-port error terms를 풉니다. Coax connector 환경에서 commercial calibration kit와 함께 사용하기 편합니다.</p>
+          <p>TRL은 through, high-reflection standard와 through와 다른 electrical length의 line을 사용합니다. Planar fixture와 on-wafer 환경에서 정확한 open·load를 만들기 어려울 때 유리할 수 있으며, through와 line의 characteristic impedance가 calibrated reference impedance를 정의합니다.</p>
+          <table>
+            <thead><tr><th>방법</th><th>주요 Standards</th><th>주의점</th></tr></thead>
+            <tbody>
+              <tr><td>SOLT</td><td>Short, Open, Load, Through</td><td>Standard model과 connector repeatability</td></tr>
+              <tr><td>TRL</td><td>Through, Reflect, Line</td><td>Line의 usable frequency range와 propagation</td></tr>
+            </tbody>
+          </table>
+          <p>어느 방법이 항상 더 좋다고 단정할 수 없습니다. DUT interface에서 가장 정확히 구현하고 characterize할 수 있는 standards와 frequency range를 기준으로 선택합니다.</p>
+
+          <h2 id="section-11">11. Fixture가 남으면 De-embedding이 필요하다</h2>
+          <p>PCB coupon이나 packaged device를 coaxial cable에 직접 연결할 수 없으면 fixture, probe와 launch가 필요합니다. Calibration plane이 fixture 입구에 남아 있다면 측정값에는 DUT뿐 아니라 lead-in과 lead-out network가 포함됩니다.</p>
+          <div class="mermaid diagram">
+flowchart LR
+    measured[Measured network] --> left[Input fixture]
+    measured --> dut[DUT]
+    measured --> right[Output fixture]
+    model[Characterized fixture model] --> remove[De-embedding]
+    left --> remove
+    right --> remove
+    remove --> plane[Shift result to DUT planes]
+          </div>
+          <p>De-embedding은 fixture model을 수학적으로 제거해 reference plane을 device terminal로 옮깁니다. 하지만 inaccurate model, ill-conditioned inversion과 low signal-to-noise region에서는 오히려 error를 증폭할 수 있으므로 verification structure가 필요합니다.</p>
+
+          <h2 id="section-12">12. Dynamic Range와 측정 설정이 Trace를 바꾼다</h2>
+          <p>Stopband의 -80 dB transmission이나 amplifier의 작은 S12를 측정하려면 instrument dynamic range와 isolation이 충분해야 합니다. IF bandwidth를 줄이거나 averaging을 늘리면 noise floor를 낮출 수 있지만 sweep time이 늘어납니다.</p>
+          <p>Active device는 source power가 너무 크면 compression에 들어가 S-parameter가 drive level에 의존하고, 너무 작으면 receiver noise에 묻힐 수 있습니다. Bias tee loss, DUT stability, maximum port power와 DC blocking도 측정 전에 확인해야 합니다.</p>
+
+          <h2 id="section-13">13. Small-Signal S-Parameter가 말하지 못하는 것</h2>
+          <p>일반적인 VNA S-parameter는 선택한 bias point 주변을 작은 신호로 선형화한 결과입니다. Matching, small-signal gain, reverse isolation, group delay와 stability analysis에는 유용하지만 large-signal compression과 distortion을 직접 설명하지는 못합니다.</p>
+          <div class="mermaid diagram">
+flowchart TB
+    small[Small-signal S-parameters] --> match[Matching and reflection]
+    small --> linear[Linear gain and phase]
+    small --> stability[Linear stability analysis]
+    large[Large-signal tests] --> p1[P1dB and saturation]
+    large --> imd[IP3, harmonics and ACPR]
+    large --> efficiency[Output power and PAE]
+          </div>
+          <p>Transistor의 <code>fT</code>와 <code>fmax</code>도 S-parameter에서 gain quantity를 추출해 정의하지만 extrapolation method와 de-embedding 조건에 영향을 받습니다. 측정 대역과 추출 기준을 함께 제시해야 비교가 가능합니다.</p>
+
+          <h2 id="section-14">14. 정리: 숫자보다 측정 조건을 먼저 읽는다</h2>
+          <dl class="service-summary">
+            <div><dt>S11 / S22</dt><dd>반대 port가 reference termination인 조건의 input/output reflection입니다.</dd></div>
+            <div><dt>S21 / S12</dt><dd>정방향/역방향 complex transmission이며 matched 조건에서 power gain·loss로 읽습니다.</dd></div>
+            <div><dt>Calibration</dt><dd>Known standards로 systematic error를 보정하고 reference plane을 정의합니다.</dd></div>
+            <div><dt>De-embedding</dt><dd>Characterized fixture를 제거해 결과를 DUT plane으로 옮깁니다.</dd></div>
+            <div><dt>Limit</dt><dd>Bias와 power가 지정된 small-signal linear description입니다.</dd></div>
+          </dl>
+          <p>다음 글에서는 이 S-parameter를 amplifier 설계에 사용하되, gain 하나로는 판단할 수 없는 noise, stability, compression, intermodulation과 efficiency를 함께 살펴보겠습니다.</p>
+          <p><strong>참고 자료:</strong> <a href="https://www.rohde-schwarz.com/sg/products/test-and-measurement/essentials-test-equipment/spectrum-analyzers/understanding-s-parameters_257831.html">Rohde &amp; Schwarz: Understanding S-Parameters</a>, <a href="https://www.keysight.com/th/en/assets/7018-06761/application-notes/5965-7709.pdf">Keysight: Applying Error Correction to VNA Measurements</a>, <a href="https://www.rohde-schwarz.com/us/products/test-and-measurement/essentials-test-equipment/spectrum-analyzers/vna-calibration-methods-and-standards_258187.html">Rohde &amp; Schwarz: VNA Calibration Methods</a>, <a href="https://helpfiles.keysight.com/csg/pxivna/S3_Cals/TRL_Calibration.htm">Keysight: TRL Calibration</a>, <a href="https://www.rohde-schwarz.com/uk/applications/accurate-test-fixture-characterization-and-de-embedding_56280-1271617.html">Rohde &amp; Schwarz: Fixture Characterization and De-embedding</a></p>
+        </div>
+
+        <!-- GENERATED:ARTICLE_TAIL:START -->
+        <nav class="article-pagination" aria-label="발행 순서로 읽기">
+          <span class="article-nav-empty"><span>Newer</span><strong>더 이상 글이 없습니다.</strong></span>
+          <a href="./rf-50-ohm-impedance-matching-smith-chart.html"><span>Older</span><strong>[RF] 왜 50Ω을 기준으로 삼을까? - Impedance Matching과 Smith Chart</strong></a>
+        </nav>
+        <aside class="related-notes" aria-labelledby="related-heading">
+          <h2 id="related-heading">Related notes</h2>
+          <div class="related-note-list">
+          <a href="./rf-50-ohm-impedance-matching-smith-chart.html">
+            <span>Architecture · 2026.10.03</span>
+            <strong>[RF] 왜 50Ω을 기준으로 삼을까? - Impedance Matching과 Smith Chart</strong>
+          </a>
+          <a href="./rf-transmission-line-characteristic-impedance-reflection.html">
+            <span>Architecture · 2026.10.03</span>
+            <strong>[RF] 신호는 배선을 어떻게 이동할까? - Transmission Line, Characteristic Impedance, Reflection</strong>
+          </a>
+          <a href="./rf-lumped-circuit-electrical-length-pcb-trace.html">
+            <span>Architecture · 2026.10.03</span>
+            <strong>[RF] 주파수가 올라가면 왜 PCB 배선도 회로 소자가 될까? - Lumped Circuit과 Electrical Length</strong>
+          </a>
+          </div>
+        </aside>
+        <!-- GENERATED:ARTICLE_TAIL:END -->
+      </article>
+    </main>
+    <footer class="site-footer">
+      <p>© 2026 Jiwon Kim</p>
+      <div class="footer-links">
+        <span id="visitStatus">집계 중</span>
+        <a href="../articles.html">Articles</a>
+        <a href="../feed.xml">RSS</a>
+      </div>
+    </footer>
+    <script src="../script.js?v=20260905-4"></script>
+    <script data-goatcounter="https://jiwonkim-blog.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
+    <noscript><img class="tracking-pixel" src="https://jiwonkim-blog.goatcounter.com/count?p=/posts/rf-s-parameters-vna-calibration-measurement.html" alt="" /></noscript>
+  </body>
+</html>

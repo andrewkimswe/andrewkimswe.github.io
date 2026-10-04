@@ -22,6 +22,7 @@ Jiwon Kim's Korean engineering journal about backend systems, cloud infrastructu
 
 ## Posts
 
+- [[RF] 반사와 전달을 어떻게 측정할까? - S-Parameter와 VNA Calibration](https://andrewkimswe.github.io/posts/rf-s-parameters-vna-calibration-measurement.html): Power wave로 정의하는 S11, S21, S12, S22의 측정 조건과 VNA calibration, reference plane, de-embedding, dynamic range와 small-signal 한계를 설명합니다.
 - [[RF] 왜 50Ω을 기준으로 삼을까? - Impedance Matching과 Smith Chart](https://andrewkimswe.github.io/posts/rf-50-ohm-impedance-matching-smith-chart.html): 50Ω RF ecosystem의 배경, complex impedance matching, Smith chart의 Z-Gamma mapping, S11 해석과 GaN PA의 load-pull까지 연결해 설명합니다.
 - [[RF] 신호는 배선을 어떻게 이동할까? - Transmission Line, Characteristic Impedance, Reflection](https://andrewkimswe.github.io/posts/rf-transmission-line-characteristic-impedance-reflection.html): Distributed RLCG model에서 characteristic impedance와 traveling wave를 유도하고, load 경계의 reflection coefficient, return loss, VSWR, input impedance와 quarter-wave 변환을 설명합니다.
 - [[RF] 주파수가 올라가면 왜 PCB 배선도 회로 소자가 될까? - Lumped Circuit과 Electrical Length](https://andrewkimswe.github.io/posts/rf-lumped-circuit-electrical-length-pcb-trace.html): Lumped circuit 가정이 성립하는 조건을 propagation delay, wavelength, phase difference와 digital rise time으로 설명하고 PCB trace가 transmission line이 되는 경계를 살펴봅니다.

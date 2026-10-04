@@ -6,7 +6,14 @@
     <atom:link href="https://andrewkimswe.github.io/feed.xml" rel="self" type="application/rss+xml" />
     <description>백엔드, 클라우드, RAG, 아키텍처와 운영 판단을 기록하는 기술 블로그입니다.</description>
     <language>ko-KR</language>
-    <lastBuildDate>Sat, 03 Oct 2026 21:00:00 +0900</lastBuildDate>
+    <lastBuildDate>Sun, 04 Oct 2026 09:00:00 +0900</lastBuildDate>
+    <item>
+      <title>[RF] 반사와 전달을 어떻게 측정할까? - S-Parameter와 VNA Calibration</title>
+      <link>https://andrewkimswe.github.io/posts/rf-s-parameters-vna-calibration-measurement.html</link>
+      <guid isPermaLink="true">https://andrewkimswe.github.io/posts/rf-s-parameters-vna-calibration-measurement.html</guid>
+      <pubDate>Sun, 04 Oct 2026 09:00:00 +0900</pubDate>
+      <description>네 개의 S-parameter를 외우는 데서 멈추지 않고 어떤 termination과 reference plane에서 측정한 값인지까지 살펴봅니다.</description>
+    </item>
     <item>
       <title>[RF] 왜 50Ω을 기준으로 삼을까? - Impedance Matching과 Smith Chart</title>
       <link>https://andrewkimswe.github.io/posts/rf-50-ohm-impedance-matching-smith-chart.html</link>
