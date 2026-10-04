@@ -1,0 +1,303 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>[RF] 좋은 증폭기는 무엇으로 평가할까? - Gain, Noise, Stability, Linearity | Jiwon Kim Engineering Notes</title>
+    <meta name="description" content="RF amplifier의 gain 정의, noise figure와 Friis cascade, stability factor, P1dB와 IP3, EVM·ACLR, efficiency와 PAE를 LNA와 PA의 서로 다른 목표에 맞춰 설명합니다." />
+    <meta name="author" content="Jiwon Kim" />
+    <meta name="robots" content="index, follow, max-image-preview:large" />
+    <link rel="canonical" href="https://andrewkimswe.github.io/posts/rf-amplifier-gain-noise-stability-linearity.html" />
+    <meta property="og:site_name" content="Jiwon Kim | Engineering Notes" />
+    <meta property="og:title" content="[RF] 좋은 증폭기는 무엇으로 평가할까? - Gain, Noise, Stability, Linearity" />
+    <meta property="og:description" content="Gain 하나가 아니라 용도에 맞는 noise, stability, linearity, output power와 efficiency를 함께 읽는 방법을 살펴봅니다." />
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="https://andrewkimswe.github.io/posts/rf-amplifier-gain-noise-stability-linearity.html" />
+    <meta property="og:image" content="https://andrewkimswe.github.io/assets/social-card.png" />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Jiwon Kim Engineering Notes" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://andrewkimswe.github.io/assets/social-card.png" />
+    <meta name="twitter:title" content="[RF] 좋은 증폭기는 무엇으로 평가할까? - Gain, Noise, Stability, Linearity" />
+    <meta name="twitter:description" content="Gain 하나가 아니라 용도에 맞는 noise, stability, linearity, output power와 efficiency를 함께 읽는 방법을 살펴봅니다." />
+    <meta property="article:modified_time" content="2026-10-04T15:00:00+09:00" />
+    <meta name="twitter:image:alt" content="Jiwon Kim Engineering Notes" />
+    <meta property="article:published_time" content="2026-10-04T15:00:00+09:00" />
+    <meta property="article:author" content="Jiwon Kim" />
+    <meta property="article:tag" content="RF" />
+    <meta property="article:tag" content="Amplifier" />
+    <meta property="article:tag" content="Noise Figure" />
+    <meta property="article:tag" content="Stability" />
+    <meta property="article:tag" content="Linearity" />
+    <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="../styles.css?v=20260905-4" />
+    <script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","headline":"[RF] 좋은 증폭기는 무엇으로 평가할까? - Gain, Noise, Stability, Linearity","description":"RF amplifier의 gain 정의, noise figure와 Friis cascade, stability factor, P1dB와 IP3, EVM·ACLR, efficiency와 PAE를 LNA와 PA의 서로 다른 목표에 맞춰 설명합니다.","datePublished":"2026-10-04T15:00:00+09:00","dateModified":"2026-10-04T15:00:00+09:00","author":{"@type":"Person","name":"Jiwon Kim","url":"https://github.com/andrewkimswe"},"publisher":{"@type":"Person","name":"Jiwon Kim"},"mainEntityOfPage":"https://andrewkimswe.github.io/posts/rf-amplifier-gain-noise-stability-linearity.html","inLanguage":"ko-KR"}
+    </script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main-content">본문으로 바로가기</a>
+    <header class="site-header"><a class="brand" href="../" aria-label="Jiwon Kim Engineering Notes 홈"><span class="brand-mark" aria-hidden="true">JK</span><span class="brand-copy"><strong>Jiwon Kim</strong><small>Engineering Notes</small></span></a><nav class="nav-links" aria-label="주요 메뉴"><a href="../articles.html">Articles</a><a href="../projects.html">Projects</a><a href="../#about">About</a><span class="nav-divider" aria-hidden="true"></span><a href="https://github.com/andrewkimswe">GitHub</a><a href="https://www.linkedin.com/in/jiwon-kim-867334285/">LinkedIn</a></nav></header>
+
+    <main id="main-content">
+      <article class="article-page">
+        <header class="article-hero">
+          <a class="back-link" href="../articles.html">All articles</a>
+          <p class="eyebrow">RF · Amplifier · Measurement</p>
+          <h1>[RF] 좋은 증폭기는 무엇으로 평가할까? - Gain, Noise, Stability, Linearity</h1>
+          <p class="article-summary">Gain 하나가 아니라 용도에 맞는 noise, stability, linearity, output power와 efficiency를 함께 읽는 방법을 살펴봅니다.</p>
+          <div class="article-meta"><time datetime="2026-10-04">2026.10.04</time><span>RF</span><span>Amplifier</span><span>Linearity</span><span class="reading-time" data-generated="true">약 16분</span></div>
+        </header>
+
+        <!-- GENERATED:ARTICLE_TOC:START -->
+        <aside class="article-toc" aria-label="이 글의 목차">
+          <details open>
+            <summary>On this page</summary>
+            <ol>
+              <li><a href="#section-01">1. 좋은 Amplifier는 역할에 따라 달라진다</a></li>
+              <li><a href="#section-02">2. Gain이라는 말부터 하나가 아니다</a></li>
+              <li><a href="#section-03">3. Small-Signal Gain은 Large-Signal 성능을 보장하지 않는다</a></li>
+              <li><a href="#section-04">4. Noise Figure는 SNR이 얼마나 나빠졌는지 보여준다</a></li>
+              <li><a href="#section-05">5. Friis 식은 첫 Stage의 중요성을 보여준다</a></li>
+              <li><a href="#section-06">6. Noise Match와 Gain Match는 같지 않을 수 있다</a></li>
+              <li><a href="#section-07">7. Stability는 모든 Passive Termination에서 물어야 한다</a></li>
+              <li><a href="#section-08">8. K만 보고 Unconditional Stability를 선언하면 안 된다</a></li>
+              <li><a href="#section-09">9. P1dB는 Gain Compression의 시작을 정한다</a></li>
+              <li><a href="#section-10">10. IP3는 Two-Tone 왜곡을 외삽한 지표다</a></li>
+              <li><a href="#section-11">11. 실제 변조 신호는 EVM과 ACLR로 확인한다</a></li>
+              <li><a href="#section-12">12. PA에는 Output Power와 Efficiency가 추가된다</a></li>
+              <li><a href="#section-13">13. Matching 목표는 LNA와 PA가 다르다</a></li>
+              <li><a href="#section-14">14. Datasheet 숫자는 같은 조건에서 비교해야 한다</a></li>
+              <li><a href="#section-15">15. 정리: 하나의 최고값보다 목적에 맞는 균형</a></li>
+            </ol>
+          </details>
+        </aside>
+        <!-- GENERATED:ARTICLE_TOC:END -->
+
+        <div class="article-body">
+          <p><a href="./rf-s-parameters-vna-calibration-measurement.html">앞선 글</a>에서는 VNA로 small-signal S-parameter를 측정하는 방법을 살펴봤습니다. Amplifier에서 <code>S21</code>이 높다고 해서 좋은 설계가 끝나는 것은 아닙니다. Receiver와 transmitter가 amplifier에 요구하는 실패 조건부터 다르기 때문입니다.</p>
+          <div class="mermaid diagram">
+flowchart TB
+    role[System role] --> lna[LNA: preserve weak signal]
+    role --> driver[Driver: gain and drive]
+    role --> pa[PA: deliver RF power]
+    lna --> noise[Noise figure and stability]
+    driver --> gain[Gain, bandwidth and linearity]
+    pa --> power[Output power, efficiency and linearity]
+          </div>
+
+          <h2 id="section-01">1. 좋은 Amplifier는 역할에 따라 달라진다</h2>
+          <p>LNA는 antenna 뒤에서 매우 약한 신호에 noise를 적게 추가하면서 다음 stage의 noise 기여를 누를 만큼 gain을 제공해야 합니다. PA는 transmitter 끝에서 required output power와 efficiency를 내면서 spectral mask와 reliability를 지켜야 합니다.</p>
+          <p>따라서 gain, noise, stability와 linearity를 하나의 점수로 합칠 수 없습니다. Frequency band, bandwidth, bias, source/load impedance, input level, modulation과 temperature를 먼저 정하고 지표의 우선순위를 정해야 합니다.</p>
+
+          <h2 id="section-02">2. Gain이라는 말부터 하나가 아니다</h2>
+          <p>Power gain의 가장 단순한 표현은 다음과 같습니다.</p>
+          <pre><code>G = Pout / Pin
+G(dB) = 10 log10(Pout / Pin)</code></pre>
+          <p>하지만 RF two-port에는 operating power gain <code>GP</code>, available gain <code>GA</code>, transducer gain <code>GT</code>처럼 power의 기준점이 다른 정의가 있습니다. <code>|S21|^2</code>는 source와 load가 reference impedance로 matched된 조건의 forward power ratio이며, 임의의 mismatch에서는 실제 load에 전달되는 <code>GT</code>와 같지 않습니다.</p>
+          <table>
+            <thead><tr><th>지표</th><th>분모와 분자</th><th>포함하는 조건</th></tr></thead>
+            <tbody>
+              <tr><td><code>|S21|²</code></td><td>Port power-wave ratio</td><td>Reference termination</td></tr>
+              <tr><td><code>GP</code></td><td>Load power / Network input power</td><td>Load mismatch 영향</td></tr>
+              <tr><td><code>GA</code></td><td>Available output / Source available power</td><td>Source mismatch 영향</td></tr>
+              <tr><td><code>GT</code></td><td>Delivered load power / Source available power</td><td>Source와 load 모두 포함</td></tr>
+            </tbody>
+          </table>
+
+          <h2 id="section-03">3. Small-Signal Gain은 Large-Signal 성능을 보장하지 않는다</h2>
+          <p>Input이 충분히 작을 때 amplifier는 bias point 주변에서 거의 linear하고 gain이 일정합니다. Input power가 커지면 device current와 voltage swing의 한계, bias shift와 self-heating 때문에 output 증가가 느려집니다.</p>
+          <div class="mermaid diagram">
+flowchart LR
+    small[Small input] --> linear[Constant small-signal gain]
+    linear --> compression[Gain compression]
+    compression --> p1[P1dB]
+    p1 --> saturation[Saturation and clipping]
+          </div>
+          <p>따라서 VNA의 낮은 source power에서 얻은 <code>S21</code>은 compression, harmonic distortion, modulated-signal linearity와 efficiency를 대신하지 않습니다. Gain flatness도 band 전체에서 별도로 확인해야 합니다.</p>
+
+          <h2 id="section-04">4. Noise Figure는 SNR이 얼마나 나빠졌는지 보여준다</h2>
+          <p>Amplifier는 input signal과 input noise를 함께 증폭하고 자체 noise도 추가합니다. Noise factor와 noise figure는 input 대비 output SNR degradation을 나타냅니다.</p>
+          <pre><code>F = SNR_in / SNR_out
+NF(dB) = 10 log10(F)</code></pre>
+          <p>이상적인 noiseless amplifier는 <code>F = 1</code>, <code>NF = 0 dB</code>입니다. 실제 noise figure는 source impedance, frequency, bias와 기준 noise temperature에 의존합니다. 단순히 output noise power만 재는 것과 같은 지표가 아닙니다.</p>
+
+          <h2 id="section-05">5. Friis 식은 첫 Stage의 중요성을 보여준다</h2>
+          <p>Cascade의 total noise factor는 linear quantity로 다음처럼 계산합니다.</p>
+          <pre><code>F_total = F1 + (F2 - 1)/G1
+               + (F3 - 1)/(G1 G2) + ...</code></pre>
+          <p>여기서 <code>G1</code>과 <code>G2</code>는 dB가 아닌 linear available power gain입니다. 첫 stage의 noise factor는 그대로 들어가지만 뒤 stage의 noise contribution은 앞 gain으로 나뉩니다.</p>
+          <div class="mermaid diagram">
+flowchart LR
+    antenna[Antenna and pre-LNA loss] --> lna[First LNA]
+    lna --> filter[Filter or mixer]
+    filter --> later[Later gain stages]
+    lna --> dominate[Its NF enters directly]
+    lna --> suppress[Its gain suppresses later NF contribution]
+          </div>
+          <p>그래서 LNA 앞의 lossy filter와 cable도 치명적일 수 있습니다. 수동 loss는 signal을 줄이고 noise factor를 악화시킨 뒤라 이후 gain으로 복구할 수 없습니다.</p>
+
+          <h2 id="section-06">6. Noise Match와 Gain Match는 같지 않을 수 있다</h2>
+          <p>Transistor에는 minimum noise figure를 만드는 optimum source reflection coefficient <code>Gamma_opt</code>가 있고, maximum gain을 위한 source impedance와 일치하지 않을 수 있습니다. LNA input matching은 noise circle, available-gain circle, input VSWR와 stability를 함께 보고 compromise합니다.</p>
+          <div class="mermaid diagram">
+flowchart TB
+    source[Choose source impedance] --> nf[Noise figure circle]
+    source --> gain[Gain circle]
+    source --> match[Input return loss]
+    source --> stability[Stable region]
+    nf --> choice[Application-specific compromise]
+    gain --> choice
+    match --> choice
+    stability --> choice
+          </div>
+          <p>“모든 port를 50Ω에 맞추면 noise도 최소”라는 결론은 일반적으로 성립하지 않습니다. Matching network가 external 50Ω interface와 device가 원하는 internal impedance 사이를 변환합니다.</p>
+
+          <h2 id="section-07">7. Stability는 모든 Passive Termination에서 물어야 한다</h2>
+          <p>Amplifier 내부에는 parasitic capacitance와 reverse transmission이 있어 output 변화가 input으로 돌아갈 수 있습니다. Loop gain과 phase가 특정 조건을 만족하면 외부 RF input이 없어도 oscillation할 수 있습니다.</p>
+          <p>Datasheet 기준 impedance에서 <code>S11</code>과 <code>S22</code>가 좋아 보여도 antenna, filter, cable이 mismatch되면 source와 load reflection coefficient가 달라집니다. Unconditional stability는 선택한 frequency와 bias에서 <strong>모든 passive source·load termination</strong>에 대해 stable한지를 묻습니다.</p>
+
+          <h2 id="section-08">8. K만 보고 Unconditional Stability를 선언하면 안 된다</h2>
+          <p>Two-port S-parameter에서 Rollet factor를 계산할 수 있습니다.</p>
+          <pre><code>Delta = S11 S22 - S12 S21
+
+K = (1 - |S11|^2 - |S22|^2 + |Delta|^2)
+    / (2 |S12 S21|)</code></pre>
+          <p>대표적인 unconditional stability 조건은 <code>K > 1</code>과 <code>|Delta| < 1</code>을 함께 만족하는 것입니다. <code>K > 1</code> 하나만 확인하는 설명은 불완전합니다. <code>mu > 1</code>과 <code>mu' > 1</code>을 사용하는 대안도 있습니다.</p>
+          <div class="mermaid diagram">
+flowchart TB
+    data[S-parameters at frequency and bias] --> k[Compute K and Delta]
+    k --> both[K greater than 1 and magnitude Delta less than 1]
+    both --> unconditional[Unconditionally stable in linear two-port model]
+    k --> fail[Otherwise conditionally stable or potentially unstable]
+    fail --> circles[Inspect source and load stability circles]
+          </div>
+          <p>이 판정은 측정한 frequency 범위와 small-signal model 안에서의 결과입니다. Out-of-band, low-frequency bias network, package resonance, large-signal parametric behavior까지 자동으로 보장하지 않습니다.</p>
+
+          <h2 id="section-09">9. P1dB는 Gain Compression의 시작을 정한다</h2>
+          <p>Small-signal linear extrapolation보다 actual gain이 1 dB 낮아지는 input 또는 output power를 1 dB compression point라고 합니다. <code>IP1dB</code>와 <code>OP1dB</code>를 구분해야 하며 datasheet의 P1dB가 어느 쪽인지 확인해야 합니다.</p>
+          <pre><code>At P1dB:
+actual Pout = linear-extrapolated Pout - 1 dB</code></pre>
+          <p>P1dB는 single-tone compression 지표입니다. 변조 신호의 acceptable operating point는 peak-to-average ratio와 EVM·ACLR 요구 때문에 P1dB보다 훨씬 낮은 average output power일 수 있습니다.</p>
+
+          <h2 id="section-10">10. IP3는 Two-Tone 왜곡을 외삽한 지표다</h2>
+          <p>두 tone <code>f1</code>과 <code>f2</code>를 nonlinear amplifier에 넣으면 <code>2f1-f2</code>와 <code>2f2-f1</code> 같은 third-order intermodulation product가 원 신호 가까이에 생깁니다. Filter로 제거하기 어려워 communication receiver와 transmitter에서 중요합니다.</p>
+          <div class="mermaid diagram">
+flowchart LR
+    tones[Two input tones f1 and f2] --> nonlinear[Nonlinear amplifier]
+    nonlinear --> fundamentals[Fundamentals grow 1 dB per dB]
+    nonlinear --> im3[IM3 products grow about 3 dB per dB]
+    fundamentals --> intercept[Extrapolated IP3]
+    im3 --> intercept
+          </div>
+          <p>IP3는 두 직선의 <strong>외삽 교점</strong>이지 실제로 device를 그 power까지 구동해 얻는 동작점이 아닙니다. IIP3와 OIP3를 구분하며 linear gain으로 <code>OIP3 ≈ IIP3 + Gain</code> 관계를 사용합니다. 이 근사도 선택한 power range에서 third-order slope가 유지될 때 유효합니다.</p>
+
+          <h2 id="section-11">11. 실제 변조 신호는 EVM과 ACLR로 확인한다</h2>
+          <p>P1dB와 IP3는 비교하기 좋은 scalar 지표지만 실제 OFDM이나 wideband modulation의 memory effect와 spectral regrowth를 전부 설명하지는 못합니다.</p>
+          <table>
+            <thead><tr><th>지표</th><th>보는 현상</th><th>주요 측정</th></tr></thead>
+            <tbody>
+              <tr><td>P1dB</td><td>Single-tone gain compression</td><td>Power sweep</td></tr>
+              <tr><td>IP3</td><td>Third-order intermodulation</td><td>Two-tone test</td></tr>
+              <tr><td>EVM</td><td>Ideal constellation 대비 modulation error</td><td>Vector signal analysis</td></tr>
+              <tr><td>ACLR/ACPR</td><td>Adjacent channel로 번진 power</td><td>Modulated spectrum</td></tr>
+            </tbody>
+          </table>
+          <p>통신 PA의 linearity sign-off에는 target waveform, bandwidth, crest factor, output back-off와 digital predistortion 조건을 명시해야 합니다.</p>
+
+          <h2 id="section-12">12. PA에는 Output Power와 Efficiency가 추가된다</h2>
+          <p>Drain efficiency는 DC input power 중 fundamental RF output으로 변환된 비율이고, power-added efficiency는 input RF power까지 고려합니다.</p>
+          <pre><code>Drain efficiency = P_RF,out / P_DC
+PAE = (P_RF,out - P_RF,in) / P_DC</code></pre>
+          <p>PA를 saturation에 가깝게 구동하면 efficiency는 좋아질 수 있지만 compression과 spectral regrowth가 커집니다. Linear operation을 위해 output back-off를 늘리면 average efficiency가 떨어질 수 있습니다. Thermal design과 safe operating area도 output power를 지속할 수 있는지를 결정합니다.</p>
+
+          <h2 id="section-13">13. Matching 목표는 LNA와 PA가 다르다</h2>
+          <p>LNA는 noise, gain과 stability circle을 사용해 source impedance를 선택합니다. PA는 chosen bias와 drive에서 source-pull·load-pull로 impedance를 변화시키며 output power, PAE, gain, linearity와 ruggedness contour를 얻습니다.</p>
+          <div class="mermaid diagram">
+flowchart TB
+    lna[LNA] --> noisePull[Noise and gain circles]
+    noisePull --> lnaTarget[Low NF with enough gain and stability]
+    pa[PA] --> loadPull[Source-pull and load-pull]
+    loadPull --> paTarget[Pout, PAE, linearity and ruggedness target]
+    lnaTarget --> networks[Input and output matching networks]
+    paTarget --> networks
+    networks --> ports[External 50 ohm interfaces]
+          </div>
+          <p>따라서 maximum small-signal gain match가 LNA와 PA 모두의 정답은 아닙니다. 역할과 signal level에 맞는 optimum impedance를 먼저 찾고 50Ω port로 변환해야 합니다.</p>
+
+          <h2 id="section-14">14. Datasheet 숫자는 같은 조건에서 비교해야 한다</h2>
+          <p>Gain 20 dB, NF 1 dB, OIP3 35 dBm 같은 숫자만 나란히 놓으면 잘못된 결론을 내리기 쉽습니다. 최소한 다음 조건을 함께 확인해야 합니다.</p>
+          <dl class="service-summary">
+            <div><dt>Frequency</dt><dd>Center point인지 전체 operating band의 worst case인지 확인합니다.</dd></div>
+            <div><dt>Bias</dt><dd>Supply voltage, current와 quiescent operating point를 맞춥니다.</dd></div>
+            <div><dt>Match</dt><dd>Evaluation board, external network와 source/load impedance를 확인합니다.</dd></div>
+            <div><dt>Signal</dt><dd>CW, two-tone, pulsed 또는 modulated waveform인지 구분합니다.</dd></div>
+            <div><dt>Temperature</dt><dd>Room value인지 guaranteed range인지 확인합니다.</dd></div>
+            <div><dt>Reference Plane</dt><dd>Connector, package, fixture loss가 포함됐는지 확인합니다.</dd></div>
+          </dl>
+          <p>Typical curve와 production limit도 구분해야 합니다. 최고점 하나보다 band·temperature·unit variation에서 요구사항을 만족하는 margin이 설계에는 더 중요합니다.</p>
+
+          <h2 id="section-15">15. 정리: 하나의 최고값보다 목적에 맞는 균형</h2>
+          <table>
+            <thead><tr><th>질문</th><th>대표 지표</th><th>대표 함정</th></tr></thead>
+            <tbody>
+              <tr><td>얼마나 증폭하는가</td><td>GT, GA, GP, S21</td><td>Gain 정의와 mismatch 조건 혼용</td></tr>
+              <tr><td>Noise를 얼마나 추가하는가</td><td>NF, cascade NF</td><td>dB 값을 Friis 식에 직접 대입</td></tr>
+              <tr><td>발진하지 않는가</td><td>K, Delta, mu, stability circles</td><td>K &gt; 1만 확인</td></tr>
+              <tr><td>큰 신호를 얼마나 보존하는가</td><td>P1dB, IP3, EVM, ACLR</td><td>Small-signal S21로 대체</td></tr>
+              <tr><td>DC를 RF로 얼마나 바꾸는가</td><td>Drain efficiency, PAE</td><td>Output back-off와 열 조건 생략</td></tr>
+            </tbody>
+          </table>
+          <div class="mermaid diagram">
+flowchart TB
+    requirements[System requirements] --> role[Choose LNA, driver or PA priorities]
+    role --> linear[Small-signal gain, match and stability]
+    role --> noise[Noise characterization]
+    role --> nonlinear[Compression, distortion and efficiency]
+    linear --> verify[Verify across frequency, power and temperature]
+    noise --> verify
+    nonlinear --> verify
+          </div>
+          <p>좋은 RF amplifier는 gain이 가장 높은 부품이 아니라, system에서 허용한 noise와 distortion 안에서 stable하게 필요한 power를 내고 그 상태를 temperature와 mismatch에서도 유지하는 amplifier입니다.</p>
+          <p><strong>참고 자료:</strong> <a href="https://www.keysight.com/jp/ja/assets/7018-01256/application-notes/5989-1609.pdf">Keysight: Two-Stage Low Noise Amplifier Design</a>, <a href="https://www.analog.com/en/resources/app-notes/an-2622.html">Analog Devices AN-2622: Selecting an RF LNA</a>, <a href="https://www.analog.com/en/resources/analog-dialogue/articles/nonlinear-simulation-of-rf-ic-amplifiers-in-keysight-genesys-and-systemvue.html">Analog Devices: Nonlinear Simulation of RF Amplifiers</a>, <a href="https://www.rohde-schwarz.com/uk/applications/amplifier-characterization-using-load-pull_56279-922304.html">Rohde &amp; Schwarz: Amplifier Characterization Using Load Pull</a>, <a href="https://www.analog.com/media/en/technical-documentation/application-notes/an123f.pdf">Analog Devices AN-123: Differential Amplifier Optimization</a></p>
+        </div>
+
+        <!-- GENERATED:ARTICLE_TAIL:START -->
+        <nav class="article-pagination" aria-label="발행 순서로 읽기">
+          <span class="article-nav-empty"><span>Newer</span><strong>더 이상 글이 없습니다.</strong></span>
+          <a href="./rf-s-parameters-vna-calibration-measurement.html"><span>Older</span><strong>[RF] 반사와 전달을 어떻게 측정할까? - S-Parameter와 VNA Calibration</strong></a>
+        </nav>
+        <aside class="related-notes" aria-labelledby="related-heading">
+          <h2 id="related-heading">Related notes</h2>
+          <div class="related-note-list">
+          <a href="./rf-s-parameters-vna-calibration-measurement.html">
+            <span>Architecture · 2026.10.04</span>
+            <strong>[RF] 반사와 전달을 어떻게 측정할까? - S-Parameter와 VNA Calibration</strong>
+          </a>
+          <a href="./rf-50-ohm-impedance-matching-smith-chart.html">
+            <span>Architecture · 2026.10.03</span>
+            <strong>[RF] 왜 50Ω을 기준으로 삼을까? - Impedance Matching과 Smith Chart</strong>
+          </a>
+          <a href="./rf-transmission-line-characteristic-impedance-reflection.html">
+            <span>Architecture · 2026.10.03</span>
+            <strong>[RF] 신호는 배선을 어떻게 이동할까? - Transmission Line, Characteristic Impedance, Reflection</strong>
+          </a>
+          </div>
+        </aside>
+        <!-- GENERATED:ARTICLE_TAIL:END -->
+      </article>
+    </main>
+    <footer class="site-footer">
+      <p>© 2026 Jiwon Kim</p>
+      <div class="footer-links">
+        <span id="visitStatus">집계 중</span>
+        <a href="../articles.html">Articles</a>
+        <a href="../feed.xml">RSS</a>
+      </div>
+    </footer>
+    <script src="../script.js?v=20260905-4"></script>
+    <script data-goatcounter="https://jiwonkim-blog.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
+    <noscript><img class="tracking-pixel" src="https://jiwonkim-blog.goatcounter.com/count?p=/posts/rf-amplifier-gain-noise-stability-linearity.html" alt="" /></noscript>
+  </body>
+</html>
