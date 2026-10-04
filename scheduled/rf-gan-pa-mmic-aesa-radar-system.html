@@ -1,0 +1,272 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>[RF] GaN HEMT는 어떻게 Radar의 RF Power를 만들까? - PA, MMIC, T/R Module, AESA | Jiwon Kim Engineering Notes</title>
+    <meta name="description" content="GaN HEMT cell에서 load-pull과 matching을 거쳐 PA MMIC, package, T/R module과 AESA radar까지 이어지는 RF power chain과 각 단계의 검증 지표를 설명합니다." />
+    <meta name="author" content="Jiwon Kim" />
+    <meta name="robots" content="index, follow, max-image-preview:large" />
+    <link rel="canonical" href="https://andrewkimswe.github.io/posts/rf-gan-pa-mmic-aesa-radar-system.html" />
+    <meta property="og:site_name" content="Jiwon Kim | Engineering Notes" />
+    <meta property="og:title" content="[RF] GaN HEMT는 어떻게 Radar의 RF Power를 만들까? - PA, MMIC, T/R Module, AESA" />
+    <meta property="og:description" content="높은 device power density가 실제 radar EIRP와 탐지 성능으로 이어지기까지 필요한 회로·열·배열 설계를 연결합니다." />
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="https://andrewkimswe.github.io/posts/rf-gan-pa-mmic-aesa-radar-system.html" />
+    <meta property="og:image" content="https://andrewkimswe.github.io/assets/social-card.png" />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Jiwon Kim Engineering Notes" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://andrewkimswe.github.io/assets/social-card.png" />
+    <meta name="twitter:title" content="[RF] GaN HEMT는 어떻게 Radar의 RF Power를 만들까? - PA, MMIC, T/R Module, AESA" />
+    <meta name="twitter:description" content="높은 device power density가 실제 radar EIRP와 탐지 성능으로 이어지기까지 필요한 회로·열·배열 설계를 연결합니다." />
+    <meta property="article:modified_time" content="2026-10-05T09:00:00+09:00" />
+    <meta name="twitter:image:alt" content="Jiwon Kim Engineering Notes" />
+    <meta property="article:published_time" content="2026-10-05T09:00:00+09:00" />
+    <meta property="article:author" content="Jiwon Kim" />
+    <meta property="article:tag" content="RF" />
+    <meta property="article:tag" content="GaN" />
+    <meta property="article:tag" content="MMIC" />
+    <meta property="article:tag" content="Radar" />
+    <meta property="article:tag" content="AESA" />
+    <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="../styles.css?v=20260905-4" />
+    <script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","headline":"[RF] GaN HEMT는 어떻게 Radar의 RF Power를 만들까? - PA, MMIC, T/R Module, AESA","description":"GaN HEMT cell에서 load-pull과 matching을 거쳐 PA MMIC, package, T/R module과 AESA radar까지 이어지는 RF power chain과 각 단계의 검증 지표를 설명합니다.","datePublished":"2026-10-05T09:00:00+09:00","dateModified":"2026-10-05T09:00:00+09:00","author":{"@type":"Person","name":"Jiwon Kim","url":"https://github.com/andrewkimswe"},"publisher":{"@type":"Person","name":"Jiwon Kim"},"mainEntityOfPage":"https://andrewkimswe.github.io/posts/rf-gan-pa-mmic-aesa-radar-system.html","inLanguage":"ko-KR"}
+    </script>
+  </head>
+  <body>
+    <a class="skip-link" href="#main-content">본문으로 바로가기</a>
+    <header class="site-header"><a class="brand" href="../" aria-label="Jiwon Kim Engineering Notes 홈"><span class="brand-mark" aria-hidden="true">JK</span><span class="brand-copy"><strong>Jiwon Kim</strong><small>Engineering Notes</small></span></a><nav class="nav-links" aria-label="주요 메뉴"><a href="../articles.html">Articles</a><a href="../projects.html">Projects</a><a href="../#about">About</a><span class="nav-divider" aria-hidden="true"></span><a href="https://github.com/andrewkimswe">GitHub</a><a href="https://www.linkedin.com/in/jiwon-kim-867334285/">LinkedIn</a></nav></header>
+
+    <main id="main-content">
+      <article class="article-page">
+        <header class="article-hero">
+          <a class="back-link" href="../articles.html">All articles</a>
+          <p class="eyebrow">RF · GaN · MMIC · Radar</p>
+          <h1>[RF] GaN HEMT는 어떻게 Radar의 RF Power를 만들까? - PA, MMIC, T/R Module, AESA</h1>
+          <p class="article-summary">높은 device power density가 실제 radar EIRP와 탐지 성능으로 이어지기까지 필요한 회로·열·배열 설계를 연결합니다.</p>
+          <div class="article-meta"><time datetime="2026-10-05">2026.10.05</time><span>RF</span><span>GaN</span><span>Radar</span><span class="reading-time" data-generated="true">약 15분</span></div>
+        </header>
+
+        <!-- GENERATED:ARTICLE_TOC:START -->
+        <aside class="article-toc" aria-label="이 글의 목차"><details open><summary>On this page</summary><ol>
+          <li><a href="#section-01">1. Radar에서 PA는 송신 Chain의 한 단계다</a></li>
+          <li><a href="#section-02">2. Radar Range Equation은 Power의 효과와 한계를 함께 보여준다</a></li>
+          <li><a href="#section-03">3. GaN의 장점은 Voltage와 Current를 함께 다루는 데 있다</a></li>
+          <li><a href="#section-04">4. HEMT Cell 하나가 곧 PA는 아니다</a></li>
+          <li><a href="#section-05">5. Load-Pull이 Device가 원하는 Impedance를 찾는다</a></li>
+          <li><a href="#section-06">6. Multi-Stage와 Power Combining에는 대가가 따른다</a></li>
+          <li><a href="#section-07">7. MMIC에서는 Layout 자체가 Circuit이다</a></li>
+          <li><a href="#section-08">8. Package와 Ground가 Chip 성능을 다시 바꾼다</a></li>
+          <li><a href="#section-09">9. T/R Module은 송신과 수신의 상반된 요구를 묶는다</a></li>
+          <li><a href="#section-10">10. AESA는 Phase와 Amplitude로 Beam을 만든다</a></li>
+          <li><a href="#section-11">11. Element Power가 Radar 성능으로 곧장 이어지지는 않는다</a></li>
+          <li><a href="#section-12">12. Thermal과 Trap은 Sustained RF Power를 제한한다</a></li>
+          <li><a href="#section-13">13. 검증은 Device에서 Array까지 단계별로 이어진다</a></li>
+          <li><a href="#section-14">14. 정리: Material Advantage를 System Margin으로 바꾸는 과정</a></li>
+        </ol></details></aside>
+        <!-- GENERATED:ARTICLE_TOC:END -->
+
+        <div class="article-body">
+          <p><a href="./rf-amplifier-gain-noise-stability-linearity.html">앞선 글</a>에서는 amplifier를 gain 하나가 아니라 noise, stability, linearity와 efficiency로 평가했습니다. 이번에는 그 지표가 GaN HEMT와 MMIC 설계를 거쳐 phased-array radar의 송신 성능으로 이어지는 과정을 살펴봅니다.</p>
+          <div class="mermaid diagram">
+flowchart TB
+    material[GaN material system] --> device[AlGaN and GaN HEMT]
+    device --> pa[PA cell and matching]
+    pa --> mmic[Multi-stage PA MMIC]
+    mmic --> package[Package and thermal path]
+    package --> trm[T/R module or front-end module]
+    trm --> array[Phased-array antenna]
+    array --> radar[Radar detection performance]
+          </div>
+
+          <h2 id="section-01">1. Radar에서 PA는 송신 Chain의 한 단계다</h2>
+          <p>Radar는 waveform을 생성하고 증폭해 antenna로 방사한 뒤 target에서 돌아온 echo를 수신·처리합니다. Pulse radar에서는 round-trip delay가 range와 연결되고, Doppler processing은 radial velocity 정보를 제공합니다.</p>
+          <div class="mermaid diagram">
+flowchart LR
+    waveform[Waveform generation] --> up[Upconversion and driver]
+    up --> pa[Power amplifier]
+    pa --> route[T/R switch or circulator]
+    route --> antenna[Antenna array]
+    antenna --> target[Target and echo]
+    target --> receive[Limiter, LNA and receiver]
+    receive --> dsp[Detection and estimation]
+          </div>
+          <p>PA는 antenna에 전달할 RF power를 만드는 핵심 블록이지만 waveform, antenna aperture, receiver noise, losses, clutter와 processing gain을 대신하지는 않습니다. Radar 성능을 “PA watt” 하나로 설명할 수 없는 이유입니다.</p>
+
+          <h2 id="section-02">2. Radar Range Equation은 Power의 효과와 한계를 함께 보여준다</h2>
+          <p>단순한 monostatic radar의 received power는 다음 관계로 표현할 수 있습니다.</p>
+          <pre><code>Pr = Pt Gt Gr lambda^2 sigma
+     / ((4 pi)^3 R^4 L)</code></pre>
+          <p><code>Pt</code>는 transmit power, <code>Gt</code>와 <code>Gr</code>은 antenna gain, <code>sigma</code>는 radar cross section, <code>L</code>은 loss입니다. Echo가 target까지 한 번, 다시 radar까지 한 번 퍼지므로 received power는 이상화하면 <code>R^4</code>에 반비례합니다.</p>
+          <p>다른 조건이 고정되고 detection threshold만 본다면 maximum range는 transmit power의 fourth root에 비례합니다. Transmit power를 16배 늘려야 range가 약 2배가 되는 관계입니다. PA 개선은 중요하지만 aperture, loss, dwell time와 receiver·processing 개선도 함께 봐야 합니다.</p>
+
+          <h2 id="section-03">3. GaN의 장점은 Voltage와 Current를 함께 다루는 데 있다</h2>
+          <p>GaN의 wide band gap과 높은 critical electric field는 큰 voltage swing에 유리하고, AlGaN/GaN heterojunction의 높은-density 2DEG는 current density에 기여합니다. 높은 saturation velocity와 짧은 gate는 microwave·millimeter-wave gain을 가능하게 합니다.</p>
+          <div class="mermaid diagram">
+flowchart TB
+    field[High critical electric field] --> voltage[Large voltage swing]
+    deg[High-density 2DEG] --> current[High current density]
+    velocity[Carrier velocity and short gate] --> frequency[RF gain at target frequency]
+    voltage --> density[Device power density]
+    current --> density
+    frequency --> usable[Usable RF output]
+    density --> usable
+          </div>
+          <p>Band gap만 크다고 좋은 PA가 자동으로 만들어지는 것은 아닙니다. Breakdown margin, contact resistance, trapping, parasitic capacitance, thermal resistance와 process variation이 usable output power를 결정합니다.</p>
+
+          <h2 id="section-04">4. HEMT Cell 하나가 곧 PA는 아니다</h2>
+          <p>RF power transistor는 충분한 total gate width를 얻기 위해 여러 gate finger를 병렬로 배치합니다. Finger가 늘면 current capability는 커지지만 gate resistance, current distribution, odd-mode oscillation과 thermal non-uniformity 문제가 생깁니다.</p>
+          <p>T-gate는 short gate foot와 낮은 gate resistance를 함께 노리고, field plate는 drain-side peak field를 분산합니다. Field plate가 breakdown과 dynamic behavior를 개선할 수 있지만 parasitic capacitance로 gain과 bandwidth를 희생할 수 있다는 점도 함께 봐야 합니다.</p>
+          <div class="mermaid diagram">
+flowchart LR
+    fingers[Parallel gate fingers] --> width[Higher total gate width]
+    width --> current[More current capability]
+    fingers --> parasitic[Gate resistance and parasitic coupling]
+    fingers --> thermal[Non-uniform temperature]
+    parasitic --> design[Cell stabilization and layout]
+    thermal --> design
+          </div>
+
+          <h2 id="section-05">5. Load-Pull이 Device가 원하는 Impedance를 찾는다</h2>
+          <p>PA transistor의 optimum load는 일반적으로 50Ω이 아니고, maximum small-signal gain을 만드는 impedance와 maximum output power·PAE·linearity를 만드는 impedance도 다를 수 있습니다.</p>
+          <div class="mermaid diagram">
+flowchart TB
+    bias[Choose bias and drive level] --> pull[Vary source and load impedance]
+    pull --> contours[Pout, PAE, gain and linearity contours]
+    contours --> target[Choose target impedance with margin]
+    target --> network[Design input, interstage and output matching]
+    network --> port[Transform to external reference port]
+          </div>
+          <p>Load-pull 결과는 frequency, bias, waveform, package reference plane과 harmonic termination에 종속됩니다. Fixture loss와 calibration plane을 분명히 하지 않으면 matching network에 잘못된 target을 사용할 수 있습니다.</p>
+
+          <h2 id="section-06">6. Multi-Stage와 Power Combining에는 대가가 따른다</h2>
+          <p>한 stage로 필요한 gain과 output power를 모두 얻기 어려우면 driver와 power stage를 cascade합니다. 각 stage 사이에는 interstage matching, bias feed와 stabilization network가 필요합니다.</p>
+          <p>더 큰 output을 위해 여러 branch를 combine할 수도 있습니다. 이상적인 combiner는 power를 합치지만 실제로는 insertion loss, amplitude·phase imbalance와 isolation network loss가 있습니다. Branch 하나의 failure나 temperature drift가 전체 combining efficiency와 load distribution을 바꿀 수도 있습니다.</p>
+          <div class="mermaid diagram">
+flowchart LR
+    input[RF input] --> driver[Driver stage]
+    driver --> split[Power split]
+    split --> b1[Power branch 1]
+    split --> b2[Power branch 2]
+    b1 --> combine[Power combiner]
+    b2 --> combine
+    combine --> output[RF output]
+          </div>
+
+          <h2 id="section-07">7. MMIC에서는 Layout 자체가 Circuit이다</h2>
+          <p>MMIC는 transistor와 resistor, capacitor, transmission line 같은 microwave components를 한 semiconductor substrate 위에 monolithic하게 구현합니다. PA MMIC에는 여러 HEMT stage, matching, bias, stabilization과 combining network가 들어갈 수 있습니다.</p>
+          <p>Microwave에서는 metal line의 length와 width가 phase와 impedance를 정하고 bend, via, pad와 coupling이 circuit response를 바꿉니다. Schematic의 이상적인 L·C 값만 맞아도 layout electromagnetic interaction이 달라지면 gain과 match가 이동합니다.</p>
+          <blockquote><p>MMIC의 배선은 회로를 연결하는 그림이 아니라 distributed circuit 그 자체입니다.</p></blockquote>
+          <p>모든 front-end block을 한 GaN die에 넣어야 하는 것도 아닙니다. PA와 high-power switch는 GaN, low-noise path는 GaAs, beamforming control은 SiGe·CMOS처럼 기능별 technology를 조합한 multi-die module도 사용됩니다.</p>
+
+          <h2 id="section-08">8. Package와 Ground가 Chip 성능을 다시 바꾼다</h2>
+          <p>Wafer probe에서 좋은 MMIC도 package에 넣으면 bond wire inductance, pad capacitance, lead transition, cavity mode와 ground via가 추가됩니다. Package-to-PCB launch의 discontinuity는 return loss와 gain뿐 아니라 stability를 바꿀 수 있습니다.</p>
+          <div class="mermaid diagram">
+flowchart TB
+    die[MMIC die] --> attach[Die attach and thermal interface]
+    die --> interconnect[Bond wire or flip-chip interconnect]
+    interconnect --> package[Package transition]
+    package --> pcb[Controlled-impedance PCB launch]
+    attach --> sink[Heat spreader and cooling]
+    pcb --> measured[Module-level RF performance]
+    sink --> measured
+          </div>
+          <p>RF ground는 schematic의 이상적인 0 V node가 아닙니다. Via inductance와 spreading current가 source degeneration과 feedback을 만들 수 있어 짧고 반복 가능한 ground path와 full-wave EM verification이 필요합니다.</p>
+
+          <h2 id="section-09">9. T/R Module은 송신과 수신의 상반된 요구를 묶는다</h2>
+          <p>Phased-array front end의 transmit path에는 phase·amplitude control, driver와 PA가 있고, receive path에는 limiter, LNA와 gain control이 있습니다. Switch나 circulator가 antenna path를 공유하고 high-power transmit leakage로부터 LNA를 보호합니다.</p>
+          <div class="mermaid diagram">
+flowchart TB
+    common[Beamforming and control] --> tx[Transmit path]
+    tx --> pa[Driver and PA]
+    pa --> switch[T/R switch or circulator]
+    switch --> antenna[Antenna element or subarray]
+    antenna --> switch
+    switch --> protect[Limiter and protection]
+    protect --> lna[LNA and receive gain]
+    lna --> common
+          </div>
+          <p>T/R module이 항상 antenna element 하나와 일대일인 것은 아닙니다. Architecture에 따라 element-level module, 여러 element를 묶은 subarray, tile 또는 shared front end를 사용할 수 있습니다. Radar 요구와 cost, cooling, calibration 복잡도가 partition을 결정합니다.</p>
+
+          <h2 id="section-10">10. AESA는 Phase와 Amplitude로 Beam을 만든다</h2>
+          <p>AESA는 여러 radiating element의 relative phase와 amplitude를 조절해 원하는 방향에서 wave가 constructive interference하도록 합니다. Mechanical rotation 없이 beam을 전자적으로 조향하고, waveform과 resource scheduling을 빠르게 바꿀 수 있습니다.</p>
+          <div class="mermaid diagram">
+flowchart LR
+    reference[Common coherent reference] --> weights[Per-channel phase and amplitude weights]
+    weights --> elements[Array elements]
+    elements --> interference[Constructive and destructive interference]
+    interference --> beam[Steered beam pattern]
+          </div>
+          <p>Phase setting만 맞추면 끝나는 것은 아닙니다. Element spacing이 크면 grating lobe가 생길 수 있고, mutual coupling, amplitude·phase error, failed channel, radome와 temperature gradient가 sidelobe와 pointing accuracy를 바꿉니다. Array calibration이 필요한 이유입니다.</p>
+
+          <h2 id="section-11">11. Element Power가 Radar 성능으로 곧장 이어지지는 않는다</h2>
+          <p>Array의 radiated power와 antenna gain이 결합된 EIRP는 중요한 송신 지표입니다. Ideal coherent array에서는 element 수 증가가 total power와 directivity 모두에 기여하지만, exact scaling은 element pattern, spacing, taper, losses와 architecture에 의존합니다.</p>
+          <div class="mermaid diagram">
+flowchart TB
+    element[Element PA output] --> feed[Switch, line and antenna loss]
+    feed --> radiated[Total radiated power]
+    aperture[Array aperture and weighting] --> gain[Array gain and beam shape]
+    radiated --> eirp[EIRP]
+    gain --> eirp
+    eirp --> equation[Radar range and detection chain]
+    receiver[Receiver NF, bandwidth and processing] --> equation
+          </div>
+          <p>PA output variation도 channel amplitude·phase error와 thermal imbalance로 이어질 수 있습니다. 그래서 per-channel watt뿐 아니라 module loss, EIRP, sidelobe, duty cycle와 receiver sensitivity를 함께 검증해야 합니다.</p>
+
+          <h2 id="section-12">12. Thermal과 Trap은 Sustained RF Power를 제한한다</h2>
+          <p>PAE가 낮을수록 같은 RF output에서 더 많은 heat를 제거해야 합니다. Pulsed radar도 peak power, pulse width와 duty cycle에 따라 transient junction temperature가 달라지고, average heat만으로 hotspot을 설명하지 못할 수 있습니다.</p>
+          <p>GaN-on-SiC는 유리한 thermal path를 제공하지만 channel-to-substrate interface, die attach, package, cold plate까지 이어지는 total thermal resistance가 중요합니다. Junction temperature가 오르면 gain, output power, lifetime과 channel balance가 달라집니다.</p>
+          <div class="mermaid diagram">
+flowchart LR
+    stress[High voltage RF and temperature stress] --> traps[Surface and buffer traps]
+    traps --> collapse[Current collapse and dynamic R_on]
+    stress --> heat[Junction self-heating]
+    heat --> drift[Gain and phase drift]
+    collapse --> margin[Reduced RF power margin]
+    drift --> margin
+          </div>
+          <p>Surface passivation, buffer design와 field plate는 trapping과 electric field를 조절하지만 parasitic trade-off가 있습니다. Reliability는 DC breakdown 한 번이 아니라 pulsed RF, mismatch, temperature cycling과 lifetime stress에서 확인해야 합니다.</p>
+
+          <h2 id="section-13">13. 검증은 Device에서 Array까지 단계별로 이어진다</h2>
+          <table>
+            <thead><tr><th>단계</th><th>대표 검증</th><th>놓치기 쉬운 경계</th></tr></thead>
+            <tbody>
+              <tr><td>HEMT / Process</td><td>DC·pulsed I-V, breakdown, traps, RF small signal</td><td>Self-heating과 de-embedding</td></tr>
+              <tr><td>PA Cell</td><td>Load-pull, Pout, gain, PAE, stability</td><td>Bias·harmonic termination</td></tr>
+              <tr><td>MMIC</td><td>S-parameter, power sweep, pulse, EM correlation</td><td>Combiner·interstage loss</td></tr>
+              <tr><td>Package / Module</td><td>Launch, thermal, mismatch ruggedness, calibration</td><td>Ground와 reference plane</td></tr>
+              <tr><td>Array</td><td>EIRP, beam pattern, sidelobe, channel calibration</td><td>Coupling·temperature gradient</td></tr>
+              <tr><td>Radar</td><td>Detection probability, false alarm, range and tracking</td><td>Clutter·waveform·processing</td></tr>
+            </tbody>
+          </table>
+          <p>아래 단계의 최고 수치가 위 단계의 성능을 자동 보장하지 않습니다. 각 interface에서 loss, variation과 uncertainty budget을 넘겨야 material advantage가 system margin으로 남습니다.</p>
+
+          <h2 id="section-14">14. 정리: Material Advantage를 System Margin으로 바꾸는 과정</h2>
+          <dl class="service-summary">
+            <div><dt>Device</dt><dd>GaN HEMT가 높은 voltage swing과 current density를 RF gain으로 바꿉니다.</dd></div>
+            <div><dt>Circuit</dt><dd>Load-pull과 matching, staging, combining으로 목표 Pout·PAE·bandwidth를 만듭니다.</dd></div>
+            <div><dt>MMIC</dt><dd>Distributed layout와 EM coupling을 포함해 기능을 monolithic하게 집적합니다.</dd></div>
+            <div><dt>Module</dt><dd>Package, protection, receive path, bias와 cooling을 함께 설계합니다.</dd></div>
+            <div><dt>Array</dt><dd>Channel phase·amplitude를 교정해 EIRP와 beam pattern을 만듭니다.</dd></div>
+            <div><dt>Radar</dt><dd>Waveform, aperture, receiver와 processing을 합쳐 detection requirement를 검증합니다.</dd></div>
+          </dl>
+          <p>GaN은 모든 radar에 자동으로 최적인 technology가 아닙니다. Frequency, element power, cost, integration과 cooling 요구에 따라 GaAs, SiGe와 CMOS가 더 적합할 수도 있습니다. GaN의 강점은 높은 RF power density가 필요한 지점에서 뚜렷하며, 그것을 실제 radar 성능으로 바꾸는 일은 회로와 package, array, calibration의 몫입니다.</p>
+          <p><strong>참고 자료:</strong> <a href="https://www.ll.mit.edu/sites/default/files/outreach/doc/2018-07/lecture%201.pdf">MIT Lincoln Laboratory: Introduction to Radar Systems</a>, <a href="https://ocw.mit.edu/courses/6-013-electromagnetics-and-applications-spring-2009/d3be4ea78b036a6362230fb41780cf54_MIT6_013S09_notes.pdf">MIT 6.013: Electromagnetics and Applications</a>, <a href="https://ntrs.nasa.gov/citations/20250004214">NASA: E-Band GaN MMIC PA for Vehicular Radar</a>, <a href="https://ntrs.nasa.gov/citations/20240006627">NASA: GaN MMIC Multi-Stage and Distributed PA Study</a>, <a href="https://www.ll.mit.edu/sites/default/files/publication/doc/2018-12/Weber_2014_ATC-416.pdf">MIT Lincoln Laboratory: Phased Array T/R Module Requirements</a></p>
+        </div>
+
+        <!-- GENERATED:ARTICLE_TAIL:START -->
+        <nav class="article-pagination" aria-label="발행 순서로 읽기"><span class="article-nav-empty"><span>Newer</span><strong>더 이상 글이 없습니다.</strong></span><a href="./rf-amplifier-gain-noise-stability-linearity.html"><span>Older</span><strong>[RF] 좋은 증폭기는 무엇으로 평가할까? - Gain, Noise, Stability, Linearity</strong></a></nav>
+        <aside class="related-notes" aria-labelledby="related-heading"><h2 id="related-heading">Related notes</h2><div class="related-note-list"><a href="./rf-amplifier-gain-noise-stability-linearity.html"><span>RF · 2026.10.04</span><strong>[RF] 좋은 증폭기는 무엇으로 평가할까? - Gain, Noise, Stability, Linearity</strong></a></div></aside>
+        <!-- GENERATED:ARTICLE_TAIL:END -->
+      </article>
+    </main>
+    <footer class="site-footer"><p>© 2026 Jiwon Kim</p><div class="footer-links"><span id="visitStatus">집계 중</span><a href="../articles.html">Articles</a><a href="../feed.xml">RSS</a></div></footer>
+    <script src="../script.js?v=20260905-4"></script>
+    <script data-goatcounter="https://jiwonkim-blog.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
+    <noscript><img class="tracking-pixel" src="https://jiwonkim-blog.goatcounter.com/count?p=/posts/rf-gan-pa-mmic-aesa-radar-system.html" alt="" /></noscript>
+  </body>
+</html>
